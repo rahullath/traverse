@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'meshos-cache-v1';
+const CACHE_NAME = 'meshos-cache-v2';
 const OFFLINE_URL = '/offline.html';
 const APP_SHELL = [
   '/',
@@ -10,6 +10,8 @@ const APP_SHELL = [
   '/billing',
   '/manifest.json',
   '/favicon.svg',
+  '/icons/favicon-white.png',
+  '/icons/favicon-black.png',
   OFFLINE_URL,
 ];
 
@@ -73,3 +75,4 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
+

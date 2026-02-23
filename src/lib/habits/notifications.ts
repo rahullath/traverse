@@ -163,8 +163,8 @@ class HabitNotificationService {
       // Fallback to browser notification
       new Notification(`Time for ${reminder.habitName}!`, {
         body: 'Don\'t forget to complete your habit today.',
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/badge-72x72.png',
+        icon: '/favicon.svg',
+        badge: '/icons/favicon-black.png',
         tag: `habit-${reminder.habitId}`,
         requireInteraction: true,
         actions: [
@@ -178,15 +178,15 @@ class HabitNotificationService {
     // Use service worker for better control
     await registration.showNotification(`Time for ${reminder.habitName}!`, {
       body: 'Don\'t forget to complete your habit today.',
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/badge-72x72.png',
+      icon: '/favicon.svg',
+      badge: '/icons/favicon-black.png',
       tag: `habit-${reminder.habitId}`,
       requireInteraction: true,
       vibrate: [200, 100, 200],
       actions: [
-        { action: 'complete', title: 'Mark Complete', icon: '/icons/check.png' },
-        { action: 'snooze', title: 'Remind in 1 hour', icon: '/icons/snooze.png' },
-        { action: 'dismiss', title: 'Dismiss', icon: '/icons/dismiss.png' }
+        { action: 'complete', title: 'Mark Complete', icon: '/icons/favicon-black.png' },
+        { action: 'snooze', title: 'Remind in 1 hour', icon: '/icons/favicon-black.png' },
+        { action: 'dismiss', title: 'Dismiss', icon: '/icons/favicon-black.png' }
       ],
       data: {
         habitId: reminder.habitId,
