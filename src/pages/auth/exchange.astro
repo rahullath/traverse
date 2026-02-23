@@ -1,0 +1,6 @@
+---
+// Legacy OAuth exchange route kept for compatibility.
+// Forward all query params to the maintained callback handler.
+const query = Astro.url.search || '';
+return Astro.redirect(`/auth/callback${query}`);
+---

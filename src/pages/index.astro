@@ -1,0 +1,262 @@
+---
+// src/pages/index.astro - Executive function focused landing + waitlist
+import Layout from '../layouts/Layout.astro';
+const canonical = 'https://messy-os.vercel.app/';
+---
+
+<Layout
+  title="MeshOS - Executive Function Support"
+  description="MeshOS is an executive-function prosthetic for neurodivergent users: chain-based daily planning, habits, and reduced transition friction."
+  canonical={canonical}
+>
+  <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950">
+    <nav class="relative z-10 px-4 sm:px-6 py-4 sm:py-5">
+      <div class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <div class="text-2xl font-bold text-white">
+          <span class="text-cyan-400">Mesh</span>OS
+        </div>
+        <div class="flex flex-wrap items-center gap-2 sm:gap-5 text-sm">
+          <a href="#how" class="text-gray-300 hover:text-white transition-colors">How It Works</a>
+          <a href="#who" class="text-gray-300 hover:text-white transition-colors">Who It Is For</a>
+          <a href="/about" class="text-gray-300 hover:text-white transition-colors">About</a>
+          <a href="/login" class="ml-auto sm:ml-0 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg transition-colors">
+            Sign In
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <section class="relative z-10 px-6 pt-14 pb-10">
+      <div class="max-w-4xl mx-auto text-center">
+        <p class="text-cyan-300 uppercase tracking-[0.2em] text-xs mb-4">Executive Function Prosthetic</p>
+        <h1 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+          Not productivity.
+          <br />
+          <span class="text-cyan-400">Daily stability.</span>
+        </h1>
+        <p class="text-lg text-slate-300 max-w-3xl mx-auto mb-8">
+          MeshOS helps neurodivergent users get through chaotic days with clearer execution chains, fewer transition failures,
+          and less executive overload.
+        </p>
+      </div>
+    </section>
+
+    <section id="who" class="relative z-10 px-6 pb-12">
+      <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-5">
+        <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h2 class="text-xl text-white font-semibold mb-3">Who It Is For</h2>
+          <ul class="space-y-2 text-slate-300 text-sm">
+            <li>People with ADHD traits who struggle to initiate tasks</li>
+            <li>People with autistic traits who freeze under ambiguity</li>
+            <li>People dealing with overwhelm, shutdown, or transition friction</li>
+          </ul>
+        </div>
+        <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h2 class="text-xl text-white font-semibold mb-3">What It Is Not</h2>
+          <ul class="space-y-2 text-slate-300 text-sm">
+            <li>Not an AI therapist or companion</li>
+            <li>Not a guilt-driven streak machine</li>
+            <li>Not optimization theater or life surveillance</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="relative z-10 px-6 pb-12">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="text-3xl text-white font-bold text-center mb-8">How MeshOS Helps</h2>
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+            <p class="text-cyan-300 text-xs uppercase tracking-wider mb-2">1</p>
+            <h3 class="text-white text-lg font-semibold mb-2">Anchor The Day</h3>
+            <p class="text-slate-300 text-sm">Start from fixed commitments so the day is concrete, not abstract.</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+            <p class="text-cyan-300 text-xs uppercase tracking-wider mb-2">2</p>
+            <h3 class="text-white text-lg font-semibold mb-2">Run A Chain</h3>
+            <p class="text-slate-300 text-sm">Externalize sequencing with realistic durations and clear next actions.</p>
+          </div>
+          <div class="bg-white/5 border border-white/10 rounded-xl p-6">
+            <p class="text-cyan-300 text-xs uppercase tracking-wider mb-2">3</p>
+            <h3 class="text-white text-lg font-semibold mb-2">Leave With Fewer Misses</h3>
+            <p class="text-slate-300 text-sm">Use an exit gate checklist to reduce transition errors and panic loops.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="relative z-10 px-6 pb-16">
+      <div class="max-w-md mx-auto bg-white/5 border border-white/10 rounded-2xl p-7">
+        <h3 class="text-2xl font-semibold text-white mb-3 text-center">Join The Waitlist</h3>
+        <p class="text-slate-300 text-sm text-center mb-6">
+          Early access is focused on executive dysfunction support, especially ADHD/autistic workflow friction.
+        </p>
+
+        <form id="waitlistForm" class="space-y-4">
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            required
+            autocomplete="email"
+            class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-colors"
+          />
+          <select
+            name="interest"
+            required
+            class="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-colors"
+          >
+            <option value="" disabled selected>What do you want help with first?</option>
+            <option value="chain-view">Starting and finishing daily chains</option>
+            <option value="transition-failures">Leaving home without missing essentials</option>
+            <option value="overwhelm">Reducing overwhelm and freeze</option>
+            <option value="all">All of the above</option>
+          </select>
+          <button
+            type="submit"
+            class="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+          >
+            Join Waitlist
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <footer class="relative z-10 border-t border-white/10 px-6 py-6">
+      <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3 text-sm text-slate-300">
+        <p>MeshOS - Executive Function Support</p>
+        <div class="flex items-center gap-4">
+          <a href="/about" class="hover:text-white transition-colors">About</a>
+          <a href="https://www.linkedin.com/company/messy-os" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">LinkedIn</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const waitlistForm = document.getElementById('waitlistForm');
+    const submitButton = waitlistForm?.querySelector('button[type="submit"]');
+    const emailInput = waitlistForm?.querySelector('input[name="email"]');
+    const interestSelect = waitlistForm?.querySelector('select[name="interest"]');
+
+    const notificationContainer = document.createElement('div');
+    notificationContainer.id = 'notification-container';
+    notificationContainer.className = 'fixed top-4 right-4 z-50 space-y-2';
+    document.body.appendChild(notificationContainer);
+
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `p-4 rounded-lg border max-w-md transform transition-all duration-300 ${
+        type === 'success'
+          ? 'bg-green-500/10 border-green-500/20 text-green-400'
+          : type === 'error'
+          ? 'bg-red-500/10 border-red-500/20 text-red-400'
+          : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+      }`;
+      notification.innerHTML = `<p class="text-sm">${message}</p>`;
+
+      notificationContainer.appendChild(notification);
+
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => notification.remove(), 300);
+      }, 5000);
+    }
+
+    function setFormLoading(loading) {
+      if (submitButton) {
+        submitButton.disabled = loading;
+        submitButton.innerHTML = loading
+          ? '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Joining...'
+          : 'Join Waitlist';
+      }
+
+      if (emailInput) emailInput.disabled = loading;
+      if (interestSelect) interestSelect.disabled = loading;
+    }
+
+    function validateEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email.trim());
+    }
+
+    waitlistForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const email = form.elements.namedItem('email').value.trim();
+      const interest = form.elements.namedItem('interest').value;
+
+      if (!email) {
+        showNotification('Please enter your email address.', 'error');
+        emailInput?.focus();
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        showNotification('Please enter a valid email address.', 'error');
+        emailInput?.focus();
+        return;
+      }
+
+      if (!interest) {
+        showNotification('Please select an option.', 'error');
+        interestSelect?.focus();
+        return;
+      }
+
+      setFormLoading(true);
+
+      try {
+        const response = await fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            interest,
+            referrer: document.referrer || 'direct'
+          })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showNotification('Added to waitlist. Redirecting to signup...', 'success');
+          if (waitlistForm) {
+            waitlistForm.innerHTML = `
+              <div class="text-center">
+                <h3 class="text-2xl font-semibold text-white mb-4">You are in.</h3>
+                <p class="text-gray-300 mb-6">We will email you as early support rolls out.</p>
+                <button
+                  onclick="window.location.href = '/login'"
+                  class="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                >
+                  Continue to Sign Up
+                </button>
+              </div>
+            `;
+          }
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        } else {
+          showNotification(result.error || 'Something went wrong. Please try again.', 'error');
+          setFormLoading(false);
+        }
+      } catch (error) {
+        console.error('Waitlist submission error:', error);
+        showNotification('Network error. Please check your connection and try again.', 'error');
+        setFormLoading(false);
+      }
+    });
+
+    emailInput?.addEventListener('input', (e) => {
+      const email = e.target.value.trim();
+      if (email && !validateEmail(email)) {
+        e.target.style.borderColor = '#ef4444';
+      } else {
+        e.target.style.borderColor = '';
+      }
+    });
+  </script>
+</Layout>

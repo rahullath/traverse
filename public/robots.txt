@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://messy-os.vercel.app/sitemap.xml

@@ -1,0 +1,28 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+import { createServerAuth } from '../lib/auth/simple-multi-user';
+import DailyPlanPageContent from '../components/daily-plan/DailyPlanPageContent';
+
+// Require authentication
+const serverAuth = createServerAuth(Astro.cookies);
+const user = await serverAuth.getUser();
+
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<DashboardLayout title="Daily Plan - MessyOS" user={user}>
+  <div class="app-content-wrap space-y-6 sm:space-y-8">
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-semibold text-text-primary mb-2">Daily Plan</h1>
+        <p class="text-sm sm:text-base text-text-secondary">Your structured day from wake to sleep, built for clear next actions.</p>
+      </div>
+    </div>
+
+    <!-- Daily Plan Content -->
+    <DailyPlanPageContent client:load />
+  </div>
+</DashboardLayout>
