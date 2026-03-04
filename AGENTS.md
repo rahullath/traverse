@@ -31,6 +31,7 @@ Astro runs in full SSR mode (`output: 'server'`). Pages are `.astro` files that 
 ### Path Aliases
 
 Configured in `tsconfig.json` and `vitest.config.ts`:
+
 - `@/*` → `./src/*` (primary alias used throughout)
 - `components/*`, `lib/*`, `types/*` also map into `./src/`
 
@@ -45,6 +46,7 @@ Configured in `tsconfig.json` and `vitest.config.ts`:
 ### Middleware Flow (`src/middleware.ts`)
 
 Every request goes through middleware that:
+
 1. Classifies the route via `RouteClassifier` (static, public, protected)
 2. Skips auth for static assets and public routes
 3. For protected routes: checks Supabase auth → enforces onboarding completion → enforces billing/trial gate → allows access
@@ -98,6 +100,7 @@ Tailwind CSS with a custom dark theme using CSS custom properties (`--background
 ### Testing
 
 Vitest with jsdom environment. Setup file at `src/test/setup.ts`. Tests are organized as:
+
 - `src/test/unit/` — Unit tests
 - `src/test/integration/` — Integration tests
 - `src/test/e2e/` — End-to-end tests

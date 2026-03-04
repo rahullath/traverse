@@ -48,16 +48,16 @@ class AnalyticsTracker {
 
   public isPublicRoute(pathname: string): boolean {
     const publicRoutes = [
-      '/',
-      '/landing',
-      '/login',
-      '/auth/callback',
-      '/auth/exchange',
-      '/onboarding',
-      '/reset-password',
-      '/auth-status'
+      "/",
+      "/landing",
+      "/login",
+      "/auth/callback",
+      "/auth/exchange",
+      "/onboarding",
+      "/reset-password",
+      "/auth-status",
     ];
-    
+
     const staticAssetPatterns = [
       /^\/icons\/.*/,
       /^\/manifest\.json$/,
@@ -65,7 +65,7 @@ class AnalyticsTracker {
       /^\/sw\.js$/,
       /^\/.*\.(png|jpg|jpeg|svg|ico|webp)$/,
       /^\/robots\.txt$/,
-      /^\/sitemap\.xml$/
+      /^\/sitemap\.xml$/,
     ];
 
     // Check exact matches first
@@ -74,11 +74,11 @@ class AnalyticsTracker {
     }
 
     // Check pattern matches
-    return staticAssetPatterns.some(pattern => pattern.test(pathname));
+    return staticAssetPatterns.some((pattern) => pattern.test(pathname));
   }
 
   private initializeTracking(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Start flush timer
     this.flushTimer = setInterval(() => {
@@ -86,12 +86,12 @@ class AnalyticsTracker {
     }, this.flushInterval);
 
     // Flush on page unload
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener("beforeunload", () => {
       this.flush(true);
     });
 
     // Track page visibility changes
-    document.addEventListener('visibilitychange', () => {
+    document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         this.flush();
       }
@@ -115,12 +115,12 @@ class AnalyticsTracker {
     if (!this.isEnabled) return;
 
     // Skip tracking if we're in a browser environment but window is not available
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     try {
       const analyticsEvent: AnalyticsEvent = {
         event,
-        category: properties.category || 'general',
+        category: properties.category || "general",
         action: properties.action || event,
         label: properties.label,
         value: properties.value,
@@ -134,12 +134,12 @@ class AnalyticsTracker {
           userAgent: navigator.userAgent,
           viewport: {
             width: window.innerWidth,
-            height: window.innerHeight
+            height: window.innerHeight,
           },
           // Add context about authentication state
           isAuthenticated: !!this.userId,
-          isPublicRoute: this.isPublicRoute(window.location.pathname)
-        }
+          isPublicRoute: this.isPublicRoute(window.location.pathname),
+        },
       };
 
       this.events.push(analyticsEvent);
@@ -151,130 +151,153 @@ class AnalyticsTracker {
     } catch (error) {
       // Silently handle tracking errors to prevent breaking the user experience
       // Only log errors for authenticated routes or critical tracking failures
-      if (this.userId || properties.category === 'error') {
-        console.warn('Analytics tracking failed:', error);
+      if (this.userId || properties.category === "error") {
+        console.warn("Analytics tracking failed:", error);
       }
     }
   }
 
   // Authentication flow tracking
-  trackAuthFlow(step: string, success: boolean, metadata: Record<string, any> = {}): void {
-    this.track('auth_flow', {
-      category: 'authentication',
+  trackAuthFlow(
+    step: string,
+    success: boolean,
+    metadata: Record<string, any> = {},
+  ): void {
+    this.track("auth_flow", {
+      category: "authentication",
       action: step,
       success,
-      ...metadata
+      ...metadata,
     });
   }
 
   // User flow tracking with timing
-  trackUserFlow(flow: string, step: string, success: boolean, startTime?: number, metadata: Record<string, any> = {}): void {
+  trackUserFlow(
+    flow: string,
+    step: string,
+    success: boolean,
+    startTime?: number,
+    metadata: Record<string, any> = {},
+  ): void {
     const duration = startTime ? Date.now() - startTime : undefined;
-    
-    this.track('user_flow', {
-      category: 'user_journey',
+
+    this.track("user_flow", {
+      category: "user_journey",
       action: `${flow}_${step}`,
       flow,
       step,
       success,
       duration,
-      ...metadata
+      ...metadata,
     });
   }
 
   // Performance tracking
-  trackPerformance(metric: string, value: number, metadata: Record<string, any> = {}): void {
-    this.track('performance', {
-      category: 'performance',
+  trackPerformance(
+    metric: string,
+    value: number,
+    metadata: Record<string, any> = {},
+  ): void {
+    this.track("performance", {
+      category: "performance",
       action: metric,
       value,
       page: window.location.pathname,
-      ...metadata
+      ...metadata,
     });
   }
 
   // Error tracking
   trackError(error: Error | string, context: Record<string, any> = {}): void {
-    const errorMessage = typeof error === 'string' ? error : error.message;
-    const errorStack = typeof error === 'object' ? error.stack : undefined;
+    const errorMessage = typeof error === "string" ? error : error.message;
+    const errorStack = typeof error === "object" ? error.stack : undefined;
 
     // Filter out errors that are expected on public routes
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const isPublic = this.isPublicRoute(window.location.pathname);
-      
+
       // Don't track auth-related errors on public routes as they're expected
       if (isPublic && this.isAuthRelatedError(errorMessage)) {
         return;
       }
     }
 
-    this.track('error', {
-      category: 'error',
-      action: 'javascript_error',
+    this.track("error", {
+      category: "error",
+      action: "javascript_error",
       label: errorMessage,
       error: errorMessage,
       stack: errorStack,
-      route: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
+      route:
+        typeof window !== "undefined" ? window.location.pathname : "unknown",
       hasUserId: !!this.userId,
-      ...context
+      ...context,
     });
   }
 
   public isAuthRelatedError(errorMessage: string): boolean {
     const authErrorPatterns = [
-      'auth session missing',
-      'user not authenticated',
-      'no user session',
-      'authentication required',
-      'invalid session',
-      'session expired',
-      'unauthorized'
+      "auth session missing",
+      "user not authenticated",
+      "no user session",
+      "authentication required",
+      "invalid session",
+      "session expired",
+      "unauthorized",
     ];
-    
+
     const lowerMessage = errorMessage.toLowerCase();
-    return authErrorPatterns.some(pattern => lowerMessage.includes(pattern));
+    return authErrorPatterns.some((pattern) => lowerMessage.includes(pattern));
   }
 
   // Conversion tracking
-  trackConversion(event: string, value?: number, metadata: Record<string, any> = {}): void {
-    this.track('conversion', {
-      category: 'conversion',
+  trackConversion(
+    event: string,
+    value?: number,
+    metadata: Record<string, any> = {},
+  ): void {
+    this.track("conversion", {
+      category: "conversion",
       action: event,
       value,
-      ...metadata
+      ...metadata,
     });
   }
 
   // Engagement tracking
-  trackEngagement(action: string, element?: string, metadata: Record<string, any> = {}): void {
-    this.track('engagement', {
-      category: 'engagement',
+  trackEngagement(
+    action: string,
+    element?: string,
+    metadata: Record<string, any> = {},
+  ): void {
+    this.track("engagement", {
+      category: "engagement",
       action,
       label: element,
-      ...metadata
+      ...metadata,
     });
   }
 
   // Page view tracking
   trackPageView(page?: string): void {
-    this.track('page_view', {
-      category: 'navigation',
-      action: 'page_view',
+    this.track("page_view", {
+      category: "navigation",
+      action: "page_view",
       page: page || window.location.pathname,
-      title: document.title
+      title: document.title,
     });
   }
 
   // Custom event tracking with timing
   startTiming(eventName: string): () => void {
     const startTime = Date.now();
-    
+
     return () => {
       const duration = Date.now() - startTime;
-      this.track('timing', {
-        category: 'timing',
+      this.track("timing", {
+        category: "timing",
         action: eventName,
-        value: duration
+        value: duration,
       });
     };
   }
@@ -287,7 +310,7 @@ class AnalyticsTracker {
     this.events = [];
 
     // Filter and sanitize events before sending
-    const sanitizedEvents = eventsToSend.map(event => ({
+    const sanitizedEvents = eventsToSend.map((event) => ({
       ...event,
       // Ensure userId is either a string or null, never undefined
       userId: event.userId || null,
@@ -295,27 +318,29 @@ class AnalyticsTracker {
       metadata: {
         ...event.properties?.metadata,
         wasAuthenticated: !!event.userId,
-        routeType: event.properties?.isPublicRoute ? 'public' : 'protected'
-      }
+        routeType: event.properties?.isPublicRoute ? "public" : "protected",
+      },
     }));
 
     try {
       // In a real app, this would send to your analytics endpoint
       if (immediate && navigator.sendBeacon) {
         // Use sendBeacon for reliable delivery on page unload
-        navigator.sendBeacon('/api/analytics', JSON.stringify(sanitizedEvents));
+        navigator.sendBeacon("/api/analytics", JSON.stringify(sanitizedEvents));
       } else {
         // Regular fetch for normal operation
-        const response = await fetch('/api/analytics', {
-          method: 'POST',
+        const response = await fetch("/api/analytics", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(sanitizedEvents)
+          body: JSON.stringify(sanitizedEvents),
         });
 
         if (!response.ok) {
-          throw new Error(`Analytics API responded with ${response.status}: ${response.statusText}`);
+          throw new Error(
+            `Analytics API responded with ${response.status}: ${response.statusText}`,
+          );
         }
       }
 
@@ -326,11 +351,12 @@ class AnalyticsTracker {
     } catch (error) {
       // Only log errors for authenticated users or in development
       if (this.userId || import.meta.env.DEV) {
-        console.error('Analytics: Failed to send events', error);
+        console.error("Analytics: Failed to send events", error);
       }
-      
+
       // Re-add events to queue for retry, but limit retry queue size
-      if (this.events.length < 50) { // Prevent memory leaks
+      if (this.events.length < 50) {
+        // Prevent memory leaks
         this.events.unshift(...eventsToSend);
       }
     }
@@ -347,7 +373,7 @@ class AnalyticsTracker {
       sessionId: this.sessionId,
       userId: this.userId,
       eventsQueued: this.events.length,
-      isEnabled: this.isEnabled
+      isEnabled: this.isEnabled,
     };
   }
 
@@ -371,134 +397,152 @@ export class MessyOSAnalytics {
   // Landing page interactions
   trackLandingPageView(): void {
     try {
-      this.tracker.trackPageView('/');
-      this.tracker.track('landing_page_view', {
-        category: 'marketing',
-        action: 'landing_page_view',
-        isPublicRoute: true
+      this.tracker.trackPageView("/");
+      this.tracker.track("landing_page_view", {
+        category: "marketing",
+        action: "landing_page_view",
+        isPublicRoute: true,
       });
     } catch (error) {
       // Silently handle errors on public routes
       if (import.meta.env.DEV) {
-        console.warn('Failed to track landing page view:', error);
+        console.warn("Failed to track landing page view:", error);
       }
     }
   }
 
   trackWaitlistSignup(email: string, source?: string): void {
     try {
-      this.tracker.trackConversion('waitlist_signup', 1, {
+      this.tracker.trackConversion("waitlist_signup", 1, {
         source,
         hasEmail: !!email,
-        isPublicRoute: true
+        isPublicRoute: true,
       });
     } catch (error) {
       // This is important conversion tracking, so log it
-      console.warn('Failed to track waitlist signup:', error);
+      console.warn("Failed to track waitlist signup:", error);
     }
   }
 
   trackWaitlistError(error: string): void {
     try {
       this.tracker.trackError(error, {
-        context: 'waitlist_signup',
-        isPublicRoute: true
+        context: "waitlist_signup",
+        isPublicRoute: true,
       });
     } catch (trackingError) {
       // Don't let tracking errors break the user experience
       if (import.meta.env.DEV) {
-        console.warn('Failed to track waitlist error:', trackingError);
+        console.warn("Failed to track waitlist error:", trackingError);
       }
     }
   }
 
   // Authentication flow
-  trackAuthStart(method: 'email' | 'google' | 'github'): void {
-    this.tracker.trackAuthFlow('auth_start', true, { method });
+  trackAuthStart(method: "email" | "google" | "github"): void {
+    this.tracker.trackAuthFlow("auth_start", true, { method });
   }
 
   trackAuthSuccess(method: string, isNewUser: boolean): void {
-    this.tracker.trackAuthFlow('auth_success', true, { method, isNewUser });
-    this.tracker.trackConversion('user_signup', 1, { method, isNewUser });
+    this.tracker.trackAuthFlow("auth_success", true, { method, isNewUser });
+    this.tracker.trackConversion("user_signup", 1, { method, isNewUser });
   }
 
   trackAuthError(method: string, error: string): void {
-    this.tracker.trackAuthFlow('auth_error', false, { method, error });
+    this.tracker.trackAuthFlow("auth_error", false, { method, error });
   }
 
   // Token system
   trackTokenAllocation(amount: number, userId: string): void {
     this.tracker.setUserId(userId);
-    this.tracker.track('token_allocation', {
-      category: 'tokens',
-      action: 'initial_allocation',
-      value: amount
+    this.tracker.track("token_allocation", {
+      category: "tokens",
+      action: "initial_allocation",
+      value: amount,
     });
   }
 
-  trackTokenUsage(amount: number, feature: string, remainingBalance: number): void {
-    this.tracker.track('token_usage', {
-      category: 'tokens',
-      action: 'token_spent',
+  trackTokenUsage(
+    amount: number,
+    feature: string,
+    remainingBalance: number,
+  ): void {
+    this.tracker.track("token_usage", {
+      category: "tokens",
+      action: "token_spent",
       value: amount,
       feature,
-      remainingBalance
+      remainingBalance,
     });
   }
 
   // Onboarding flow
   trackOnboardingStart(): void {
-    this.tracker.trackUserFlow('onboarding', 'start', true);
+    this.tracker.trackUserFlow("onboarding", "start", true);
   }
 
-  trackOnboardingStep(step: string, completed: boolean, data?: Record<string, any>): void {
-    this.tracker.trackUserFlow('onboarding', step, completed, undefined, data);
+  trackOnboardingStep(
+    step: string,
+    completed: boolean,
+    data?: Record<string, any>,
+  ): void {
+    this.tracker.trackUserFlow("onboarding", step, completed, undefined, data);
   }
 
   trackOnboardingComplete(totalTime: number): void {
-    this.tracker.trackUserFlow('onboarding', 'complete', true, undefined, { totalTime });
-    this.tracker.trackConversion('onboarding_complete', 1, { totalTime });
+    this.tracker.trackUserFlow("onboarding", "complete", true, undefined, {
+      totalTime,
+    });
+    this.tracker.trackConversion("onboarding_complete", 1, { totalTime });
   }
 
   // Dashboard interactions
   trackDashboardView(): void {
-    this.tracker.trackPageView('/dashboard');
+    this.tracker.trackPageView("/dashboard");
   }
 
-  trackFeatureUsage(feature: string, action: string, metadata?: Record<string, any>): void {
+  trackFeatureUsage(
+    feature: string,
+    action: string,
+    metadata?: Record<string, any>,
+  ): void {
     this.tracker.trackEngagement(`${feature}_${action}`, feature, metadata);
   }
 
   // Performance tracking
   trackPageLoadTime(page: string, loadTime: number): void {
-    this.tracker.trackPerformance('page_load_time', loadTime, { page });
+    this.tracker.trackPerformance("page_load_time", loadTime, { page });
   }
 
-  trackAPIResponse(endpoint: string, responseTime: number, success: boolean): void {
-    this.tracker.trackPerformance('api_response_time', responseTime, {
+  trackAPIResponse(
+    endpoint: string,
+    responseTime: number,
+    success: boolean,
+  ): void {
+    this.tracker.trackPerformance("api_response_time", responseTime, {
       endpoint,
-      success
+      success,
     });
   }
 
   // Mobile-specific tracking
   trackMobileInteraction(interaction: string, element: string): void {
-    this.tracker.trackEngagement('mobile_interaction', element, {
+    this.tracker.trackEngagement("mobile_interaction", element, {
       interaction,
       isMobile: true,
-      touchDevice: 'ontouchstart' in window
+      touchDevice: "ontouchstart" in window,
     });
   }
 
   trackPWAInstall(): void {
-    this.tracker.trackConversion('pwa_install', 1);
+    this.tracker.trackConversion("pwa_install", 1);
   }
 
   trackPWAUsage(): void {
-    this.tracker.track('pwa_usage', {
-      category: 'pwa',
-      action: 'app_launch',
-      standalone: window.matchMedia('(display-mode: standalone)').matches
+    this.tracker.track("pwa_usage", {
+      category: "pwa",
+      action: "app_launch",
+      standalone: window.matchMedia("(display-mode: standalone)").matches,
     });
   }
 
@@ -506,7 +550,7 @@ export class MessyOSAnalytics {
   trackJavaScriptError(error: Error, componentStack?: string): void {
     this.tracker.trackError(error, {
       componentStack,
-      context: 'react_component'
+      context: "react_component",
     });
   }
 
@@ -515,28 +559,36 @@ export class MessyOSAnalytics {
       url,
       status,
       statusText,
-      context: 'network_request'
+      context: "network_request",
     });
   }
 
   // User behavior patterns
-  trackUserSession(duration: number, pageViews: number, interactions: number): void {
-    this.tracker.track('session_summary', {
-      category: 'engagement',
-      action: 'session_end',
+  trackUserSession(
+    duration: number,
+    pageViews: number,
+    interactions: number,
+  ): void {
+    this.tracker.track("session_summary", {
+      category: "engagement",
+      action: "session_end",
       duration,
       pageViews,
-      interactions
+      interactions,
     });
   }
 
   // A/B testing support
-  trackExperiment(experimentName: string, variant: string, converted: boolean): void {
-    this.tracker.track('experiment', {
-      category: 'experiment',
+  trackExperiment(
+    experimentName: string,
+    variant: string,
+    converted: boolean,
+  ): void {
+    this.tracker.track("experiment", {
+      category: "experiment",
       action: experimentName,
       label: variant,
-      converted
+      converted,
     });
   }
 
@@ -568,18 +620,18 @@ export function useAnalytics() {
     trackPageView: analytics.trackDashboardView.bind(analytics),
     trackFeatureUsage: analytics.trackFeatureUsage.bind(analytics),
     trackError: analytics.trackJavaScriptError.bind(analytics),
-    startTiming: analytics.tracker.startTiming.bind(analytics.tracker)
+    startTiming: analytics.tracker.startTiming.bind(analytics.tracker),
   };
 }
 
 // Higher-order component for automatic page tracking
 export function withAnalytics<P extends object>(
   Component: React.ComponentType<P>,
-  pageName?: string
+  pageName?: string,
 ) {
   return function AnalyticsWrapper(props: P) {
     React.useEffect(() => {
-      analytics.trackPageLoadTime(pageName || 'unknown', performance.now());
+      analytics.trackPageLoadTime(pageName || "unknown", performance.now());
     }, []);
 
     return React.createElement(Component, props);
@@ -587,67 +639,72 @@ export function withAnalytics<P extends object>(
 }
 
 // Auto-initialize analytics
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   // Track initial page load
-  window.addEventListener('load', () => {
+  window.addEventListener("load", () => {
     try {
-      const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+      const loadTime =
+        performance.timing.loadEventEnd - performance.timing.navigationStart;
       analytics.trackPageLoadTime(window.location.pathname, loadTime);
     } catch (error) {
       // Don't let analytics errors break the page
       if (import.meta.env.DEV) {
-        console.warn('Failed to track page load time:', error);
+        console.warn("Failed to track page load time:", error);
       }
     }
   });
 
   // Track PWA usage
   try {
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (window.matchMedia("(display-mode: standalone)").matches) {
       analytics.trackPWAUsage();
     }
   } catch (error) {
     if (import.meta.env.DEV) {
-      console.warn('Failed to track PWA usage:', error);
+      console.warn("Failed to track PWA usage:", error);
     }
   }
 
   // Track unhandled errors (but filter out auth-related errors on public routes)
-  window.addEventListener('error', (event) => {
+  window.addEventListener("error", (event) => {
     try {
       // Don't track auth errors on public routes
-      const isPublic = analytics.tracker.isPublicRoute?.(window.location.pathname) ?? false;
-      const isAuthError = event.error?.message && 
+      const isPublic =
+        analytics.tracker.isPublicRoute?.(window.location.pathname) ?? false;
+      const isAuthError =
+        event.error?.message &&
         (analytics.tracker.isAuthRelatedError?.(event.error.message) ?? false);
-      
+
       if (isPublic && isAuthError) {
         return; // Skip tracking expected auth errors on public routes
       }
-      
+
       analytics.trackJavaScriptError(event.error, event.filename);
     } catch (trackingError) {
       // Don't let tracking errors create more errors
       if (import.meta.env.DEV) {
-        console.warn('Failed to track JavaScript error:', trackingError);
+        console.warn("Failed to track JavaScript error:", trackingError);
       }
     }
   });
 
   // Track unhandled promise rejections
-  window.addEventListener('unhandledrejection', (event) => {
+  window.addEventListener("unhandledrejection", (event) => {
     try {
       const error = new Error(event.reason);
-      const isPublic = analytics.tracker.isPublicRoute?.(window.location.pathname) ?? false;
-      const isAuthError = (analytics.tracker.isAuthRelatedError?.(error.message) ?? false);
-      
+      const isPublic =
+        analytics.tracker.isPublicRoute?.(window.location.pathname) ?? false;
+      const isAuthError =
+        analytics.tracker.isAuthRelatedError?.(error.message) ?? false;
+
       if (isPublic && isAuthError) {
         return; // Skip tracking expected auth errors on public routes
       }
-      
-      analytics.trackJavaScriptError(error, 'unhandled_promise');
+
+      analytics.trackJavaScriptError(error, "unhandled_promise");
     } catch (trackingError) {
       if (import.meta.env.DEV) {
-        console.warn('Failed to track promise rejection:', trackingError);
+        console.warn("Failed to track promise rejection:", trackingError);
       }
     }
   });

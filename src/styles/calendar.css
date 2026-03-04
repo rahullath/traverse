@@ -44,7 +44,9 @@
   color: rgb(var(--text-secondary));
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 .view-controls button:hover {
   background-color: rgb(var(--surface-hover));

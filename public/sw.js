@@ -1,46 +1,55 @@
-const CACHE_NAME = 'meshos-cache-v2';
-const OFFLINE_URL = '/offline.html';
+const CACHE_NAME = "meshos-cache-v2";
+const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
-  '/',
-  '/dashboard',
-  '/daily-plan',
-  '/habits',
-  '/settings',
-  '/profile',
-  '/billing',
-  '/manifest.json',
-  '/favicon.svg',
-  '/icons/favicon-white.png',
-  '/icons/favicon-black.png',
+  "/",
+  "/dashboard",
+  "/daily-plan",
+  "/habits",
+  "/settings",
+  "/profile",
+  "/billing",
+  "/manifest.json",
+  "/favicon.svg",
+  "/icons/favicon-white.png",
+  "/icons/favicon-black.png",
   OFFLINE_URL,
 ];
 
-self.addEventListener('install', (event) => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).catch(() => undefined)
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .catch(() => undefined),
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
-    )
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
+      ),
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  if (request.method !== 'GET') {
+  if (request.method !== "GET") {
     return;
   }
 
   // Navigation requests: network first, then offline fallback.
-  if (request.mode === 'navigate') {
+  if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -51,7 +60,7 @@ self.addEventListener('fetch', (event) => {
         .catch(async () => {
           const cached = await caches.match(request);
           return cached || caches.match(OFFLINE_URL);
-        })
+        }),
     );
     return;
   }
@@ -64,15 +73,16 @@ self.addEventListener('fetch', (event) => {
           .then((response) => {
             if (response && response.status === 200) {
               const clone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(request, clone));
             }
             return response;
           })
           .catch(() => cached);
 
         return cached || networkFetch;
-      })
+      }),
     );
   }
 });
-

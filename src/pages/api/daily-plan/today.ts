@@ -1,20 +1,26 @@
-import type { APIRoute } from 'astro';
-import { createServerClient } from '../../../lib/supabase/server';
-import { getDailyPlanByDateWithBlocks } from '../../../lib/daily-plan/database';
-import type { DailyPlan, TimeBlock } from '../../../types/daily-plan';
-import type { Anchor } from '../../../lib/anchors/types';
-import type { ChainStepInstance, CommitmentEnvelope, ExecutionChain } from '../../../lib/chains/types';
+import type { APIRoute } from "astro";
+import { createServerClient } from "../../../lib/supabase/server";
+import { getDailyPlanByDateWithBlocks } from "../../../lib/daily-plan/database";
+import type { DailyPlan, TimeBlock } from "../../../types/daily-plan";
+import type { Anchor } from "../../../lib/anchors/types";
+import type {
+  ChainStepInstance,
+  CommitmentEnvelope,
+  ExecutionChain,
+} from "../../../lib/chains/types";
 
-function deriveChainStatus(steps: ChainStepInstance[]): ExecutionChain['status'] {
-  if (steps.length > 0 && steps.every((step) => step.status === 'completed')) {
-    return 'completed';
+function deriveChainStatus(
+  steps: ChainStepInstance[],
+): ExecutionChain["status"] {
+  if (steps.length > 0 && steps.every((step) => step.status === "completed")) {
+    return "completed";
   }
 
-  if (steps.some((step) => step.status === 'in-progress')) {
-    return 'in-progress';
+  if (steps.some((step) => step.status === "in-progress")) {
+    return "in-progress";
   }
 
-  return 'pending';
+  return "pending";
 }
 
 function buildSyntheticEnvelope(
@@ -22,7 +28,7 @@ function buildSyntheticEnvelope(
   anchorId: string,
   anchor: Anchor,
   chainCompletionDeadline: Date,
-  chainStart: Date
+  chainStart: Date,
 ): CommitmentEnvelope {
   const travelDurationMinutes = 30;
   const recoveryDurationMinutes = 10;
@@ -30,18 +36,25 @@ function buildSyntheticEnvelope(
   const prep: ChainStepInstance = {
     step_id: `${chainId}-prep`,
     chain_id: chainId,
-    name: 'Preparation',
+    name: "Preparation",
     start_time: chainStart,
     end_time: chainCompletionDeadline,
-    duration: Math.max(1, Math.round((chainCompletionDeadline.getTime() - chainStart.getTime()) / 60000)),
+    duration: Math.max(
+      1,
+      Math.round(
+        (chainCompletionDeadline.getTime() - chainStart.getTime()) / 60000,
+      ),
+    ),
     is_required: true,
     can_skip_when_late: false,
-    status: 'pending',
-    role: 'chain-step',
+    status: "pending",
+    role: "chain-step",
   };
 
   const travelThereStart = chainCompletionDeadline;
-  const travelThereEnd = new Date(travelThereStart.getTime() + travelDurationMinutes * 60000);
+  const travelThereEnd = new Date(
+    travelThereStart.getTime() + travelDurationMinutes * 60000,
+  );
 
   const travelThere: ChainStepInstance = {
     step_id: `${chainId}-travel-there`,
@@ -52,8 +65,8 @@ function buildSyntheticEnvelope(
     duration: travelDurationMinutes,
     is_required: true,
     can_skip_when_late: false,
-    status: 'pending',
-    role: 'chain-step',
+    status: "pending",
+    role: "chain-step",
   };
 
   const anchorStep: ChainStepInstance = {
@@ -62,15 +75,20 @@ function buildSyntheticEnvelope(
     name: anchor.title,
     start_time: anchor.start,
     end_time: anchor.end,
-    duration: Math.max(1, Math.round((anchor.end.getTime() - anchor.start.getTime()) / 60000)),
+    duration: Math.max(
+      1,
+      Math.round((anchor.end.getTime() - anchor.start.getTime()) / 60000),
+    ),
     is_required: true,
     can_skip_when_late: false,
-    status: 'pending',
-    role: 'anchor',
+    status: "pending",
+    role: "anchor",
   };
 
   const travelBackStart = anchor.end;
-  const travelBackEnd = new Date(travelBackStart.getTime() + travelDurationMinutes * 60000);
+  const travelBackEnd = new Date(
+    travelBackStart.getTime() + travelDurationMinutes * 60000,
+  );
 
   const travelBack: ChainStepInstance = {
     step_id: `${chainId}-travel-back`,
@@ -81,24 +99,26 @@ function buildSyntheticEnvelope(
     duration: travelDurationMinutes,
     is_required: true,
     can_skip_when_late: false,
-    status: 'pending',
-    role: 'chain-step',
+    status: "pending",
+    role: "chain-step",
   };
 
   const recoveryStart = travelBackEnd;
-  const recoveryEnd = new Date(recoveryStart.getTime() + recoveryDurationMinutes * 60000);
+  const recoveryEnd = new Date(
+    recoveryStart.getTime() + recoveryDurationMinutes * 60000,
+  );
 
   const recovery: ChainStepInstance = {
     step_id: `${chainId}-recovery`,
     chain_id: chainId,
-    name: 'Recovery',
+    name: "Recovery",
     start_time: recoveryStart,
     end_time: recoveryEnd,
     duration: recoveryDurationMinutes,
     is_required: true,
     can_skip_when_late: false,
-    status: 'pending',
-    role: 'recovery',
+    status: "pending",
+    role: "recovery",
   };
 
   return {
@@ -121,8 +141,10 @@ function reconstructChainsFromTimeBlocks(plan: DailyPlan): ExecutionChain[] {
     const roleType = metadata.role?.type;
     const chainId = metadata.chain_id || metadata.role?.chain_id;
 
-    return typeof chainId === 'string' &&
-      (roleType === 'chain-step' || roleType === 'exit-gate');
+    return (
+      typeof chainId === "string" &&
+      (roleType === "chain-step" || roleType === "exit-gate")
+    );
   });
 
   if (chainBlocks.length === 0) {
@@ -151,51 +173,76 @@ function reconstructChainsFromTimeBlocks(plan: DailyPlan): ExecutionChain[] {
       return a.startTime.getTime() - b.startTime.getTime();
     });
 
-    const firstMetadata = (sortedBlocks[0].metadata || {}) as Record<string, any>;
-    const anchorId = String(firstMetadata.anchor_id || sortedBlocks[0].activityId || `anchor-${chainId}`);
+    const firstMetadata = (sortedBlocks[0].metadata || {}) as Record<
+      string,
+      any
+    >;
+    const anchorId = String(
+      firstMetadata.anchor_id ||
+        sortedBlocks[0].activityId ||
+        `anchor-${chainId}`,
+    );
 
-    const anchorTimeBlock = plan.timeBlocks.find((block) => (
-      block.activityType === 'commitment' &&
-      (block.activityId === anchorId || ((block.metadata || {}) as Record<string, any>).anchor_id === anchorId)
-    ));
+    const anchorTimeBlock = plan.timeBlocks.find(
+      (block) =>
+        block.activityType === "commitment" &&
+        (block.activityId === anchorId ||
+          ((block.metadata || {}) as Record<string, any>).anchor_id ===
+            anchorId),
+    );
 
-    const fallbackAnchorStart = new Date(sortedBlocks[sortedBlocks.length - 1].endTime.getTime() + 75 * 60000);
-    const fallbackAnchorEnd = new Date(fallbackAnchorStart.getTime() + 60 * 60000);
+    const fallbackAnchorStart = new Date(
+      sortedBlocks[sortedBlocks.length - 1].endTime.getTime() + 75 * 60000,
+    );
+    const fallbackAnchorEnd = new Date(
+      fallbackAnchorStart.getTime() + 60 * 60000,
+    );
 
-    const metadataAnchorStart = typeof firstMetadata.anchor_start === 'string'
-      ? new Date(firstMetadata.anchor_start)
-      : null;
-    const metadataAnchorEnd = typeof firstMetadata.anchor_end === 'string'
-      ? new Date(firstMetadata.anchor_end)
-      : null;
-    const metadataAnchorTitle = typeof firstMetadata.anchor_title === 'string'
-      ? firstMetadata.anchor_title
-      : null;
-    const metadataAnchorLocation = typeof firstMetadata.anchor_location === 'string'
-      ? firstMetadata.anchor_location
-      : undefined;
-    const metadataAnchorType = typeof firstMetadata.anchor_type === 'string'
-      ? firstMetadata.anchor_type
-      : 'other';
+    const metadataAnchorStart =
+      typeof firstMetadata.anchor_start === "string"
+        ? new Date(firstMetadata.anchor_start)
+        : null;
+    const metadataAnchorEnd =
+      typeof firstMetadata.anchor_end === "string"
+        ? new Date(firstMetadata.anchor_end)
+        : null;
+    const metadataAnchorTitle =
+      typeof firstMetadata.anchor_title === "string"
+        ? firstMetadata.anchor_title
+        : null;
+    const metadataAnchorLocation =
+      typeof firstMetadata.anchor_location === "string"
+        ? firstMetadata.anchor_location
+        : undefined;
+    const metadataAnchorType =
+      typeof firstMetadata.anchor_type === "string"
+        ? firstMetadata.anchor_type
+        : "other";
 
     const anchor: Anchor = {
       id: anchorId,
-      title: metadataAnchorTitle || anchorTimeBlock?.activityName || 'Planned commitment',
-      start: (metadataAnchorStart && !Number.isNaN(metadataAnchorStart.getTime()))
-        ? metadataAnchorStart
-        : (anchorTimeBlock?.startTime || fallbackAnchorStart),
-      end: (metadataAnchorEnd && !Number.isNaN(metadataAnchorEnd.getTime()))
-        ? metadataAnchorEnd
-        : (anchorTimeBlock?.endTime || fallbackAnchorEnd),
+      title:
+        metadataAnchorTitle ||
+        anchorTimeBlock?.activityName ||
+        "Planned commitment",
+      start:
+        metadataAnchorStart && !Number.isNaN(metadataAnchorStart.getTime())
+          ? metadataAnchorStart
+          : anchorTimeBlock?.startTime || fallbackAnchorStart,
+      end:
+        metadataAnchorEnd && !Number.isNaN(metadataAnchorEnd.getTime())
+          ? metadataAnchorEnd
+          : anchorTimeBlock?.endTime || fallbackAnchorEnd,
       location: metadataAnchorLocation,
-      type: metadataAnchorType as Anchor['type'],
+      type: metadataAnchorType as Anchor["type"],
       must_attend: true,
       calendar_event_id: anchorId,
     };
 
     const steps: ChainStepInstance[] = sortedBlocks.map((block) => {
       const metadata = (block.metadata || {}) as Record<string, any>;
-      const roleType = metadata.role?.type === 'exit-gate' ? 'exit-gate' : 'chain-step';
+      const roleType =
+        metadata.role?.type === "exit-gate" ? "exit-gate" : "chain-step";
 
       return {
         step_id: String(metadata.step_id || block.id),
@@ -203,10 +250,20 @@ function reconstructChainsFromTimeBlocks(plan: DailyPlan): ExecutionChain[] {
         name: block.activityName,
         start_time: block.startTime,
         end_time: block.endTime,
-        duration: Math.max(1, Math.round((block.endTime.getTime() - block.startTime.getTime()) / 60000)),
+        duration: Math.max(
+          1,
+          Math.round(
+            (block.endTime.getTime() - block.startTime.getTime()) / 60000,
+          ),
+        ),
         is_required: Boolean(metadata.role?.required ?? true),
         can_skip_when_late: false,
-        status: block.status === 'completed' ? 'completed' : block.status === 'skipped' ? 'skipped' : 'pending',
+        status:
+          block.status === "completed"
+            ? "completed"
+            : block.status === "skipped"
+              ? "skipped"
+              : "pending",
         role: roleType,
         skip_reason: block.skipReason,
         metadata: {
@@ -217,11 +274,11 @@ function reconstructChainsFromTimeBlocks(plan: DailyPlan): ExecutionChain[] {
     });
 
     const chainCompletionDeadline = new Date(
-      Math.max(...steps.map((step) => step.end_time.getTime()))
+      Math.max(...steps.map((step) => step.end_time.getTime())),
     );
 
     const chainStart = new Date(
-      Math.min(...steps.map((step) => step.start_time.getTime()))
+      Math.min(...steps.map((step) => step.start_time.getTime())),
     );
 
     chains.push({
@@ -235,7 +292,7 @@ function reconstructChainsFromTimeBlocks(plan: DailyPlan): ExecutionChain[] {
         anchorId,
         anchor,
         chainCompletionDeadline,
-        chainStart
+        chainStart,
       ),
       status: deriveChainStatus(steps),
       metadata: {
@@ -244,7 +301,9 @@ function reconstructChainsFromTimeBlocks(plan: DailyPlan): ExecutionChain[] {
     });
   }
 
-  return chains.sort((a, b) => a.anchor.start.getTime() - b.anchor.start.getTime());
+  return chains.sort(
+    (a, b) => a.anchor.start.getTime() - b.anchor.start.getTime(),
+  );
 }
 
 function hydratePlanWithChains(plan: DailyPlan): DailyPlan {
@@ -265,20 +324,23 @@ function hydratePlanWithChains(plan: DailyPlan): DailyPlan {
 
 /**
  * GET /api/daily-plan/today
- * 
+ *
  * Fetch today's plan for the authenticated user
- * 
+ *
  * Requirements: 8.2, 9.2
  */
 export const GET: APIRoute = async ({ cookies }) => {
   try {
     const supabase = createServerClient(cookies);
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -293,7 +355,7 @@ export const GET: APIRoute = async ({ cookies }) => {
     if (!plan) {
       return new Response(JSON.stringify({ plan: null }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" },
       });
     }
 
@@ -301,18 +363,20 @@ export const GET: APIRoute = async ({ cookies }) => {
 
     return new Response(JSON.stringify({ plan: hydratedPlan }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
-
   } catch (error) {
-    console.error('Error fetching today\'s plan:', error);
-    
-    return new Response(JSON.stringify({ 
-      error: 'Failed to fetch plan',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error("Error fetching today's plan:", error);
+
+    return new Response(
+      JSON.stringify({
+        error: "Failed to fetch plan",
+        details: error instanceof Error ? error.message : "Unknown error",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 };

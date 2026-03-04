@@ -1,7 +1,7 @@
 // src/lib/pwa/service-worker.ts - Service Worker registration and management
 export interface PWAInstallPrompt {
   prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
 export interface PWACapabilities {
@@ -20,23 +20,23 @@ class PWAService {
    * Initialize PWA functionality
    */
   async init(): Promise<void> {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return; // Skip on server-side
     }
 
     try {
       // Register service worker
       await this.registerServiceWorker();
-      
+
       // Set up install prompt handling
       this.setupInstallPrompt();
-      
+
       // Set up update handling
       this.setupUpdateHandling();
-      
-      console.log('PWA: Initialized successfully');
+
+      console.log("PWA: Initialized successfully");
     } catch (error) {
-      console.error('PWA: Initialization failed', error);
+      console.error("PWA: Initialization failed", error);
     }
   }
 
@@ -44,32 +44,34 @@ class PWAService {
    * Register the service worker
    */
   private async registerServiceWorker(): Promise<void> {
-    if (!('serviceWorker' in navigator)) {
-      throw new Error('Service Worker not supported');
+    if (!("serviceWorker" in navigator)) {
+      throw new Error("Service Worker not supported");
     }
 
     try {
-      this.registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+      this.registration = await navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
       });
 
-      console.log('PWA: Service Worker registered', this.registration.scope);
+      console.log("PWA: Service Worker registered", this.registration.scope);
 
       // Handle service worker updates
-      this.registration.addEventListener('updatefound', () => {
+      this.registration.addEventListener("updatefound", () => {
         const newWorker = this.registration?.installing;
         if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          newWorker.addEventListener("statechange", () => {
+            if (
+              newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
               // New service worker is available
               this.notifyUpdate();
             }
           });
         }
       });
-
     } catch (error) {
-      console.error('PWA: Service Worker registration failed', error);
+      console.error("PWA: Service Worker registration failed", error);
       throw error;
     }
   }
@@ -78,22 +80,22 @@ class PWAService {
    * Set up install prompt handling
    */
   private setupInstallPrompt(): void {
-    window.addEventListener('beforeinstallprompt', (event) => {
+    window.addEventListener("beforeinstallprompt", (event) => {
       event.preventDefault();
       this.installPrompt = event as any;
-      console.log('PWA: Install prompt available');
-      
+      console.log("PWA: Install prompt available");
+
       // Dispatch custom event for UI components
-      window.dispatchEvent(new CustomEvent('pwa-installable'));
+      window.dispatchEvent(new CustomEvent("pwa-installable"));
     });
 
     // Handle successful installation
-    window.addEventListener('appinstalled', () => {
-      console.log('PWA: App installed successfully');
+    window.addEventListener("appinstalled", () => {
+      console.log("PWA: App installed successfully");
       this.installPrompt = null;
-      
+
       // Dispatch custom event
-      window.dispatchEvent(new CustomEvent('pwa-installed'));
+      window.dispatchEvent(new CustomEvent("pwa-installed"));
     });
   }
 
@@ -109,8 +111,8 @@ class PWAService {
     }, 60000); // Check every minute
 
     // Handle messages from service worker
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'SW_UPDATE_AVAILABLE') {
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "SW_UPDATE_AVAILABLE") {
         this.notifyUpdate();
       }
     });
@@ -121,24 +123,24 @@ class PWAService {
    */
   async promptInstall(): Promise<boolean> {
     if (!this.installPrompt) {
-      console.warn('PWA: Install prompt not available');
+      console.warn("PWA: Install prompt not available");
       return false;
     }
 
     try {
       await this.installPrompt.prompt();
       const result = await this.installPrompt.userChoice;
-      
-      console.log('PWA: Install prompt result', result.outcome);
-      
-      if (result.outcome === 'accepted') {
+
+      console.log("PWA: Install prompt result", result.outcome);
+
+      if (result.outcome === "accepted") {
         this.installPrompt = null;
         return true;
       }
-      
+
       return false;
     } catch (error) {
-      console.error('PWA: Install prompt failed', error);
+      console.error("PWA: Install prompt failed", error);
       return false;
     }
   }
@@ -148,15 +150,15 @@ class PWAService {
    */
   async updateServiceWorker(): Promise<void> {
     if (!this.registration) {
-      throw new Error('No service worker registration found');
+      throw new Error("No service worker registration found");
     }
 
     const waitingWorker = this.registration.waiting;
     if (waitingWorker) {
-      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-      
+      waitingWorker.postMessage({ type: "SKIP_WAITING" });
+
       // Reload the page after the new service worker takes control
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
         window.location.reload();
       });
     }
@@ -166,15 +168,16 @@ class PWAService {
    * Get PWA capabilities
    */
   getCapabilities(): PWACapabilities {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                        (window.navigator as any).standalone === true;
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
 
     return {
-      isSupported: 'serviceWorker' in navigator && 'PushManager' in window,
+      isSupported: "serviceWorker" in navigator && "PushManager" in window,
       isInstalled: isStandalone,
       isInstallable: this.installPrompt !== null,
       isStandalone,
-      hasServiceWorker: this.registration !== null
+      hasServiceWorker: this.registration !== null,
     };
   }
 
@@ -182,30 +185,32 @@ class PWAService {
    * Check if app is running in standalone mode
    */
   isStandalone(): boolean {
-    return window.matchMedia('(display-mode: standalone)').matches ||
-           (window.navigator as any).standalone === true;
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true
+    );
   }
 
   /**
    * Notify about available updates
    */
   private notifyUpdate(): void {
-    console.log('PWA: Update available');
-    
+    console.log("PWA: Update available");
+
     // Dispatch custom event for UI components
-    window.dispatchEvent(new CustomEvent('pwa-update-available'));
+    window.dispatchEvent(new CustomEvent("pwa-update-available"));
   }
 
   /**
    * Clear all caches (for debugging)
    */
   async clearCaches(): Promise<void> {
-    if ('caches' in window) {
+    if ("caches" in window) {
       const cacheNames = await caches.keys();
       await Promise.all(
-        cacheNames.map(cacheName => caches.delete(cacheName))
+        cacheNames.map((cacheName) => caches.delete(cacheName)),
       );
-      console.log('PWA: All caches cleared');
+      console.log("PWA: All caches cleared");
     }
   }
 
@@ -213,7 +218,7 @@ class PWAService {
    * Get cache usage information
    */
   async getCacheInfo(): Promise<{ name: string; size: number }[]> {
-    if (!('caches' in window)) {
+    if (!("caches" in window)) {
       return [];
     }
 
@@ -225,7 +230,7 @@ class PWAService {
       const keys = await cache.keys();
       cacheInfo.push({
         name: cacheName,
-        size: keys.length
+        size: keys.length,
       });
     }
 
@@ -237,6 +242,6 @@ class PWAService {
 export const pwaService = new PWAService();
 
 // Auto-initialize when imported
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   pwaService.init().catch(console.error);
 }

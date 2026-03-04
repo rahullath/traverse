@@ -21,20 +21,33 @@ export interface RouteClassification {
 
 export class RouteClassifier {
   private static readonly STATIC_ASSET_PATTERNS: StaticAssetPattern[] = [
-    { pattern: /^\/icons\/.*/, description: 'PWA Icons' },
-    { pattern: /^\/manifest\.json$/, description: 'PWA Manifest' },
-    { pattern: /^\/favicon\..*/, description: 'Favicon' },
-    { pattern: /^\/sw\.js$/, description: 'Service Worker' },
-    { pattern: /^\/offline\.html$/, description: 'Offline Page' },
-    { pattern: /^\/.*\.(png|jpg|jpeg|svg|ico|webp|gif|bmp)$/i, description: 'Images' },
-    { pattern: /^\/.*\.(css|js|woff|woff2|ttf|eot)$/i, description: 'Static Assets' },
-    { pattern: /^\/robots\.txt$/, description: 'Robots' },
-    { pattern: /^\/sitemap\.xml$/, description: 'Sitemap' },
+    { pattern: /^\/icons\/.*/, description: "PWA Icons" },
+    { pattern: /^\/manifest\.json$/, description: "PWA Manifest" },
+    { pattern: /^\/favicon\..*/, description: "Favicon" },
+    { pattern: /^\/sw\.js$/, description: "Service Worker" },
+    { pattern: /^\/offline\.html$/, description: "Offline Page" },
+    {
+      pattern: /^\/.*\.(png|jpg|jpeg|svg|ico|webp|gif|bmp)$/i,
+      description: "Images",
+    },
+    {
+      pattern: /^\/.*\.(css|js|woff|woff2|ttf|eot)$/i,
+      description: "Static Assets",
+    },
+    { pattern: /^\/robots\.txt$/, description: "Robots" },
+    { pattern: /^\/sitemap\.xml$/, description: "Sitemap" },
   ];
 
   private static readonly PUBLIC_ROUTES: string[] = [
-    '/', '/landing', '/login', '/auth/callback', '/auth/exchange',
-    '/onboarding', '/reset-password', '/auth-status', '/about'
+    "/",
+    "/landing",
+    "/login",
+    "/auth/callback",
+    "/auth/exchange",
+    "/onboarding",
+    "/reset-password",
+    "/auth-status",
+    "/about",
   ];
 
   /**
@@ -48,7 +61,7 @@ export class RouteClassifier {
         isPublic: true,
         isStatic: true,
         requiresAuth: false,
-        matchedPattern: staticMatch.description
+        matchedPattern: staticMatch.description,
       };
     }
 
@@ -59,7 +72,7 @@ export class RouteClassifier {
       isPublic,
       isStatic: false,
       requiresAuth: !isPublic,
-      matchedPattern: isPublic ? 'Public Route' : 'Protected Route'
+      matchedPattern: isPublic ? "Public Route" : "Protected Route",
     };
   }
 
@@ -67,14 +80,20 @@ export class RouteClassifier {
    * Checks if a pathname matches any static asset pattern
    */
   static isStaticAsset(pathname: string): boolean {
-    return this.STATIC_ASSET_PATTERNS.some(({ pattern }) => pattern.test(pathname));
+    return this.STATIC_ASSET_PATTERNS.some(({ pattern }) =>
+      pattern.test(pathname),
+    );
   }
 
   /**
    * Gets the matching static asset pattern for a pathname
    */
   static getStaticAssetMatch(pathname: string): StaticAssetPattern | null {
-    return this.STATIC_ASSET_PATTERNS.find(({ pattern }) => pattern.test(pathname)) || null;
+    return (
+      this.STATIC_ASSET_PATTERNS.find(({ pattern }) =>
+        pattern.test(pathname),
+      ) || null
+    );
   }
 
   /**
@@ -106,4 +125,3 @@ export class RouteClassifier {
     return [...this.PUBLIC_ROUTES];
   }
 }
-

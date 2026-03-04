@@ -1,10 +1,10 @@
 // src/components/ui/SuccessAnimations.tsx - Success animations and user feedback
-import React, { useEffect, useState } from 'react';
-import { analytics } from '../../lib/analytics/tracking';
+import React, { useEffect, useState } from "react";
+import { analytics } from "../../lib/analytics/tracking";
 
 interface SuccessAnimationProps {
-  type?: 'checkmark' | 'confetti' | 'pulse' | 'slide' | 'bounce';
-  size?: 'sm' | 'md' | 'lg';
+  type?: "checkmark" | "confetti" | "pulse" | "slide" | "bounce";
+  size?: "sm" | "md" | "lg";
   message?: string;
   duration?: number;
   onComplete?: () => void;
@@ -12,26 +12,26 @@ interface SuccessAnimationProps {
 }
 
 const sizeClasses = {
-  sm: 'w-8 h-8',
-  md: 'w-12 h-12',
-  lg: 'w-16 h-16'
+  sm: "w-8 h-8",
+  md: "w-12 h-12",
+  lg: "w-16 h-16",
 };
 
-export function SuccessAnimation({ 
-  type = 'checkmark',
-  size = 'md',
+export function SuccessAnimation({
+  type = "checkmark",
+  size = "md",
   message,
   duration = 2000,
   onComplete,
-  className = ''
+  className = "",
 }: SuccessAnimationProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     // Track success animation display
-    analytics.trackEngagement('success_animation', type, {
+    analytics.trackEngagement("success_animation", type, {
       message,
-      duration
+      duration,
     });
 
     const timer = setTimeout(() => {
@@ -46,22 +46,22 @@ export function SuccessAnimation({
     <div className={`relative ${sizeClasses[size]}`}>
       <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></div>
       <div className="relative bg-green-500 rounded-full flex items-center justify-center w-full h-full">
-        <svg 
-          className="w-1/2 h-1/2 text-white animate-bounce" 
-          fill="none" 
-          stroke="currentColor" 
+        <svg
+          className="w-1/2 h-1/2 text-white animate-bounce"
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={3} 
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={3}
             d="M5 13l4 4L19 7"
             className="animate-[draw_0.5s_ease-in-out_forwards]"
             style={{
-              strokeDasharray: '20',
-              strokeDashoffset: '20',
-              animation: 'draw 0.5s ease-in-out 0.2s forwards'
+              strokeDasharray: "20",
+              strokeDashoffset: "20",
+              animation: "draw 0.5s ease-in-out 0.2s forwards",
             }}
           />
         </svg>
@@ -83,7 +83,7 @@ export function SuccessAnimation({
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
             animationDelay: `${Math.random() * 0.5}s`,
-            animationDuration: `${0.5 + Math.random() * 0.5}s`
+            animationDuration: `${0.5 + Math.random() * 0.5}s`,
           }}
         />
       ))}
@@ -100,7 +100,9 @@ export function SuccessAnimation({
   );
 
   const renderSlide = () => (
-    <div className={`${sizeClasses[size]} transform transition-all duration-500 ease-out animate-[slideIn_0.5s_ease-out]`}>
+    <div
+      className={`${sizeClasses[size]} transform transition-all duration-500 ease-out animate-[slideIn_0.5s_ease-out]`}
+    >
       <div className="bg-gradient-to-r from-green-400 to-blue-500 rounded-full w-full h-full flex items-center justify-center">
         <span className="text-white font-bold text-xl">✓</span>
       </div>
@@ -117,18 +119,25 @@ export function SuccessAnimation({
 
   const renderAnimation = () => {
     switch (type) {
-      case 'confetti': return renderConfetti();
-      case 'pulse': return renderPulse();
-      case 'slide': return renderSlide();
-      case 'bounce': return renderBounce();
-      default: return renderCheckmark();
+      case "confetti":
+        return renderConfetti();
+      case "pulse":
+        return renderPulse();
+      case "slide":
+        return renderSlide();
+      case "bounce":
+        return renderBounce();
+      default:
+        return renderCheckmark();
     }
   };
 
   if (!isVisible) return null;
 
   return (
-    <div className={`flex flex-col items-center justify-center space-y-3 ${className}`}>
+    <div
+      className={`flex flex-col items-center justify-center space-y-3 ${className}`}
+    >
       {renderAnimation()}
       {message && (
         <p className="text-sm text-green-400 font-medium animate-fade-in text-center">
@@ -141,19 +150,24 @@ export function SuccessAnimation({
 
 // Toast notification component
 interface ToastProps {
-  type?: 'success' | 'error' | 'warning' | 'info';
+  type?: "success" | "error" | "warning" | "info";
   message: string;
   duration?: number;
   onClose?: () => void;
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center';
+  position?:
+    | "top-right"
+    | "top-left"
+    | "bottom-right"
+    | "bottom-left"
+    | "top-center";
 }
 
-export function Toast({ 
-  type = 'success',
+export function Toast({
+  type = "success",
   message,
   duration = 4000,
   onClose,
-  position = 'top-right'
+  position = "top-right",
 }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
@@ -171,36 +185,40 @@ export function Toast({
   }, [duration, onClose]);
 
   const positionClasses = {
-    'top-right': 'top-4 right-4',
-    'top-left': 'top-4 left-4',
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-    'top-center': 'top-4 left-1/2 transform -translate-x-1/2'
+    "top-right": "top-4 right-4",
+    "top-left": "top-4 left-4",
+    "bottom-right": "bottom-4 right-4",
+    "bottom-left": "bottom-4 left-4",
+    "top-center": "top-4 left-1/2 transform -translate-x-1/2",
   };
 
   const typeStyles = {
-    success: 'bg-green-500/10 border-green-500/20 text-green-400',
-    error: 'bg-red-500/10 border-red-500/20 text-red-400',
-    warning: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400',
-    info: 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+    success: "bg-green-500/10 border-green-500/20 text-green-400",
+    error: "bg-red-500/10 border-red-500/20 text-red-400",
+    warning: "bg-yellow-500/10 border-yellow-500/20 text-yellow-400",
+    info: "bg-blue-500/10 border-blue-500/20 text-blue-400",
   };
 
   const icons = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ'
+    success: "✓",
+    error: "✕",
+    warning: "⚠",
+    info: "ℹ",
   };
 
   if (!isVisible) return null;
 
   return (
-    <div 
+    <div
       className={`fixed z-50 ${positionClasses[position]} transition-all duration-300 ${
-        isExiting ? 'opacity-0 transform translate-y-2' : 'opacity-100 transform translate-y-0'
+        isExiting
+          ? "opacity-0 transform translate-y-2"
+          : "opacity-100 transform translate-y-0"
       }`}
     >
-      <div className={`${typeStyles[type]} border rounded-lg p-4 backdrop-blur-sm shadow-lg max-w-sm`}>
+      <div
+        className={`${typeStyles[type]} border rounded-lg p-4 backdrop-blur-sm shadow-lg max-w-sm`}
+      >
         <div className="flex items-center space-x-3">
           <span className="text-lg">{icons[type]}</span>
           <p className="text-sm font-medium">{message}</p>
@@ -230,43 +248,50 @@ interface ProgressIndicatorProps {
   className?: string;
 }
 
-export function ProgressIndicator({ 
-  steps, 
-  currentStep, 
+export function ProgressIndicator({
+  steps,
+  currentStep,
   completedSteps = [],
-  className = '' 
+  className = "",
 }: ProgressIndicatorProps) {
   return (
     <div className={`flex items-center justify-between ${className}`}>
       {steps.map((step, index) => {
-        const isCompleted = completedSteps.includes(index) || index < currentStep;
+        const isCompleted =
+          completedSteps.includes(index) || index < currentStep;
         const isCurrent = index === currentStep;
         const isUpcoming = index > currentStep;
 
         return (
           <React.Fragment key={index}>
             <div className="flex flex-col items-center">
-              <div 
+              <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
-                  isCompleted 
-                    ? 'bg-green-500 text-white' 
-                    : isCurrent 
-                    ? 'bg-cyan-500 text-white animate-pulse' 
-                    : 'bg-gray-600 text-gray-400'
+                  isCompleted
+                    ? "bg-green-500 text-white"
+                    : isCurrent
+                      ? "bg-cyan-500 text-white animate-pulse"
+                      : "bg-gray-600 text-gray-400"
                 }`}
               >
-                {isCompleted ? '✓' : index + 1}
+                {isCompleted ? "✓" : index + 1}
               </div>
-              <span className={`mt-2 text-xs text-center transition-colors duration-300 ${
-                isCurrent ? 'text-cyan-400' : isCompleted ? 'text-green-400' : 'text-gray-500'
-              }`}>
+              <span
+                className={`mt-2 text-xs text-center transition-colors duration-300 ${
+                  isCurrent
+                    ? "text-cyan-400"
+                    : isCompleted
+                      ? "text-green-400"
+                      : "text-gray-500"
+                }`}
+              >
                 {step}
               </span>
             </div>
             {index < steps.length - 1 && (
-              <div 
+              <div
                 className={`flex-1 h-0.5 mx-2 transition-colors duration-300 ${
-                  index < currentStep ? 'bg-green-500' : 'bg-gray-600'
+                  index < currentStep ? "bg-green-500" : "bg-gray-600"
                 }`}
               />
             )}
@@ -280,16 +305,16 @@ export function ProgressIndicator({
 // Floating action feedback
 interface FloatingFeedbackProps {
   message: string;
-  type?: 'success' | 'error' | 'info';
+  type?: "success" | "error" | "info";
   position: { x: number; y: number };
   onComplete?: () => void;
 }
 
-export function FloatingFeedback({ 
-  message, 
-  type = 'success', 
-  position, 
-  onComplete 
+export function FloatingFeedback({
+  message,
+  type = "success",
+  position,
+  onComplete,
 }: FloatingFeedbackProps) {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -303,19 +328,21 @@ export function FloatingFeedback({
   }, [onComplete]);
 
   const typeColors = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    info: 'text-blue-400'
+    success: "text-green-400",
+    error: "text-red-400",
+    info: "text-blue-400",
   };
 
   if (!isVisible) return null;
 
   return (
-    <div 
+    <div
       className="fixed z-50 pointer-events-none animate-[floatUp_2s_ease-out_forwards]"
       style={{ left: position.x, top: position.y }}
     >
-      <div className={`${typeColors[type]} text-sm font-medium bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-600 shadow-lg`}>
+      <div
+        className={`${typeColors[type]} text-sm font-medium bg-slate-800/90 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-600 shadow-lg`}
+      >
         {message}
       </div>
     </div>
@@ -324,50 +351,57 @@ export function FloatingFeedback({
 
 // Enhanced micro-interaction feedback for buttons
 export function useFeedback() {
-  const [feedbacks, setFeedbacks] = useState<Array<{
-    id: string;
-    message: string;
-    type: 'success' | 'error' | 'info';
-    position: { x: number; y: number };
-  }>>([]);
+  const [feedbacks, setFeedbacks] = useState<
+    Array<{
+      id: string;
+      message: string;
+      type: "success" | "error" | "info";
+      position: { x: number; y: number };
+    }>
+  >([]);
 
   const showFeedback = (
-    message: string, 
-    event: React.MouseEvent, 
-    type: 'success' | 'error' | 'info' = 'success'
+    message: string,
+    event: React.MouseEvent,
+    type: "success" | "error" | "info" = "success",
   ) => {
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const id = Math.random().toString(36).substr(2, 9);
-    
+
     // Add haptic feedback on supported devices
-    if ('vibrate' in navigator) {
-      navigator.vibrate(type === 'success' ? [10] : type === 'error' ? [50, 50, 50] : [20]);
+    if ("vibrate" in navigator) {
+      navigator.vibrate(
+        type === "success" ? [10] : type === "error" ? [50, 50, 50] : [20],
+      );
     }
-    
+
     // Track feedback interaction
-    analytics.trackEngagement('micro_feedback', type, {
+    analytics.trackEngagement("micro_feedback", type, {
       message,
-      elementType: (event.target as HTMLElement).tagName.toLowerCase()
+      elementType: (event.target as HTMLElement).tagName.toLowerCase(),
     });
-    
-    setFeedbacks(prev => [...prev, {
-      id,
-      message,
-      type,
-      position: {
-        x: rect.left + rect.width / 2,
-        y: rect.top
-      }
-    }]);
+
+    setFeedbacks((prev) => [
+      ...prev,
+      {
+        id,
+        message,
+        type,
+        position: {
+          x: rect.left + rect.width / 2,
+          y: rect.top,
+        },
+      },
+    ]);
   };
 
   const removeFeedback = (id: string) => {
-    setFeedbacks(prev => prev.filter(f => f.id !== id));
+    setFeedbacks((prev) => prev.filter((f) => f.id !== id));
   };
 
   const FeedbackRenderer = () => (
     <>
-      {feedbacks.map(feedback => (
+      {feedbacks.map((feedback) => (
         <FloatingFeedback
           key={feedback.id}
           message={feedback.message}
@@ -386,19 +420,19 @@ export function useFeedback() {
 interface FeedbackButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   feedbackMessage?: string;
-  feedbackType?: 'success' | 'error' | 'info';
-  variant?: 'primary' | 'secondary' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  feedbackType?: "success" | "error" | "info";
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md" | "lg";
 }
 
 export function FeedbackButton({
   children,
   feedbackMessage,
-  feedbackType = 'success',
-  variant = 'primary',
-  size = 'md',
+  feedbackType = "success",
+  variant = "primary",
+  size = "md",
   onClick,
-  className = '',
+  className = "",
   disabled,
   ...props
 }: FeedbackButtonProps) {
@@ -407,27 +441,27 @@ export function FeedbackButton({
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
-    
+
     setIsPressed(true);
     setTimeout(() => setIsPressed(false), 150);
-    
+
     if (feedbackMessage) {
       showFeedback(feedbackMessage, event, feedbackType);
     }
-    
+
     onClick?.(event);
   };
 
   const variantClasses = {
-    primary: 'bg-cyan-600 hover:bg-cyan-700 text-white border-cyan-600',
-    secondary: 'bg-slate-700 hover:bg-slate-600 text-white border-slate-600',
-    ghost: 'bg-transparent hover:bg-slate-800 text-gray-300 border-slate-600'
+    primary: "bg-cyan-600 hover:bg-cyan-700 text-white border-cyan-600",
+    secondary: "bg-slate-700 hover:bg-slate-600 text-white border-slate-600",
+    ghost: "bg-transparent hover:bg-slate-800 text-gray-300 border-slate-600",
   };
 
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg'
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-base",
+    lg: "px-6 py-3 text-lg",
   };
 
   return (
@@ -439,13 +473,15 @@ export function FeedbackButton({
         relative border rounded-lg font-medium transition-all duration-200 ease-out
         ${variantClasses[variant]}
         ${sizeClasses[size]}
-        ${isPressed ? 'transform scale-95' : 'transform scale-100'}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg active:scale-95'}
+        ${isPressed ? "transform scale-95" : "transform scale-100"}
+        ${disabled ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg active:scale-95"}
         focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900
         ${className}
       `}
     >
-      <span className={`transition-all duration-200 ${isPressed ? 'scale-95' : 'scale-100'}`}>
+      <span
+        className={`transition-all duration-200 ${isPressed ? "scale-95" : "scale-100"}`}
+      >
         {children}
       </span>
     </button>
@@ -512,8 +548,8 @@ const customAnimations = `
 `;
 
 // Inject animations into document head
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
   style.textContent = customAnimations;
   document.head.appendChild(style);
 }

@@ -1,29 +1,29 @@
 // Wake Ramp Generator - Mandatory startup sequence after wake
 
-import type { WakeRamp, WakeRampComponents, EnergyState } from './types';
+import type { WakeRamp, WakeRampComponents, EnergyState } from "./types";
 
 // Re-export types for external use
 export type { WakeRamp, WakeRampComponents };
 
 /**
  * Wake Ramp Generator
- * 
+ *
  * Generates wake-up ramp blocks based on energy level and timing.
  * Wake ramps are mandatory startup sequences that account for the time
  * needed to become functional after waking up.
- * 
+ *
  * Duration Logic:
  * - Low energy: 120 minutes (toilet 20, hygiene 10, shower 25, dress 20, buffer 45)
  * - Medium energy: 90 minutes (toilet 20, hygiene 10, shower 25, dress 20, buffer 15)
  * - High energy: 75 minutes (toilet 20, hygiene 10, shower 25, dress 20, buffer 0)
- * 
+ *
  * Skip Logic:
  * - If planStart > wakeTime + 2 hours → skip (already awake and functional)
  */
 export class WakeRampGenerator {
   /**
    * Generate a wake ramp block
-   * 
+   *
    * @param planStart - When the plan starts
    * @param wakeTime - When the user woke up
    * @param energy - User's energy level (low, medium, high)
@@ -32,7 +32,7 @@ export class WakeRampGenerator {
   generateWakeRamp(
     planStart: Date,
     wakeTime: Date,
-    energy: EnergyState
+    energy: EnergyState,
   ): WakeRamp {
     // Check if we should skip the wake ramp
     if (this.shouldSkipWakeRamp(planStart, wakeTime)) {
@@ -48,7 +48,7 @@ export class WakeRampGenerator {
           buffer: 0,
         },
         skipped: true,
-        skip_reason: 'Already awake',
+        skip_reason: "Already awake",
       };
     }
 
@@ -71,9 +71,9 @@ export class WakeRampGenerator {
 
   /**
    * Determine if wake ramp should be skipped
-   * 
+   *
    * Skip if planStart > wakeTime + 2 hours (user is already awake and functional)
-   * 
+   *
    * @param planStart - When the plan starts
    * @param wakeTime - When the user woke up
    * @returns true if wake ramp should be skipped
@@ -85,7 +85,7 @@ export class WakeRampGenerator {
 
   /**
    * Get component breakdown for energy level
-   * 
+   *
    * @param energy - User's energy level
    * @returns Component breakdown with durations in minutes
    */
@@ -101,13 +101,13 @@ export class WakeRampGenerator {
     // Buffer varies by energy level
     let buffer: number;
     switch (energy) {
-      case 'low':
+      case "low":
         buffer = 45;
         break;
-      case 'medium':
+      case "medium":
         buffer = 15;
         break;
-      case 'high':
+      case "high":
         buffer = 0;
         break;
       default:
@@ -122,7 +122,7 @@ export class WakeRampGenerator {
 
   /**
    * Calculate total duration from components
-   * 
+   *
    * @param components - Component breakdown
    * @returns Total duration in minutes
    */

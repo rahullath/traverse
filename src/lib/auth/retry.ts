@@ -1,6 +1,10 @@
 // src/lib/auth/retry.ts - Retry mechanism for authentication operations
-import { mapSupabaseError, isRetryableError, createNetworkError } from './errors';
-import type { AuthError, NetworkError } from './errors';
+import {
+  mapSupabaseError,
+  isRetryableError,
+  createNetworkError,
+} from "./errors";
+import type { AuthError, NetworkError } from "./errors";
 
 export interface RetryConfig {
   maxRetries: number;
@@ -22,19 +26,20 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
   baseDelay: 1000, // 1 second
   maxDelay: 10000, // 10 seconds
   backoffMultiplier: 2,
-  retryCondition: isRetryableError
+  retryCondition: isRetryableError,
 };
 
 /**
  * Calculate delay for exponential backoff with jitter
  */
 function calculateDelay(attempt: number, config: RetryConfig): number {
-  const exponentialDelay = config.baseDelay * Math.pow(config.backoffMultiplier, attempt - 1);
+  const exponentialDelay =
+    config.baseDelay * Math.pow(config.backoffMultiplier, attempt - 1);
   const cappedDelay = Math.min(exponentialDelay, config.maxDelay);
-  
+
   // Add jitter to prevent thundering herd
   const jitter = cappedDelay * 0.1 * Math.random();
-  
+
   return cappedDelay + jitter;
 }
 
@@ -42,7 +47,7 @@ function calculateDelay(attempt: number, config: RetryConfig): number {
  * Sleep for specified milliseconds
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -51,42 +56,45 @@ function sleep(ms: number): Promise<void> {
 export async function withRetry<T>(
   operation: () => Promise<T>,
   config: Partial<RetryConfig> = {},
-  onRetry?: (state: RetryState) => void
+  onRetry?: (state: RetryState) => void,
 ): Promise<T> {
   const finalConfig = { ...DEFAULT_RETRY_CONFIG, ...config };
   let lastError: AuthError | null = null;
-  
+
   for (let attempt = 1; attempt <= finalConfig.maxRetries + 1; attempt++) {
     try {
       return await operation();
     } catch (error) {
       const authError = mapSupabaseError(error);
       lastError = authError;
-      
+
       // Don't retry if this is the last attempt or error is not retryable
-      if (attempt > finalConfig.maxRetries || !finalConfig.retryCondition!(authError)) {
+      if (
+        attempt > finalConfig.maxRetries ||
+        !finalConfig.retryCondition!(authError)
+      ) {
         throw authError;
       }
-      
+
       // Calculate delay and notify about retry
       const delay = calculateDelay(attempt, finalConfig);
-      
+
       if (onRetry) {
         onRetry({
           attempt,
           totalAttempts: finalConfig.maxRetries + 1,
           lastError: authError,
-          isRetrying: true
+          isRetrying: true,
         });
       }
-      
+
       // Wait before retrying
       await sleep(delay);
     }
   }
-  
+
   // This should never be reached, but TypeScript requires it
-  throw lastError || new Error('Retry loop completed without result');
+  throw lastError || new Error("Retry loop completed without result");
 }
 
 /**
@@ -94,7 +102,7 @@ export async function withRetry<T>(
  */
 export async function withNetworkRetry<T>(
   operation: () => Promise<T>,
-  onRetry?: (error: NetworkError) => void
+  onRetry?: (error: NetworkError) => void,
 ): Promise<T> {
   return withRetry(
     operation,
@@ -102,22 +110,24 @@ export async function withNetworkRetry<T>(
       maxRetries: 3,
       baseDelay: 2000,
       retryCondition: (error) => {
-        return error.code === 'NETWORK_ERROR' || 
-               error.code === 'TIMEOUT_ERROR' ||
-               error.code === 'SERVER_ERROR' ||
-               error.code === 'SERVICE_UNAVAILABLE';
-      }
+        return (
+          error.code === "NETWORK_ERROR" ||
+          error.code === "TIMEOUT_ERROR" ||
+          error.code === "SERVER_ERROR" ||
+          error.code === "SERVICE_UNAVAILABLE"
+        );
+      },
     },
     (state) => {
       if (onRetry && state.lastError) {
         const networkError = createNetworkError(
           new Error(state.lastError.message),
           state.attempt - 1,
-          state.totalAttempts - 1
+          state.totalAttempts - 1,
         );
         onRetry(networkError);
       }
-    }
+    },
   );
 }
 
@@ -125,7 +135,7 @@ export async function withNetworkRetry<T>(
  * Check if the browser is online
  */
 export function isOnline(): boolean {
-  return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  return typeof navigator !== "undefined" ? navigator.onLine : true;
 }
 
 /**
@@ -137,19 +147,19 @@ export function waitForOnline(timeout: number = 30000): Promise<boolean> {
       resolve(true);
       return;
     }
-    
+
     const timeoutId = setTimeout(() => {
-      window.removeEventListener('online', onOnline);
+      window.removeEventListener("online", onOnline);
       resolve(false);
     }, timeout);
-    
+
     const onOnline = () => {
       clearTimeout(timeoutId);
-      window.removeEventListener('online', onOnline);
+      window.removeEventListener("online", onOnline);
       resolve(true);
     };
-    
-    window.addEventListener('online', onOnline);
+
+    window.addEventListener("online", onOnline);
   });
 }
 
@@ -159,40 +169,43 @@ export function waitForOnline(timeout: number = 30000): Promise<boolean> {
 export async function withNetworkAwareRetry<T>(
   operation: () => Promise<T>,
   onNetworkError?: (error: NetworkError) => void,
-  onRetry?: (state: RetryState) => void
+  onRetry?: (state: RetryState) => void,
 ): Promise<T> {
   return withRetry(
     async () => {
       // Check if we're online before attempting operation
       if (!isOnline()) {
-        const networkError = createNetworkError(new Error('No internet connection'));
+        const networkError = createNetworkError(
+          new Error("No internet connection"),
+        );
         if (onNetworkError) {
           onNetworkError(networkError);
         }
-        
+
         // Wait for connection to be restored
         const isBackOnline = await waitForOnline(10000);
         if (!isBackOnline) {
           throw networkError;
         }
       }
-      
+
       return await operation();
     },
     {
       maxRetries: 3,
       baseDelay: 1500,
       retryCondition: (error) => {
-        const isNetworkRelated = error.code === 'NETWORK_ERROR' || 
-                                error.code === 'TIMEOUT_ERROR' ||
-                                error.code === 'SERVER_ERROR' ||
-                                error.code === 'SERVICE_UNAVAILABLE';
-        
+        const isNetworkRelated =
+          error.code === "NETWORK_ERROR" ||
+          error.code === "TIMEOUT_ERROR" ||
+          error.code === "SERVER_ERROR" ||
+          error.code === "SERVICE_UNAVAILABLE";
+
         // Only retry network-related errors
         return isNetworkRelated && isOnline();
-      }
+      },
     },
-    onRetry
+    onRetry,
   );
 }
 
@@ -201,7 +214,7 @@ export async function withNetworkAwareRetry<T>(
  */
 export function createRetryableFunction<T extends any[], R>(
   fn: (...args: T) => Promise<R>,
-  config?: Partial<RetryConfig>
+  config?: Partial<RetryConfig>,
 ) {
   return async (...args: T): Promise<R> => {
     return withRetry(() => fn(...args), config);
@@ -216,16 +229,18 @@ export class RetryManager {
   private lastFailureTime = 0;
   private circuitBreakerThreshold = 5;
   private circuitBreakerTimeout = 60000; // 1 minute
-  
+
   async execute<T>(
     operation: () => Promise<T>,
-    config?: Partial<RetryConfig>
+    config?: Partial<RetryConfig>,
   ): Promise<T> {
     // Check circuit breaker
     if (this.isCircuitOpen()) {
-      throw mapSupabaseError(new Error('Service temporarily unavailable due to repeated failures'));
+      throw mapSupabaseError(
+        new Error("Service temporarily unavailable due to repeated failures"),
+      );
     }
-    
+
     try {
       const result = await withRetry(operation, config);
       this.onSuccess();
@@ -235,26 +250,26 @@ export class RetryManager {
       throw error;
     }
   }
-  
+
   private isCircuitOpen(): boolean {
     if (this.failureCount < this.circuitBreakerThreshold) {
       return false;
     }
-    
+
     const timeSinceLastFailure = Date.now() - this.lastFailureTime;
     return timeSinceLastFailure < this.circuitBreakerTimeout;
   }
-  
+
   private onSuccess(): void {
     this.failureCount = 0;
     this.lastFailureTime = 0;
   }
-  
+
   private onFailure(): void {
     this.failureCount++;
     this.lastFailureTime = Date.now();
   }
-  
+
   reset(): void {
     this.failureCount = 0;
     this.lastFailureTime = 0;

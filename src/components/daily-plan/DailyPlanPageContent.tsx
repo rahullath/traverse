@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import PlanGeneratorForm from './PlanGeneratorForm';
-import ActivityList from './ActivityList';
-import ExitTimeDisplay from './ExitTimeDisplay';
-import DegradePlanButton from './DegradePlanButton';
-import DeletePlanButton from './DeletePlanButton';
-import PlanContextDisplay from './PlanContextDisplay';
-import ChainView from './ChainView';
-import { DEFAULT_GATE_CONDITIONS, ExitGateService } from '../../lib/chains/exit-gate';
-import type { DailyPlan, EnergyState } from '../../types/daily-plan';
-import type { ExitGate, GateCondition } from '../../lib/chains/types';
+import React, { useState, useEffect } from "react";
+import PlanGeneratorForm from "./PlanGeneratorForm";
+import ActivityList from "./ActivityList";
+import ExitTimeDisplay from "./ExitTimeDisplay";
+import DegradePlanButton from "./DegradePlanButton";
+import DeletePlanButton from "./DeletePlanButton";
+import PlanContextDisplay from "./PlanContextDisplay";
+import ChainView from "./ChainView";
+import {
+  DEFAULT_GATE_CONDITIONS,
+  ExitGateService,
+} from "../../lib/chains/exit-gate";
+import type { DailyPlan, EnergyState } from "../../types/daily-plan";
+import type { ExitGate, GateCondition } from "../../lib/chains/types";
 
 export default function DailyPlanPageContent() {
   type GenerateInput = {
@@ -20,7 +23,7 @@ export default function DailyPlanPageContent() {
       startTime: string;
       durationMinutes: number;
       location?: string;
-      anchorType: 'class' | 'seminar' | 'workshop' | 'appointment' | 'other';
+      anchorType: "class" | "seminar" | "workshop" | "appointment" | "other";
       mustAttend: boolean;
       notes?: string;
     };
@@ -32,12 +35,16 @@ export default function DailyPlanPageContent() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDegrading, setIsDegrading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chain' | 'timeline'>('chain');
-  const [exitGateService, setExitGateService] = useState<ExitGateService | null>(null);
+  const [activeTab, setActiveTab] = useState<"chain" | "timeline">("chain");
+  const [exitGateService, setExitGateService] =
+    useState<ExitGateService | null>(null);
   const [exitGate, setExitGate] = useState<ExitGate | null>(null);
-  const [gateTemplateConditions, setGateTemplateConditions] = useState<GateCondition[] | null>(null);
+  const [gateTemplateConditions, setGateTemplateConditions] = useState<
+    GateCondition[] | null
+  >(null);
   const [manualAnchorRequired, setManualAnchorRequired] = useState(false);
-  const [lastGenerateInput, setLastGenerateInput] = useState<GenerateInput | null>(null);
+  const [lastGenerateInput, setLastGenerateInput] =
+    useState<GenerateInput | null>(null);
 
   // Fetch today's plan on mount
   useEffect(() => {
@@ -52,12 +59,12 @@ export default function DailyPlanPageContent() {
       const service = new ExitGateService(conditions);
       setExitGateService(service);
       setExitGate(service.evaluateGate());
-      
+
       // Set chain view as default when chains exist
-      setActiveTab('chain');
+      setActiveTab("chain");
     } else {
       // No chains, default to timeline view
-      setActiveTab('timeline');
+      setActiveTab("timeline");
       setExitGateService(null);
       setExitGate(null);
     }
@@ -65,20 +72,24 @@ export default function DailyPlanPageContent() {
 
   const normalizeGateConditions = (rawConditions: unknown): GateCondition[] => {
     if (!Array.isArray(rawConditions)) {
-      return gateTemplateConditions?.map((condition) => ({ ...condition }))
-        || DEFAULT_GATE_CONDITIONS.map((condition) => ({ ...condition }));
+      return (
+        gateTemplateConditions?.map((condition) => ({ ...condition })) ||
+        DEFAULT_GATE_CONDITIONS.map((condition) => ({ ...condition }))
+      );
     }
 
     const parsedConditions: GateCondition[] = rawConditions
       .map((value) => {
-        if (!value || typeof value !== 'object') return null;
+        if (!value || typeof value !== "object") return null;
         const record = value as Record<string, unknown>;
-        const id = typeof record.id === 'string' ? record.id : null;
+        const id = typeof record.id === "string" ? record.id : null;
         if (!id) return null;
 
-        const name = typeof record.name === 'string'
-          ? record.name
-          : DEFAULT_GATE_CONDITIONS.find((condition) => condition.id === id)?.name || id;
+        const name =
+          typeof record.name === "string"
+            ? record.name
+            : DEFAULT_GATE_CONDITIONS.find((condition) => condition.id === id)
+                ?.name || id;
 
         return {
           id,
@@ -112,13 +123,15 @@ export default function DailyPlanPageContent() {
       targetPlan.timeBlocks.find((block) => {
         const metadata = (block.metadata || {}) as any;
         const role = metadata.role;
-        if (!role || role.type !== 'exit-gate') return false;
+        if (!role || role.type !== "exit-gate") return false;
         if (!firstChainId) return true;
-        return metadata.chain_id === firstChainId || role.chain_id === firstChainId;
+        return (
+          metadata.chain_id === firstChainId || role.chain_id === firstChainId
+        );
       }) ||
       targetPlan.timeBlocks.find((block) => {
         const role = ((block.metadata || {}) as any).role;
-        return role?.type === 'exit-gate';
+        return role?.type === "exit-gate";
       }) ||
       null
     );
@@ -137,15 +150,17 @@ export default function DailyPlanPageContent() {
 
   const resolvePersistedStepBlock = (
     targetPlan: DailyPlan,
-    step: (NonNullable<DailyPlan['chains']>[number]['steps'])[number]
+    step: NonNullable<DailyPlan["chains"]>[number]["steps"][number],
   ) => {
     if (!targetPlan.timeBlocks || targetPlan.timeBlocks.length === 0) {
       return null;
     }
 
     const metadataBlockId = (step.metadata as any)?.time_block_id;
-    if (typeof metadataBlockId === 'string') {
-      const directMatch = targetPlan.timeBlocks.find((block) => block.id === metadataBlockId);
+    if (typeof metadataBlockId === "string") {
+      const directMatch = targetPlan.timeBlocks.find(
+        (block) => block.id === metadataBlockId,
+      );
       if (directMatch) return directMatch;
     }
 
@@ -158,46 +173,62 @@ export default function DailyPlanPageContent() {
     const stepStart = getTimeMs(step.start_time as Date | string);
     const stepEnd = getTimeMs(step.end_time as Date | string);
 
-    return targetPlan.timeBlocks.find((block) => {
-      const metadataStepId = (block.metadata as any)?.step_id || (block.metadata as any)?.stepId;
-      if (metadataStepId === step.step_id) return true;
+    return (
+      targetPlan.timeBlocks.find((block) => {
+        const metadataStepId =
+          (block.metadata as any)?.step_id || (block.metadata as any)?.stepId;
+        if (metadataStepId === step.step_id) return true;
 
-      if (block.activityName !== step.name) return false;
-      const blockStart = getTimeMs(block.startTime as Date | string);
-      const blockEnd = getTimeMs(block.endTime as Date | string);
-      if (stepStart === null || stepEnd === null || blockStart === null || blockEnd === null) {
-        return false;
-      }
+        if (block.activityName !== step.name) return false;
+        const blockStart = getTimeMs(block.startTime as Date | string);
+        const blockEnd = getTimeMs(block.endTime as Date | string);
+        if (
+          stepStart === null ||
+          stepEnd === null ||
+          blockStart === null ||
+          blockEnd === null
+        ) {
+          return false;
+        }
 
-      // Allow small timestamp drift from serialization/timezone conversion.
-      return Math.abs(blockStart - stepStart) <= 60_000 && Math.abs(blockEnd - stepEnd) <= 60_000;
-    }) || null;
+        // Allow small timestamp drift from serialization/timezone conversion.
+        return (
+          Math.abs(blockStart - stepStart) <= 60_000 &&
+          Math.abs(blockEnd - stepEnd) <= 60_000
+        );
+      }) || null
+    );
   };
 
   const fetchTodaysPlan = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await fetch('/api/daily-plan/today');
-      
+
+      const response = await fetch("/api/daily-plan/today");
+
       if (!response.ok) {
         throw new Error(`Failed to fetch plan: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       const fetchedPlan = data.plan as DailyPlan | null;
 
-      if (fetchedPlan && (!fetchedPlan.timeBlocks || fetchedPlan.timeBlocks.length === 0)) {
+      if (
+        fetchedPlan &&
+        (!fetchedPlan.timeBlocks || fetchedPlan.timeBlocks.length === 0)
+      ) {
         setPlan(null);
         setManualAnchorRequired(true);
-        setError('Plan was generated without activities. Add a manual anchor and generate again.');
+        setError(
+          "Plan was generated without activities. Add a manual anchor and generate again.",
+        );
       } else {
         setPlan(fetchedPlan);
       }
     } catch (err) {
-      console.error('Error fetching plan:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch plan');
+      console.error("Error fetching plan:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch plan");
     } finally {
       setLoading(false);
     }
@@ -211,12 +242,12 @@ export default function DailyPlanPageContent() {
 
       // Convert time strings to full ISO timestamps for today
       const today = new Date();
-      const [wakeHour, wakeMinute] = input.wakeTime.split(':');
-      const [sleepHour, sleepMinute] = input.sleepTime.split(':');
-      
+      const [wakeHour, wakeMinute] = input.wakeTime.split(":");
+      const [sleepHour, sleepMinute] = input.sleepTime.split(":");
+
       const wakeTime = new Date(today);
       wakeTime.setHours(parseInt(wakeHour), parseInt(wakeMinute), 0, 0);
-      
+
       const sleepTime = new Date(today);
       sleepTime.setHours(parseInt(sleepHour), parseInt(sleepMinute), 0, 0);
       if (sleepTime <= wakeTime) {
@@ -226,10 +257,19 @@ export default function DailyPlanPageContent() {
 
       let manualAnchorPayload: Record<string, unknown> | undefined;
       if (input.manualAnchor) {
-        const [anchorHour, anchorMinute] = input.manualAnchor.startTime.split(':');
+        const [anchorHour, anchorMinute] =
+          input.manualAnchor.startTime.split(":");
         const anchorStart = new Date(today);
-        anchorStart.setHours(parseInt(anchorHour), parseInt(anchorMinute), 0, 0);
-        const anchorEnd = new Date(anchorStart.getTime() + Math.max(15, input.manualAnchor.durationMinutes) * 60000);
+        anchorStart.setHours(
+          parseInt(anchorHour),
+          parseInt(anchorMinute),
+          0,
+          0,
+        );
+        const anchorEnd = new Date(
+          anchorStart.getTime() +
+            Math.max(15, input.manualAnchor.durationMinutes) * 60000,
+        );
 
         manualAnchorPayload = {
           title: input.manualAnchor.title,
@@ -242,10 +282,10 @@ export default function DailyPlanPageContent() {
         };
       }
 
-      const response = await fetch('/api/daily-plan/generate', {
-        method: 'POST',
+      const response = await fetch("/api/daily-plan/generate", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           wakeTime: wakeTime.toISOString(),
@@ -257,28 +297,40 @@ export default function DailyPlanPageContent() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        if (response.status === 422 && errorData.error_code === 'MANUAL_ANCHOR_REQUIRED') {
+        if (
+          response.status === 422 &&
+          errorData.error_code === "MANUAL_ANCHOR_REQUIRED"
+        ) {
           setManualAnchorRequired(true);
           setPlan(null);
-          setError(errorData.details || 'Add a manual anchor to generate your plan.');
+          setError(
+            errorData.details || "Add a manual anchor to generate your plan.",
+          );
           return;
         }
-        throw new Error(errorData.error || `Failed to generate plan: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Failed to generate plan: ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
       const generatedPlan = data.plan as DailyPlan | null;
-      if (generatedPlan && (!generatedPlan.timeBlocks || generatedPlan.timeBlocks.length === 0)) {
+      if (
+        generatedPlan &&
+        (!generatedPlan.timeBlocks || generatedPlan.timeBlocks.length === 0)
+      ) {
         setPlan(null);
         setManualAnchorRequired(true);
-        setError('Plan was generated without activities. Add a manual anchor and generate again.');
+        setError(
+          "Plan was generated without activities. Add a manual anchor and generate again.",
+        );
       } else {
         setPlan(generatedPlan);
         setManualAnchorRequired(false);
       }
     } catch (err) {
-      console.error('Error generating plan:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate plan');
+      console.error("Error generating plan:", err);
+      setError(err instanceof Error ? err.message : "Failed to generate plan");
     } finally {
       setIsGenerating(false);
     }
@@ -291,26 +343,34 @@ export default function DailyPlanPageContent() {
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`/api/daily-plan/${plan.id}/activity/${blockId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/daily-plan/${plan.id}/activity/${blockId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "completed",
+          }),
         },
-        body: JSON.stringify({
-          status: 'completed',
-        }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to complete activity: ${response.statusText}`);
+        throw new Error(
+          errorData.error ||
+            `Failed to complete activity: ${response.statusText}`,
+        );
       }
 
       // Refresh the plan to get updated state
       await fetchTodaysPlan();
     } catch (err) {
-      console.error('Error completing activity:', err);
-      setError(err instanceof Error ? err.message : 'Failed to complete activity');
+      console.error("Error completing activity:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to complete activity",
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -323,27 +383,32 @@ export default function DailyPlanPageContent() {
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`/api/daily-plan/${plan.id}/activity/${blockId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/daily-plan/${plan.id}/activity/${blockId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "skipped",
+            skipReason: reason,
+          }),
         },
-        body: JSON.stringify({
-          status: 'skipped',
-          skipReason: reason,
-        }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to skip activity: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Failed to skip activity: ${response.statusText}`,
+        );
       }
 
       // Refresh the plan to get updated state
       await fetchTodaysPlan();
     } catch (err) {
-      console.error('Error skipping activity:', err);
-      setError(err instanceof Error ? err.message : 'Failed to skip activity');
+      console.error("Error skipping activity:", err);
+      setError(err instanceof Error ? err.message : "Failed to skip activity");
     } finally {
       setIsUpdating(false);
     }
@@ -357,19 +422,21 @@ export default function DailyPlanPageContent() {
       setError(null);
 
       const response = await fetch(`/api/daily-plan/${plan.id}/degrade`, {
-        method: 'POST',
+        method: "POST",
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to degrade plan: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Failed to degrade plan: ${response.statusText}`,
+        );
       }
 
       const data = await response.json();
       setPlan(data.plan);
     } catch (err) {
-      console.error('Error degrading plan:', err);
-      setError(err instanceof Error ? err.message : 'Failed to degrade plan');
+      console.error("Error degrading plan:", err);
+      setError(err instanceof Error ? err.message : "Failed to degrade plan");
     } finally {
       setIsDegrading(false);
     }
@@ -396,16 +463,16 @@ export default function DailyPlanPageContent() {
   const handleStepComplete = async (stepId: string) => {
     if (!plan?.chains || plan.chains.length === 0) return;
 
-    let targetStep:
-      | {
-          chainIndex: number;
-          stepIndex: number;
-          step: (typeof plan.chains)[number]['steps'][number];
-        }
-      | null = null;
+    let targetStep: {
+      chainIndex: number;
+      stepIndex: number;
+      step: (typeof plan.chains)[number]["steps"][number];
+    } | null = null;
 
     for (let chainIndex = 0; chainIndex < plan.chains.length; chainIndex++) {
-      const stepIndex = plan.chains[chainIndex].steps.findIndex(s => s.step_id === stepId);
+      const stepIndex = plan.chains[chainIndex].steps.findIndex(
+        (s) => s.step_id === stepId,
+      );
       if (stepIndex >= 0) {
         targetStep = {
           chainIndex,
@@ -417,19 +484,23 @@ export default function DailyPlanPageContent() {
     }
 
     if (!targetStep) {
-      setError('Unable to locate the selected chain step.');
+      setError("Unable to locate the selected chain step.");
       return;
     }
 
     const matchedBlock = resolvePersistedStepBlock(plan, targetStep.step);
 
     if (!matchedBlock) {
-      setError('This step is not synced to a persisted time block yet, so completion cannot be saved.');
+      setError(
+        "This step is not synced to a persisted time block yet, so completion cannot be saved.",
+      );
       return;
     }
 
-    const nextStatus = targetStep.step.status === 'completed' ? 'pending' : 'completed';
-    const endpointAction = nextStatus === 'completed' ? 'complete' : 'uncomplete';
+    const nextStatus =
+      targetStep.step.status === "completed" ? "pending" : "completed";
+    const endpointAction =
+      nextStatus === "completed" ? "complete" : "uncomplete";
     const previousPlan = plan;
 
     setPlan((currentPlan) => {
@@ -462,18 +533,26 @@ export default function DailyPlanPageContent() {
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`/api/time-blocks/${matchedBlock.id}/${endpointAction}`, {
-        method: 'POST',
-      });
+      const response = await fetch(
+        `/api/time-blocks/${matchedBlock.id}/${endpointAction}`,
+        {
+          method: "POST",
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to toggle completion: ${response.statusText}`);
+        throw new Error(
+          errorData.error ||
+            `Failed to toggle completion: ${response.statusText}`,
+        );
       }
     } catch (err) {
       setPlan(previousPlan);
-      console.error('Error toggling step completion:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update step completion');
+      console.error("Error toggling step completion:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to update step completion",
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -481,12 +560,12 @@ export default function DailyPlanPageContent() {
 
   const handleStepEdit = async (
     stepId: string,
-    payload: { name: string; durationMinutes: number; saveAsTemplate: boolean }
+    payload: { name: string; durationMinutes: number; saveAsTemplate: boolean },
   ) => {
     if (!plan?.chains || plan.chains.length === 0) return;
 
     let targetStep:
-      | (NonNullable<DailyPlan['chains']>[number]['steps'][number])
+      | NonNullable<DailyPlan["chains"]>[number]["steps"][number]
       | null = null;
 
     for (const chain of plan.chains) {
@@ -498,13 +577,13 @@ export default function DailyPlanPageContent() {
     }
 
     if (!targetStep) {
-      setError('Unable to locate the selected chain step.');
+      setError("Unable to locate the selected chain step.");
       return;
     }
 
     const matchedBlock = resolvePersistedStepBlock(plan, targetStep);
     if (!matchedBlock) {
-      setError('Unable to map chain step to a persisted time block.');
+      setError("Unable to map chain step to a persisted time block.");
       return;
     }
 
@@ -512,29 +591,39 @@ export default function DailyPlanPageContent() {
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`/api/time-blocks/${matchedBlock.id}/edit-step`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `/api/time-blocks/${matchedBlock.id}/edit-step`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...payload,
+            stepId,
+            planId: plan.id,
+          }),
         },
-        body: JSON.stringify({
-          ...payload,
-          stepId,
-          planId: plan.id,
-        }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        if (response.status === 404 && errorData.error_code === 'STALE_TIME_BLOCK_REFERENCE') {
+        if (
+          response.status === 404 &&
+          errorData.error_code === "STALE_TIME_BLOCK_REFERENCE"
+        ) {
           await fetchTodaysPlan();
 
-          const retryPlanResponse = await fetch('/api/daily-plan/today');
-          const retryPlanPayload = await retryPlanResponse.json().catch(() => ({}));
+          const retryPlanResponse = await fetch("/api/daily-plan/today");
+          const retryPlanPayload = await retryPlanResponse
+            .json()
+            .catch(() => ({}));
           const retryPlan = retryPlanPayload?.plan as DailyPlan | null;
 
           if (retryPlan?.chains && retryPlan.timeBlocks) {
-            let retryStep: (NonNullable<DailyPlan['chains']>[number]['steps'][number]) | null = null;
+            let retryStep:
+              | NonNullable<DailyPlan["chains"]>[number]["steps"][number]
+              | null = null;
             for (const chain of retryPlan.chains) {
               const found = chain.steps.find((item) => item.step_id === stepId);
               if (found) {
@@ -544,19 +633,25 @@ export default function DailyPlanPageContent() {
             }
 
             if (retryStep) {
-              const retryMatched = resolvePersistedStepBlock(retryPlan, retryStep);
+              const retryMatched = resolvePersistedStepBlock(
+                retryPlan,
+                retryStep,
+              );
               if (retryMatched) {
-                const retryResponse = await fetch(`/api/time-blocks/${retryMatched.id}/edit-step`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
+                const retryResponse = await fetch(
+                  `/api/time-blocks/${retryMatched.id}/edit-step`,
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      ...payload,
+                      stepId,
+                      planId: retryPlan.id,
+                    }),
                   },
-                  body: JSON.stringify({
-                    ...payload,
-                    stepId,
-                    planId: retryPlan.id,
-                  }),
-                });
+                );
 
                 if (retryResponse.ok) {
                   await fetchTodaysPlan();
@@ -566,13 +661,17 @@ export default function DailyPlanPageContent() {
             }
           }
         }
-        throw new Error(errorData.error || `Failed to edit step: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Failed to edit step: ${response.statusText}`,
+        );
       }
 
       await fetchTodaysPlan();
     } catch (err) {
-      console.error('Error editing chain step:', err);
-      setError(err instanceof Error ? err.message : 'Failed to edit chain step');
+      console.error("Error editing chain step:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to edit chain step",
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -583,84 +682,109 @@ export default function DailyPlanPageContent() {
 
     const chain = plan.chains[0];
     if (!chain?.steps || chain.steps.length === 0) {
-      setError('Unable to locate insertion point.');
+      setError("Unable to locate insertion point.");
       return;
     }
 
     // Insert before exit-gate when present, else after final step.
-    const exitGateIndex = chain.steps.findIndex((step) => step.role === 'exit-gate');
-    const insertAfterIndex = exitGateIndex > 0 ? exitGateIndex - 1 : chain.steps.length - 1;
+    const exitGateIndex = chain.steps.findIndex(
+      (step) => step.role === "exit-gate",
+    );
+    const insertAfterIndex =
+      exitGateIndex > 0 ? exitGateIndex - 1 : chain.steps.length - 1;
     const targetStep = chain.steps[insertAfterIndex] || null;
     if (!targetStep) {
-      setError('Unable to locate insertion point.');
+      setError("Unable to locate insertion point.");
       return;
     }
 
     const matchedBlock = resolvePersistedStepBlock(plan, targetStep);
     if (!matchedBlock) {
-      setError('Unable to map chain step to a persisted time block.');
+      setError("Unable to map chain step to a persisted time block.");
       return;
     }
 
-    const name = window.prompt('New step name', 'Quick prep');
+    const name = window.prompt("New step name", "Quick prep");
     if (!name || !name.trim()) return;
 
-    const durationInput = window.prompt('Duration (minutes)', '5');
+    const durationInput = window.prompt("Duration (minutes)", "5");
     if (!durationInput) return;
     const durationMinutes = Number.parseInt(durationInput, 10);
-    if (!Number.isFinite(durationMinutes) || durationMinutes < 0 || durationMinutes > 240) {
-      setError('Duration must be a number between 0 and 240.');
+    if (
+      !Number.isFinite(durationMinutes) ||
+      durationMinutes < 0 ||
+      durationMinutes > 240
+    ) {
+      setError("Duration must be a number between 0 and 240.");
       return;
     }
 
-    const saveAsTemplate = window.confirm('Save this new step as your default for future plans?');
+    const saveAsTemplate = window.confirm(
+      "Save this new step as your default for future plans?",
+    );
 
     try {
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`/api/time-blocks/${matchedBlock.id}/add-step`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          durationMinutes,
-          saveAsTemplate,
-        }),
-      });
+      const response = await fetch(
+        `/api/time-blocks/${matchedBlock.id}/add-step`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            durationMinutes,
+            saveAsTemplate,
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to add step: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Failed to add step: ${response.statusText}`,
+        );
       }
 
       await fetchTodaysPlan();
     } catch (err) {
-      console.error('Error adding chain step:', err);
-      setError(err instanceof Error ? err.message : 'Failed to add chain step');
+      console.error("Error adding chain step:", err);
+      setError(err instanceof Error ? err.message : "Failed to add chain step");
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleStepReorder = async (sourceStepId: string, targetStepId: string) => {
+  const handleStepReorder = async (
+    sourceStepId: string,
+    targetStepId: string,
+  ) => {
     if (!plan?.chains) return;
 
-    let sourceStep: (NonNullable<DailyPlan['chains']>[number]['steps'][number]) | null = null;
-    let targetStep: (NonNullable<DailyPlan['chains']>[number]['steps'][number]) | null = null;
+    let sourceStep:
+      | NonNullable<DailyPlan["chains"]>[number]["steps"][number]
+      | null = null;
+    let targetStep:
+      | NonNullable<DailyPlan["chains"]>[number]["steps"][number]
+      | null = null;
     for (const chain of plan.chains) {
-      if (!sourceStep) sourceStep = chain.steps.find((item) => item.step_id === sourceStepId) || null;
-      if (!targetStep) targetStep = chain.steps.find((item) => item.step_id === targetStepId) || null;
+      if (!sourceStep)
+        sourceStep =
+          chain.steps.find((item) => item.step_id === sourceStepId) || null;
+      if (!targetStep)
+        targetStep =
+          chain.steps.find((item) => item.step_id === targetStepId) || null;
     }
 
     if (!sourceStep || !targetStep) {
-      setError('Unable to reorder chain steps.');
+      setError("Unable to reorder chain steps.");
       return;
     }
 
     const sourceBlock = resolvePersistedStepBlock(plan, sourceStep);
     if (!sourceBlock) {
-      setError('Unable to map source chain step to a persisted time block.');
+      setError("Unable to map source chain step to a persisted time block.");
       return;
     }
 
@@ -668,25 +792,32 @@ export default function DailyPlanPageContent() {
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`/api/time-blocks/${sourceBlock.id}/reorder-step`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sourceStepId,
-          targetStepId,
-          planId: plan.id,
-        }),
-      });
+      const response = await fetch(
+        `/api/time-blocks/${sourceBlock.id}/reorder-step`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceStepId,
+            targetStepId,
+            planId: plan.id,
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to reorder steps: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Failed to reorder steps: ${response.statusText}`,
+        );
       }
 
       await fetchTodaysPlan();
     } catch (err) {
-      console.error('Error reordering chain steps:', err);
-      setError(err instanceof Error ? err.message : 'Failed to reorder chain steps');
+      console.error("Error reordering chain steps:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to reorder chain steps",
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -715,7 +846,9 @@ export default function DailyPlanPageContent() {
   const handleStepDelete = async (stepId: string) => {
     if (!plan?.chains) return;
 
-    let targetStep: (NonNullable<DailyPlan['chains']>[number]['steps'][number]) | null = null;
+    let targetStep:
+      | NonNullable<DailyPlan["chains"]>[number]["steps"][number]
+      | null = null;
     for (const chain of plan.chains) {
       const step = chain.steps.find((item) => item.step_id === stepId);
       if (step) {
@@ -724,40 +857,51 @@ export default function DailyPlanPageContent() {
       }
     }
     if (!targetStep) {
-      setError('Unable to locate step to delete.');
+      setError("Unable to locate step to delete.");
       return;
     }
 
     const matchedBlock = resolvePersistedStepBlock(plan, targetStep);
     if (!matchedBlock) {
-      setError('Unable to map chain step to a persisted time block.');
+      setError("Unable to map chain step to a persisted time block.");
       return;
     }
 
-    const confirmed = window.confirm(`Delete step "${targetStep.name}" from this chain?`);
+    const confirmed = window.confirm(
+      `Delete step "${targetStep.name}" from this chain?`,
+    );
     if (!confirmed) return;
 
-    const saveAsTemplate = window.confirm('Also remove/disable this step from your future default chain?');
+    const saveAsTemplate = window.confirm(
+      "Also remove/disable this step from your future default chain?",
+    );
 
     try {
       setIsUpdating(true);
       setError(null);
 
-      const response = await fetch(`/api/time-blocks/${matchedBlock.id}/delete-step`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ saveAsTemplate }),
-      });
+      const response = await fetch(
+        `/api/time-blocks/${matchedBlock.id}/delete-step`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ saveAsTemplate }),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to delete step: ${response.statusText}`);
+        throw new Error(
+          errorData.error || `Failed to delete step: ${response.statusText}`,
+        );
       }
 
       await fetchTodaysPlan();
     } catch (err) {
-      console.error('Error deleting chain step:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete chain step');
+      console.error("Error deleting chain step:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to delete chain step",
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -765,18 +909,21 @@ export default function DailyPlanPageContent() {
 
   const fetchExitGateTemplate = async () => {
     try {
-      const response = await fetch('/api/daily-plan/exit-gate-template');
+      const response = await fetch("/api/daily-plan/exit-gate-template");
       if (!response.ok) return;
 
       const payload = await response.json();
       const conditions = normalizeGateConditions(payload?.gate_conditions);
       setGateTemplateConditions(conditions);
     } catch (err) {
-      console.error('Failed to load exit gate template:', err);
+      console.error("Failed to load exit gate template:", err);
     }
   };
 
-  const handleGateConditionToggle = async (conditionId: string, satisfied: boolean) => {
+  const handleGateConditionToggle = async (
+    conditionId: string,
+    satisfied: boolean,
+  ) => {
     if (!exitGateService || !plan) return;
 
     const exitGateBlock = findExitGateBlock(plan);
@@ -800,22 +947,28 @@ export default function DailyPlanPageContent() {
           gate_conditions: updatedGate.conditions,
         };
 
-        const response = await fetch(`/api/time-blocks/${exitGateBlock.id}/update-meta`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            metadata: {
-              ...metadata,
-              role: mergedRole,
+        const response = await fetch(
+          `/api/time-blocks/${exitGateBlock.id}/update-meta`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
             },
-          }),
-        });
+            body: JSON.stringify({
+              metadata: {
+                ...metadata,
+                role: mergedRole,
+              },
+            }),
+          },
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Failed to persist gate conditions: ${response.statusText}`);
+          throw new Error(
+            errorData.error ||
+              `Failed to persist gate conditions: ${response.statusText}`,
+          );
         }
 
         // Keep local plan metadata in sync without refetch.
@@ -852,8 +1005,12 @@ export default function DailyPlanPageContent() {
       const rollbackService = new ExitGateService(previousConditions);
       setExitGateService(rollbackService);
       setExitGate(previousGate || rollbackService.evaluateGate());
-      console.error('Error updating exit gate condition:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update exit gate condition');
+      console.error("Error updating exit gate condition:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to update exit gate condition",
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -877,9 +1034,25 @@ export default function DailyPlanPageContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <svg className="animate-spin h-12 w-12 text-accent-primary mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <svg
+            className="animate-spin h-12 w-12 text-accent-primary mx-auto mb-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
           <p className="text-text-muted">Loading your plan...</p>
         </div>
@@ -892,22 +1065,40 @@ export default function DailyPlanPageContent() {
     return (
       <div className="bg-accent-error/10 border border-accent-error/30 rounded-xl p-6">
         <div className="flex items-start">
-          <svg className="w-6 h-6 mr-3 text-accent-error flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="w-6 h-6 mr-3 text-accent-error flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-accent-error mb-2">
               Error
             </h3>
-            <p className="text-sm text-text-primary mb-4">
-              {error}
-            </p>
+            <p className="text-sm text-text-primary mb-4">{error}</p>
             <button
               onClick={handleRetry}
               className="px-4 py-2 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition-colors font-medium flex items-center"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
               Retry
             </button>
@@ -934,11 +1125,22 @@ export default function DailyPlanPageContent() {
         )}
         <div className="mb-6 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
           <div className="flex items-start">
-            <svg className="w-5 h-5 mr-2 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-5 h-5 mr-2 text-blue-400 flex-shrink-0 mt-0.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <p className="text-sm text-blue-400">
-              No plan exists for today. Generate one to get started with your structured day!
+              No plan exists for today. Generate one to get started with your
+              structured day!
             </p>
           </div>
         </div>
@@ -966,18 +1168,29 @@ export default function DailyPlanPageContent() {
       {plan.chains && plan.chains.length > 0 && (
         <div className="flex space-x-2 border-b border-border-primary">
           <button
-            onClick={() => setActiveTab('chain')}
+            onClick={() => setActiveTab("chain")}
             className={`
               px-6 py-3 font-medium transition-colors relative
-              ${activeTab === 'chain'
-                ? 'text-accent-primary border-b-2 border-accent-primary'
-                : 'text-text-muted hover:text-text-primary'
+              ${
+                activeTab === "chain"
+                  ? "text-accent-primary border-b-2 border-accent-primary"
+                  : "text-text-muted hover:text-text-primary"
               }
             `}
           >
             <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
               </svg>
               Chain View
               <span className="ml-2 px-2 py-0.5 text-xs bg-accent-primary/20 text-accent-primary rounded">
@@ -986,18 +1199,29 @@ export default function DailyPlanPageContent() {
             </div>
           </button>
           <button
-            onClick={() => setActiveTab('timeline')}
+            onClick={() => setActiveTab("timeline")}
             className={`
               px-6 py-3 font-medium transition-colors relative
-              ${activeTab === 'timeline'
-                ? 'text-accent-primary border-b-2 border-accent-primary'
-                : 'text-text-muted hover:text-text-primary'
+              ${
+                activeTab === "timeline"
+                  ? "text-accent-primary border-b-2 border-accent-primary"
+                  : "text-text-muted hover:text-text-primary"
               }
             `}
           >
             <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               Timeline
             </div>
@@ -1006,45 +1230,50 @@ export default function DailyPlanPageContent() {
       )}
 
       {/* Chain View - Primary Interface - Requirements 13.4, 14.1 */}
-      {activeTab === 'chain' && plan.chains && plan.chains.length > 0 && exitGate && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main content - Chain View */}
-          <div className="lg:col-span-2">
-            <ChainView
-              chain={plan.chains[0]}
-              exitGate={exitGate}
-              onStepComplete={handleStepComplete}
-              onStepEdit={handleStepEdit}
-              onStepAdd={handleStepAdd}
-              onStepDelete={handleStepDelete}
-              onStepReorder={handleStepReorder}
-              onStepMoveUp={handleStepMoveUp}
-              onStepMoveDown={handleStepMoveDown}
-              onGateConditionToggle={handleGateConditionToggle}
-              isStepPersistable={isChainStepPersistable}
-            />
-          </div>
-
-          {/* Sidebar - Exit Times and Degrade Button */}
-          <div className="space-y-6">
-            {plan.exitTimes && plan.exitTimes.length > 0 && (
-              <ExitTimeDisplay
-                exitTimes={plan.exitTimes}
-                timeBlocks={plan.timeBlocks}
+      {activeTab === "chain" &&
+        plan.chains &&
+        plan.chains.length > 0 &&
+        exitGate && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main content - Chain View */}
+            <div className="lg:col-span-2">
+              <ChainView
+                chain={plan.chains[0]}
+                exitGate={exitGate}
+                onStepComplete={handleStepComplete}
+                onStepEdit={handleStepEdit}
+                onStepAdd={handleStepAdd}
+                onStepDelete={handleStepDelete}
+                onStepReorder={handleStepReorder}
+                onStepMoveUp={handleStepMoveUp}
+                onStepMoveDown={handleStepMoveDown}
+                onGateConditionToggle={handleGateConditionToggle}
+                isStepPersistable={isChainStepPersistable}
               />
-            )}
-            
-            <DegradePlanButton
-              plan={plan}
-              onDegrade={handleDegrade}
-              isDegrading={isDegrading}
-            />
+            </div>
+
+            {/* Sidebar - Exit Times and Degrade Button */}
+            <div className="space-y-6">
+              {plan.exitTimes && plan.exitTimes.length > 0 && (
+                <ExitTimeDisplay
+                  exitTimes={plan.exitTimes}
+                  timeBlocks={plan.timeBlocks}
+                />
+              )}
+
+              <DegradePlanButton
+                plan={plan}
+                onDegrade={handleDegrade}
+                isDegrading={isDegrading}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Timeline View - Secondary - Requirements 13.1, 13.3 */}
-      {(activeTab === 'timeline' || !plan.chains || plan.chains.length === 0) && (
+      {(activeTab === "timeline" ||
+        !plan.chains ||
+        plan.chains.length === 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main content - Activity List */}
           <div className="lg:col-span-2">
@@ -1064,7 +1293,7 @@ export default function DailyPlanPageContent() {
                 timeBlocks={plan.timeBlocks}
               />
             )}
-            
+
             <DegradePlanButton
               plan={plan}
               onDegrade={handleDegrade}
@@ -1078,13 +1307,26 @@ export default function DailyPlanPageContent() {
       {(!plan.chains || plan.chains.length === 0) && (
         <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
           <div className="flex items-start">
-            <svg className="w-5 h-5 mr-2 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-5 h-5 mr-2 text-blue-400 flex-shrink-0 mt-0.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <div className="text-sm text-blue-400">
-              <p className="font-medium mb-1">No calendar access. Showing basic plan.</p>
+              <p className="font-medium mb-1">
+                No calendar access. Showing basic plan.
+              </p>
               <p className="text-xs text-blue-300">
-                Your day is flexible! The timeline view shows your planned activities without calendar events.
+                Your day is flexible! The timeline view shows your planned
+                activities without calendar events.
               </p>
             </div>
           </div>

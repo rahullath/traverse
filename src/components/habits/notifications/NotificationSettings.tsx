@@ -1,6 +1,11 @@
 // src/components/habits/notifications/NotificationSettings.tsx
-import React, { useState, useEffect } from 'react';
-import { notificationService, formatReminderTime, getDayNames, type HabitReminder } from '../../../lib/habits/notifications';
+import React, { useState, useEffect } from "react";
+import {
+  notificationService,
+  formatReminderTime,
+  getDayNames,
+  type HabitReminder,
+} from "../../../lib/habits/notifications";
 
 interface NotificationSettingsProps {
   habitId: string;
@@ -11,16 +16,16 @@ interface NotificationSettingsProps {
 export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   habitId,
   habitName,
-  onClose
+  onClose,
 }) => {
   const [reminder, setReminder] = useState<HabitReminder>({
     habitId,
     habitName,
-    time: '09:00',
+    time: "09:00",
     enabled: false,
-    days: [1, 2, 3, 4, 5] // Weekdays by default
+    days: [1, 2, 3, 4, 5], // Weekdays by default
   });
-  const [permissionStatus, setPermissionStatus] = useState<string>('default');
+  const [permissionStatus, setPermissionStatus] = useState<string>("default");
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -31,7 +36,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
     }
 
     // Check permission status
-    if ('Notification' in window) {
+    if ("Notification" in window) {
       setPermissionStatus(Notification.permission);
     }
   }, [habitId]);
@@ -39,7 +44,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   const handlePermissionRequest = async () => {
     setIsLoading(true);
     const permission = await notificationService.requestPermission();
-    setPermissionStatus(permission.granted ? 'granted' : permission.denied ? 'denied' : 'default');
+    setPermissionStatus(
+      permission.granted ? "granted" : permission.denied ? "denied" : "default",
+    );
     setIsLoading(false);
   };
 
@@ -47,11 +54,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
     setIsLoading(true);
     const success = await notificationService.updateHabitReminder(reminder);
     setIsLoading(false);
-    
+
     if (success) {
       onClose();
     } else {
-      alert('Failed to save notification settings. Please check your permissions.');
+      alert(
+        "Failed to save notification settings. Please check your permissions.",
+      );
     }
   };
 
@@ -60,15 +69,15 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   };
 
   const toggleDay = (day: number) => {
-    setReminder(prev => ({
+    setReminder((prev) => ({
       ...prev,
       days: prev.days.includes(day)
-        ? prev.days.filter(d => d !== day)
-        : [...prev.days, day].sort()
+        ? prev.days.filter((d) => d !== day)
+        : [...prev.days, day].sort(),
     }));
   };
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -79,8 +88,18 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -94,26 +113,35 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           </div>
 
           {/* Permission Status */}
-          {permissionStatus !== 'granted' && (
+          {permissionStatus !== "granted" && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <div className="flex items-start">
-                <svg className="w-5 h-5 text-yellow-400 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                <svg
+                  className="w-5 h-5 text-yellow-400 mt-0.5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
                 </svg>
                 <div className="flex-1">
                   <p className="text-sm text-yellow-800">
-                    {permissionStatus === 'denied' 
-                      ? 'Notifications are blocked. Please enable them in your browser settings.'
-                      : 'Notifications permission required for reminders.'
-                    }
+                    {permissionStatus === "denied"
+                      ? "Notifications are blocked. Please enable them in your browser settings."
+                      : "Notifications permission required for reminders."}
                   </p>
-                  {permissionStatus === 'default' && (
+                  {permissionStatus === "default" && (
                     <button
                       onClick={handlePermissionRequest}
                       disabled={isLoading}
                       className="mt-2 text-sm bg-yellow-100 text-yellow-800 px-3 py-1 rounded hover:bg-yellow-200 disabled:opacity-50"
                     >
-                      {isLoading ? 'Requesting...' : 'Enable Notifications'}
+                      {isLoading ? "Requesting..." : "Enable Notifications"}
                     </button>
                   )}
                 </div>
@@ -127,14 +155,16 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               Enable Reminders
             </label>
             <button
-              onClick={() => setReminder(prev => ({ ...prev, enabled: !prev.enabled }))}
+              onClick={() =>
+                setReminder((prev) => ({ ...prev, enabled: !prev.enabled }))
+              }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                reminder.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                reminder.enabled ? "bg-blue-600" : "bg-gray-200"
               }`}
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  reminder.enabled ? 'translate-x-6' : 'translate-x-1'
+                  reminder.enabled ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
@@ -150,7 +180,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                 <input
                   type="time"
                   value={reminder.time}
-                  onChange={(e) => setReminder(prev => ({ ...prev, time: e.target.value }))}
+                  onChange={(e) =>
+                    setReminder((prev) => ({ ...prev, time: e.target.value }))
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -170,8 +202,8 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                       onClick={() => toggleDay(index)}
                       className={`px-2 py-2 text-xs rounded-lg border transition-colors ${
                         reminder.days.includes(index)
-                          ? 'bg-blue-500 text-white border-blue-500'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          ? "bg-blue-500 text-white border-blue-500"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                       }`}
                     >
                       {day}
@@ -190,19 +222,31 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                 </label>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => setReminder(prev => ({ ...prev, days: [1, 2, 3, 4, 5] }))}
+                    onClick={() =>
+                      setReminder((prev) => ({
+                        ...prev,
+                        days: [1, 2, 3, 4, 5],
+                      }))
+                    }
                     className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200"
                   >
                     Weekdays
                   </button>
                   <button
-                    onClick={() => setReminder(prev => ({ ...prev, days: [0, 6] }))}
+                    onClick={() =>
+                      setReminder((prev) => ({ ...prev, days: [0, 6] }))
+                    }
                     className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200"
                   >
                     Weekends
                   </button>
                   <button
-                    onClick={() => setReminder(prev => ({ ...prev, days: [0, 1, 2, 3, 4, 5, 6] }))}
+                    onClick={() =>
+                      setReminder((prev) => ({
+                        ...prev,
+                        days: [0, 1, 2, 3, 4, 5, 6],
+                      }))
+                    }
                     className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200"
                   >
                     Daily
@@ -211,7 +255,7 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               </div>
 
               {/* Test Notification */}
-              {permissionStatus === 'granted' && (
+              {permissionStatus === "granted" && (
                 <div>
                   <button
                     onClick={handleTestNotification}
@@ -235,10 +279,12 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           </button>
           <button
             onClick={handleSave}
-            disabled={isLoading || (reminder.enabled && reminder.days.length === 0)}
+            disabled={
+              isLoading || (reminder.enabled && reminder.days.length === 0)
+            }
             className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? 'Saving...' : 'Save'}
+            {isLoading ? "Saving..." : "Save"}
           </button>
         </div>
       </div>
@@ -247,7 +293,9 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
 };
 
 // Notification status indicator component
-export const NotificationIndicator: React.FC<{ habitId: string }> = ({ habitId }) => {
+export const NotificationIndicator: React.FC<{ habitId: string }> = ({
+  habitId,
+}) => {
   const [hasReminder, setHasReminder] = useState(false);
 
   useEffect(() => {
@@ -259,8 +307,18 @@ export const NotificationIndicator: React.FC<{ habitId: string }> = ({ habitId }
 
   return (
     <div className="inline-flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-5 5v-5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+      <svg
+        className="w-3 h-3 mr-1"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M15 17h5l-5 5v-5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+        />
       </svg>
       Reminders On
     </div>
@@ -272,7 +330,7 @@ export const NotificationStats: React.FC = () => {
   const [stats, setStats] = useState({
     totalReminders: 0,
     activeReminders: 0,
-    permissionStatus: 'default'
+    permissionStatus: "default",
   });
 
   useEffect(() => {
@@ -281,24 +339,36 @@ export const NotificationStats: React.FC = () => {
     };
 
     updateStats();
-    
+
     // Update stats when storage changes
     const handleStorageChange = () => updateStats();
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
       <div className="flex items-center mb-2">
-        <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-5 5v-5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+        <svg
+          className="w-5 h-5 text-blue-500 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M15 17h5l-5 5v-5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+          />
         </svg>
         <h4 className="font-medium text-blue-900">Notification Status</h4>
       </div>
       <div className="text-sm text-blue-800 space-y-1">
-        <p>Active reminders: {stats.activeReminders} of {stats.totalReminders}</p>
+        <p>
+          Active reminders: {stats.activeReminders} of {stats.totalReminders}
+        </p>
         <p>Permission: {stats.permissionStatus}</p>
       </div>
     </div>

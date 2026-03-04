@@ -1,7 +1,10 @@
 // src/components/auth/ErrorBoundary.tsx - Error boundary for graceful failure handling
-import React, { Component } from 'react';
-import { mapSupabaseError, getRecoverySuggestions } from '../../lib/auth/errors';
-import type { AuthError } from '../../lib/auth/errors';
+import React, { Component } from "react";
+import {
+  mapSupabaseError,
+  getRecoverySuggestions,
+} from "../../lib/auth/errors";
+import type { AuthError } from "../../lib/auth/errors";
 
 interface Props {
   children: React.ReactNode;
@@ -26,7 +29,7 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-      retryCount: 0
+      retryCount: 0,
     };
   }
 
@@ -34,22 +37,22 @@ export class ErrorBoundary extends Component<Props, State> {
     const authError = mapSupabaseError(error);
     return {
       hasError: true,
-      error: authError
+      error: authError,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const authError = mapSupabaseError(error);
-    
+
     this.setState({
-      errorInfo
+      errorInfo,
     });
 
     // Log error for debugging
-    console.error('ErrorBoundary caught an error:', {
+    console.error("ErrorBoundary caught an error:", {
       error: authError,
       errorInfo,
-      componentStack: errorInfo.componentStack
+      componentStack: errorInfo.componentStack,
     });
 
     // Call onError callback if provided
@@ -64,22 +67,22 @@ export class ErrorBoundary extends Component<Props, State> {
   private reportError = (error: AuthError, errorInfo: ErrorInfo) => {
     // This would integrate with your error tracking service
     // For now, we'll just log it
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'exception', {
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "exception", {
         description: error.message,
         fatal: false,
-        error_code: error.code
+        error_code: error.code,
       });
     }
   };
 
   private handleRetry = () => {
     if (this.state.retryCount < this.maxRetries) {
-      this.setState(prevState => ({
+      this.setState((prevState) => ({
         hasError: false,
         error: null,
         errorInfo: null,
-        retryCount: prevState.retryCount + 1
+        retryCount: prevState.retryCount + 1,
       }));
     }
   };
@@ -89,7 +92,7 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleGoHome = () => {
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   render() {
@@ -137,7 +140,7 @@ function DefaultErrorFallback({
   onReload,
   onGoHome,
   showDetails = false,
-  errorInfo
+  errorInfo,
 }: DefaultErrorFallbackProps) {
   const suggestions = getRecoverySuggestions(error);
   const canRetry = retryCount < maxRetries && error.retryable;
@@ -149,8 +152,18 @@ function DefaultErrorFallback({
           {/* Error Icon */}
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-8 h-8 text-red-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
           </div>
@@ -160,18 +173,21 @@ function DefaultErrorFallback({
             <h2 className="text-xl font-bold text-white mb-2">
               Something went wrong
             </h2>
-            <p className="text-gray-300 text-sm">
-              {error.userMessage}
-            </p>
+            <p className="text-gray-300 text-sm">{error.userMessage}</p>
           </div>
 
           {/* Recovery Suggestions */}
           {suggestions.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-300 mb-2">Try these solutions:</h3>
+              <h3 className="text-sm font-medium text-gray-300 mb-2">
+                Try these solutions:
+              </h3>
               <ul className="space-y-1">
                 {suggestions.map((suggestion, index) => (
-                  <li key={index} className="text-sm text-gray-400 flex items-start">
+                  <li
+                    key={index}
+                    className="text-sm text-gray-400 flex items-start"
+                  >
                     <span className="text-cyan-400 mr-2">•</span>
                     {suggestion}
                   </li>
@@ -190,14 +206,14 @@ function DefaultErrorFallback({
                 Try Again {retryCount > 0 && `(${retryCount}/${maxRetries})`}
               </button>
             )}
-            
+
             <button
               onClick={onReload}
               className="w-full px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors font-medium"
             >
               Reload Page
             </button>
-            
+
             <button
               onClick={onGoHome}
               className="w-full px-4 py-2 bg-slate-700 text-gray-300 rounded-lg hover:bg-slate-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 transition-colors font-medium"
@@ -236,9 +252,9 @@ function DefaultErrorFallback({
           {/* Support Link */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500">
-              Need help?{' '}
-              <a 
-                href="/support" 
+              Need help?{" "}
+              <a
+                href="/support"
                 className="text-cyan-400 hover:text-cyan-300 transition-colors"
               >
                 Contact Support
@@ -256,7 +272,7 @@ function DefaultErrorFallback({
  */
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<Props, 'children'>
+  errorBoundaryProps?: Omit<Props, "children">,
 ) {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary {...errorBoundaryProps}>
@@ -265,7 +281,7 @@ export function withErrorBoundary<P extends object>(
   );
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 }
 

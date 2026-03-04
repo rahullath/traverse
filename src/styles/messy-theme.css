@@ -6,33 +6,41 @@
   --messy-card-bg: #1a1a1a;
   --messy-card-hover: #2a2a2a;
   --messy-border: #2a2a2a;
-  
+
   /* Accent Colors */
   --messy-primary: #00d4ff;
   --messy-secondary: #7c3aed;
   --messy-success: #10b981;
   --messy-warning: #f59e0b;
   --messy-error: #ef4444;
-  
+
   /* Text Colors */
   --messy-text-primary: #ffffff;
   --messy-text-secondary: #a1a1aa;
   --messy-text-muted: #71717a;
-  
+
   /* Glass Effects */
   --messy-glass-bg: rgba(26, 26, 26, 0.8);
   --messy-glass-border: rgba(255, 255, 255, 0.1);
-  
+
   /* Gradients */
-  --messy-gradient-primary: linear-gradient(135deg, var(--messy-primary), var(--messy-secondary));
-  --messy-gradient-card: linear-gradient(135deg, var(--messy-card-bg), rgba(42, 42, 42, 0.5));
-  
+  --messy-gradient-primary: linear-gradient(
+    135deg,
+    var(--messy-primary),
+    var(--messy-secondary)
+  );
+  --messy-gradient-card: linear-gradient(
+    135deg,
+    var(--messy-card-bg),
+    rgba(42, 42, 42, 0.5)
+  );
+
   /* Shadows for depth */
   --messy-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
   --messy-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
   --messy-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
   --messy-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
-  
+
   /* Animation timings */
   --messy-transition-fast: 0.15s ease-out;
   --messy-transition-normal: 0.3s ease-out;
@@ -41,26 +49,62 @@
 
 /* Tailwind Custom Classes */
 
-.bg-messy-bg { background-color: var(--messy-bg); }
-.bg-messy-card-bg { background-color: var(--messy-card-bg); }
-.bg-messy-card-hover { background-color: var(--messy-card-hover); }
-.bg-messy-primary { background-color: var(--messy-primary); }
-.bg-messy-secondary { background-color: var(--messy-secondary); }
-.bg-messy-success { background-color: var(--messy-success); }
-.bg-messy-warning { background-color: var(--messy-warning); }
-.bg-messy-error { background-color: var(--messy-error); }
+.bg-messy-bg {
+  background-color: var(--messy-bg);
+}
+.bg-messy-card-bg {
+  background-color: var(--messy-card-bg);
+}
+.bg-messy-card-hover {
+  background-color: var(--messy-card-hover);
+}
+.bg-messy-primary {
+  background-color: var(--messy-primary);
+}
+.bg-messy-secondary {
+  background-color: var(--messy-secondary);
+}
+.bg-messy-success {
+  background-color: var(--messy-success);
+}
+.bg-messy-warning {
+  background-color: var(--messy-warning);
+}
+.bg-messy-error {
+  background-color: var(--messy-error);
+}
 
-.text-messy-primary { color: var(--messy-text-primary); }
-.text-messy-secondary { color: var(--messy-text-secondary); }
-.text-messy-muted { color: var(--messy-text-muted); }
-.text-messy-accent-primary { color: var(--messy-primary); }
-.text-messy-accent-secondary { color: var(--messy-secondary); }
-.text-messy-success { color: var(--messy-success); }
-.text-messy-warning { color: var(--messy-warning); }
-.text-messy-error { color: var(--messy-error); }
+.text-messy-primary {
+  color: var(--messy-text-primary);
+}
+.text-messy-secondary {
+  color: var(--messy-text-secondary);
+}
+.text-messy-muted {
+  color: var(--messy-text-muted);
+}
+.text-messy-accent-primary {
+  color: var(--messy-primary);
+}
+.text-messy-accent-secondary {
+  color: var(--messy-secondary);
+}
+.text-messy-success {
+  color: var(--messy-success);
+}
+.text-messy-warning {
+  color: var(--messy-warning);
+}
+.text-messy-error {
+  color: var(--messy-error);
+}
 
-.border-messy-border { border-color: var(--messy-border); }
-.border-messy-primary { border-color: var(--messy-primary); }
+.border-messy-border {
+  border-color: var(--messy-border);
+}
+.border-messy-primary {
+  border-color: var(--messy-primary);
+}
 
 /* Dashboard Card Styles */
 .messy-card {
@@ -87,7 +131,11 @@
 }
 
 .messy-progress-bar {
-  background: linear-gradient(90deg, var(--messy-primary), var(--messy-secondary));
+  background: linear-gradient(
+    90deg,
+    var(--messy-primary),
+    var(--messy-secondary)
+  );
   transition: width var(--messy-transition-normal);
 }
 
@@ -124,7 +172,7 @@
 }
 
 .messy-checkbox:checked::after {
-  content: '✓';
+  content: "✓";
   @apply absolute inset-0 flex items-center justify-center text-black text-sm font-bold;
 }
 
@@ -147,15 +195,27 @@
 }
 
 @keyframes messy-fire {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2) rotate(5deg); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Energy Level Indicator */
-.messy-energy-low { color: var(--messy-error); }
-.messy-energy-medium { color: var(--messy-warning); }
-.messy-energy-high { color: var(--messy-success); }
+.messy-energy-low {
+  color: var(--messy-error);
+}
+.messy-energy-medium {
+  color: var(--messy-warning);
+}
+.messy-energy-high {
+  color: var(--messy-success);
+}
 
 /* Nutrition Ring Chart */
 .messy-nutrition-ring {
@@ -167,9 +227,74 @@
   .messy-card {
     @apply p-3;
   }
-  
+
   .messy-mobile-padding {
     @apply pb-20; /* Account for bottom navigation */
+  }
+}
+
+/* Mobile Viewport Handling */
+html,
+body {
+  /* Ensure full viewport height on mobile browsers */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Mirror UI specific mobile viewport handling */
+.mirror-ui {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Safe area insets for notched devices */
+.mirror-header {
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.mirror-footer,
+.mirror-bottom-sheet {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Prevent overscroll bounce on iOS */
+.mirror-ui {
+  overscroll-behavior-y: contain;
+}
+
+/* Touch action optimization for gestures */
+.touch-swipeable {
+  touch-action: pan-y;
+}
+
+.touch-draggable {
+  touch-action: none;
+}
+
+/* Mobile-specific touch target sizes */
+@media (max-width: 768px) {
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Prevent text selection during touch gestures */
+.no-select-on-touch {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Smooth scrolling for mobile */
+@media (max-width: 768px) {
+  .mirror-timeline {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
 }
 
@@ -191,7 +316,7 @@
   .messy-progress-bar {
     transition: none;
   }
-  
+
   .messy-streak-fire {
     animation: none;
   }
@@ -238,6 +363,10 @@
 }
 
 @keyframes messy-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }

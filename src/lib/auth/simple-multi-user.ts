@@ -1,33 +1,37 @@
-
-import { createServerClient } from '../supabase/server';
-import type { User } from '@supabase/supabase-js';
+import { createServerClient } from "../supabase/server";
+import type { User } from "@supabase/supabase-js";
 
 function getDefaultUserPreferences() {
   return {
-    theme: 'dark',
-    accent_color: '#8b5cf6',
-    enabled_modules: ['daily-plan', 'habits', 'calendar'],
-    module_order: ['daily-plan', 'habits', 'calendar'],
+    theme: "dark",
+    accent_color: "#8b5cf6",
+    enabled_modules: ["daily-plan", "habits", "calendar"],
+    module_order: ["daily-plan", "habits", "calendar"],
     dashboard_layout: {},
-    ai_personality: 'professional',
+    ai_personality: "professional",
     ai_proactivity_level: 3,
     data_retention_days: 365,
     share_analytics: false,
-    subscription_status: 'trial',
-    trial_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    subscription_status: "trial",
+    trial_end_date: new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ).toISOString(),
   };
 }
 
 function normalizePreferenceRecord(record: any) {
   const defaults = getDefaultUserPreferences();
-  const payload = record?.preferences && typeof record.preferences === 'object'
-    ? record.preferences
-    : {};
+  const payload =
+    record?.preferences && typeof record.preferences === "object"
+      ? record.preferences
+      : {};
   const enabledModules = Array.isArray(payload.enabled_modules)
-    ? payload.enabled_modules.filter((value: unknown) => typeof value === 'string')
+    ? payload.enabled_modules.filter(
+        (value: unknown) => typeof value === "string",
+      )
     : defaults.enabled_modules;
   const moduleOrder = Array.isArray(payload.module_order)
-    ? payload.module_order.filter((value: unknown) => typeof value === 'string')
+    ? payload.module_order.filter((value: unknown) => typeof value === "string")
     : enabledModules;
 
   return {
@@ -48,22 +52,25 @@ export class ServerAuth {
 
   async getUser(): Promise<User | null> {
     try {
-      const { data: { user }, error } = await this.supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error,
+      } = await this.supabase.auth.getUser();
+
       if (error) {
-        console.log('🚫 Server auth error:', error.message);
-        return null;
-      }
-      
-      if (!user) {
-        console.log('🚫 No user found on server');
+        console.log("🚫 Server auth error:", error.message);
         return null;
       }
 
-      console.log('✅ Server found user:', user.email);
+      if (!user) {
+        console.log("🚫 No user found on server");
+        return null;
+      }
+
+      console.log("✅ Server found user:", user.email);
       return user;
     } catch (error) {
-      console.error('Server auth exception:', error);
+      console.error("Server auth exception:", error);
       return null;
     }
   }
@@ -71,7 +78,7 @@ export class ServerAuth {
   async requireAuth(): Promise<User> {
     const user = await this.getUser();
     if (!user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
     return user;
   }
@@ -79,27 +86,27 @@ export class ServerAuth {
   async getUserPreferences(userId: string) {
     try {
       const { data, error } = await this.supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', userId)
+        .from("user_preferences")
+        .select("*")
+        .eq("user_id", userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Preferences error:', error);
+      if (error && error.code !== "PGRST116") {
+        console.error("Preferences error:", error);
         return null;
       }
 
       if (!data) return null;
       return normalizePreferenceRecord(data);
     } catch (error) {
-      console.error('Error fetching preferences:', error);
+      console.error("Error fetching preferences:", error);
       return null;
     }
   }
 
   async createDefaultPreferences(userId: string, userEmail?: string) {
     try {
-      console.log('🔧 Creating default preferences for new user:', userId);
+      console.log("🔧 Creating default preferences for new user:", userId);
 
       const defaultPrefs = {
         user_id: userId,
@@ -107,17 +114,17 @@ export class ServerAuth {
       };
 
       const { data, error } = await this.supabase
-        .from('user_preferences')
+        .from("user_preferences")
         .insert(defaultPrefs)
         .select()
         .single();
 
       if (error) {
-        console.error('❌ Failed to create default preferences:', error);
+        console.error("❌ Failed to create default preferences:", error);
         return null;
       }
 
-      console.log('✅ Default preferences created for user:', userId);
+      console.log("✅ Default preferences created for user:", userId);
 
       // Also check if user should be activated from waitlist
       if (userEmail) {
@@ -126,7 +133,7 @@ export class ServerAuth {
 
       return normalizePreferenceRecord(data);
     } catch (error) {
-      console.error('❌ Error creating default preferences:', error);
+      console.error("❌ Error creating default preferences:", error);
       return null;
     }
   }
@@ -134,27 +141,30 @@ export class ServerAuth {
   async activateFromWaitlist(email: string) {
     try {
       const { data: waitlistEntry } = await this.supabase
-        .from('waitlist')
-        .select('*')
-        .eq('email', email.toLowerCase())
+        .from("waitlist")
+        .select("*")
+        .eq("email", email.toLowerCase())
         .single();
 
       if (waitlistEntry && !waitlistEntry.activated) {
         const { error } = await this.supabase
-          .from('waitlist')
+          .from("waitlist")
           .update({
             activated: true,
-            activation_date: new Date().toISOString()
+            activation_date: new Date().toISOString(),
           })
-          .eq('id', waitlistEntry.id);
+          .eq("id", waitlistEntry.id);
 
         if (!error) {
-          console.log('✅ User activated from waitlist:', email);
+          console.log("✅ User activated from waitlist:", email);
         }
       }
     } catch (error) {
       // Non-critical error, just log it
-      console.log('ℹ️ Could not activate from waitlist (user may not be on waitlist):', email);
+      console.log(
+        "ℹ️ Could not activate from waitlist (user may not be on waitlist):",
+        email,
+      );
     }
   }
 
@@ -166,51 +176,51 @@ export class ServerAuth {
   async initializeNewUser(userId: string): Promise<void> {
     try {
       // Generate a simulated wallet address (looks like Ethereum address)
-      const simulatedWalletAddress = '0x' + Array.from(
-        { length: 40 }, 
-        () => Math.floor(Math.random() * 16).toString(16)
-      ).join('');
+      const simulatedWalletAddress =
+        "0x" +
+        Array.from({ length: 40 }, () =>
+          Math.floor(Math.random() * 16).toString(16),
+        ).join("");
 
       // Update profile with simulated wallet
       await this.supabase
-        .from('profiles')
+        .from("profiles")
         .update({
           simulated_wallet_address: simulatedWalletAddress,
-          wallet_created_at: new Date().toISOString()
+          wallet_created_at: new Date().toISOString(),
         })
-        .eq('id', userId);
+        .eq("id", userId);
 
       // Initialize token balance (₹500 = 5000 tokens)
-      await this.supabase
-        .from('user_tokens')
-        .insert({
-          user_id: userId,
-          balance: 5000,
-          total_earned: 5000,
-          total_spent: 0,
-          wallet_type: 'simulated'
-        });
+      await this.supabase.from("user_tokens").insert({
+        user_id: userId,
+        balance: 5000,
+        total_earned: 5000,
+        total_spent: 0,
+        wallet_type: "simulated",
+      });
 
       // Log welcome bonus transaction
-      await this.supabase
-        .from('token_transactions')
-        .insert({
-          user_id: userId,
-          transaction_type: 'bonus',
-          amount: 5000,
-          description: 'Welcome to meshOS! ₹500 starting credit',
-          balance_before: 0,
-          balance_after: 5000,
-          metadata: {
-            bonus_type: 'welcome',
-            amount_inr: 500,
-            wallet_address: simulatedWalletAddress
-          }
-        });
+      await this.supabase.from("token_transactions").insert({
+        user_id: userId,
+        transaction_type: "bonus",
+        amount: 5000,
+        description: "Welcome to meshOS! ₹500 starting credit",
+        balance_before: 0,
+        balance_after: 5000,
+        metadata: {
+          bonus_type: "welcome",
+          amount_inr: 500,
+          wallet_address: simulatedWalletAddress,
+        },
+      });
 
-      console.log('New user initialized with simulated wallet:', simulatedWalletAddress);
+      console.log(
+        "New user initialized with simulated wallet:",
+        simulatedWalletAddress,
+      );
     } catch (error) {
-      console.error('Error initializing new user:', error);
+      console.error("Error initializing new user:", error);
     }
   }
 
@@ -224,29 +234,29 @@ export class ServerAuth {
   } | null> {
     try {
       const { data, error } = await this.supabase
-        .from('user_tokens')
-        .select('balance, total_earned, total_spent')
-        .eq('user_id', userId)
+        .from("user_tokens")
+        .select("balance, total_earned, total_spent")
+        .eq("user_id", userId)
         .single();
 
-      if (error && error.code === 'PGRST116') {
+      if (error && error.code === "PGRST116") {
         // User not found, initialize
         await this.initializeNewUser(userId);
         return {
           balance: 5000,
           total_earned: 5000,
-          total_spent: 0
+          total_spent: 0,
         };
       }
 
       if (error || !data) {
-        console.error('Error getting token balance:', error);
+        console.error("Error getting token balance:", error);
         return null;
       }
 
       return data;
     } catch (error) {
-      console.error('Error getting user token balance:', error);
+      console.error("Error getting user token balance:", error);
       return null;
     }
   }
@@ -254,12 +264,17 @@ export class ServerAuth {
   /**
    * Deduct tokens for service usage
    */
-  async deductTokens(userId: string, amount: number, description: string, metadata?: any): Promise<boolean> {
+  async deductTokens(
+    userId: string,
+    amount: number,
+    description: string,
+    metadata?: any,
+  ): Promise<boolean> {
     try {
       // Get current balance
       const balance = await this.getUserTokenBalance(userId);
       if (!balance || balance.balance < amount) {
-        console.error('Insufficient tokens for deduction');
+        console.error("Insufficient tokens for deduction");
         return false;
       }
 
@@ -268,37 +283,35 @@ export class ServerAuth {
 
       // Update token balance
       const { error: updateError } = await this.supabase
-        .from('user_tokens')
+        .from("user_tokens")
         .update({
           balance: newBalance,
-          total_spent: newTotalSpent
+          total_spent: newTotalSpent,
         })
-        .eq('user_id', userId);
+        .eq("user_id", userId);
 
       if (updateError) {
-        console.error('Error updating token balance:', updateError);
+        console.error("Error updating token balance:", updateError);
         return false;
       }
 
       // Log transaction
-      await this.supabase
-        .from('token_transactions')
-        .insert({
-          user_id: userId,
-          transaction_type: 'deduction',
-          amount: -amount, // Negative for deduction
-          description,
-          balance_before: balance.balance,
-          balance_after: newBalance,
-          metadata: {
-            ...metadata,
-            deduction_reason: description
-          }
-        });
+      await this.supabase.from("token_transactions").insert({
+        user_id: userId,
+        transaction_type: "deduction",
+        amount: -amount, // Negative for deduction
+        description,
+        balance_before: balance.balance,
+        balance_after: newBalance,
+        metadata: {
+          ...metadata,
+          deduction_reason: description,
+        },
+      });
 
       return true;
     } catch (error) {
-      console.error('Error deducting tokens:', error);
+      console.error("Error deducting tokens:", error);
       return false;
     }
   }
@@ -306,7 +319,12 @@ export class ServerAuth {
   /**
    * Add tokens (for bonuses, refunds, etc.)
    */
-  async addTokens(userId: string, amount: number, description: string, metadata?: any): Promise<boolean> {
+  async addTokens(
+    userId: string,
+    amount: number,
+    description: string,
+    metadata?: any,
+  ): Promise<boolean> {
     try {
       const balance = await this.getUserTokenBalance(userId);
       if (!balance) return false;
@@ -316,37 +334,35 @@ export class ServerAuth {
 
       // Update token balance
       const { error: updateError } = await this.supabase
-        .from('user_tokens')
+        .from("user_tokens")
         .update({
           balance: newBalance,
-          total_earned: newTotalEarned
+          total_earned: newTotalEarned,
         })
-        .eq('user_id', userId);
+        .eq("user_id", userId);
 
       if (updateError) {
-        console.error('Error updating token balance:', updateError);
+        console.error("Error updating token balance:", updateError);
         return false;
       }
 
       // Log transaction
-      await this.supabase
-        .from('token_transactions')
-        .insert({
-          user_id: userId,
-          transaction_type: 'credit',
-          amount,
-          description,
-          balance_before: balance.balance,
-          balance_after: newBalance,
-          metadata: {
-            ...metadata,
-            credit_reason: description
-          }
-        });
+      await this.supabase.from("token_transactions").insert({
+        user_id: userId,
+        transaction_type: "credit",
+        amount,
+        description,
+        balance_before: balance.balance,
+        balance_after: newBalance,
+        metadata: {
+          ...metadata,
+          credit_reason: description,
+        },
+      });
 
       return true;
     } catch (error) {
-      console.error('Error adding tokens:', error);
+      console.error("Error adding tokens:", error);
       return false;
     }
   }
@@ -354,23 +370,26 @@ export class ServerAuth {
   /**
    * Get user's transaction history
    */
-  async getTransactionHistory(userId: string, limit: number = 20): Promise<any[]> {
+  async getTransactionHistory(
+    userId: string,
+    limit: number = 20,
+  ): Promise<any[]> {
     try {
       const { data, error } = await this.supabase
-        .from('token_transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .from("token_transactions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
         .limit(limit);
 
       if (error) {
-        console.error('Error getting transaction history:', error);
+        console.error("Error getting transaction history:", error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error getting transaction history:', error);
+      console.error("Error getting transaction history:", error);
       return [];
     }
   }

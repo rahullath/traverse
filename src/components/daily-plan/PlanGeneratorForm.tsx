@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import type { EnergyState } from '../../types/daily-plan';
+import React, { useState, useEffect } from "react";
+import type { EnergyState } from "../../types/daily-plan";
 
 interface PlanGeneratorFormProps {
   onGenerate: (input: {
@@ -11,7 +11,7 @@ interface PlanGeneratorFormProps {
       startTime: string;
       durationMinutes: number;
       location?: string;
-      anchorType: 'class' | 'seminar' | 'workshop' | 'appointment' | 'other';
+      anchorType: "class" | "seminar" | "workshop" | "appointment" | "other";
       mustAttend: boolean;
       notes?: string;
     };
@@ -23,26 +23,26 @@ interface PlanGeneratorFormProps {
 /**
  * Calculate default wake time based on current time
  * Requirements: 8.1, 8.2, 8.5
- * 
+ *
  * - If current time < 12:00, default wake time = 07:00
  * - If current time >= 12:00, default wake time = now rounded down to nearest 15 min
  */
 function calculateDefaultWakeTime(): string {
   const now = new Date();
   const currentHour = now.getHours();
-  
+
   // Requirement 8.1: If current time < 12:00, default to 07:00
   if (currentHour < 12) {
-    return '07:00';
+    return "07:00";
   }
-  
+
   // Requirement 8.2: If current time >= 12:00, round down to nearest 15 minutes
   const currentMinute = now.getMinutes();
   const roundedMinute = Math.floor(currentMinute / 15) * 15;
-  
-  const hours = currentHour.toString().padStart(2, '0');
-  const minutes = roundedMinute.toString().padStart(2, '0');
-  
+
+  const hours = currentHour.toString().padStart(2, "0");
+  const minutes = roundedMinute.toString().padStart(2, "0");
+
   return `${hours}:${minutes}`;
 }
 
@@ -53,17 +53,19 @@ export default function PlanGeneratorForm({
 }: PlanGeneratorFormProps) {
   // Requirement 8.5: Display the calculated default wake time
   const [wakeTime, setWakeTime] = useState(() => calculateDefaultWakeTime());
-  const [sleepTime, setSleepTime] = useState('23:00');
-  const [energyState, setEnergyState] = useState<EnergyState>('medium');
+  const [sleepTime, setSleepTime] = useState("23:00");
+  const [energyState, setEnergyState] = useState<EnergyState>("medium");
   const [manualAnchorEnabled, setManualAnchorEnabled] = useState(false);
-  const [manualAnchorTitle, setManualAnchorTitle] = useState('');
-  const [manualAnchorStartTime, setManualAnchorStartTime] = useState('10:00');
+  const [manualAnchorTitle, setManualAnchorTitle] = useState("");
+  const [manualAnchorStartTime, setManualAnchorStartTime] = useState("10:00");
   const [manualAnchorDuration, setManualAnchorDuration] = useState(60);
-  const [manualAnchorLocation, setManualAnchorLocation] = useState('');
-  const [manualAnchorType, setManualAnchorType] = useState<'class' | 'seminar' | 'workshop' | 'appointment' | 'other'>('other');
+  const [manualAnchorLocation, setManualAnchorLocation] = useState("");
+  const [manualAnchorType, setManualAnchorType] = useState<
+    "class" | "seminar" | "workshop" | "appointment" | "other"
+  >("other");
   const [manualAnchorMustAttend, setManualAnchorMustAttend] = useState(true);
-  const [manualAnchorNotes, setManualAnchorNotes] = useState('');
-  
+  const [manualAnchorNotes, setManualAnchorNotes] = useState("");
+
   // Update default wake time when component mounts or time changes significantly
   useEffect(() => {
     const defaultWakeTime = calculateDefaultWakeTime();
@@ -75,7 +77,9 @@ export default function PlanGeneratorForm({
 
     setManualAnchorEnabled(true);
     const timeout = setTimeout(() => {
-      const titleInput = document.getElementById('manual-anchor-title') as HTMLInputElement | null;
+      const titleInput = document.getElementById(
+        "manual-anchor-title",
+      ) as HTMLInputElement | null;
       titleInput?.focus();
     }, 0);
 
@@ -94,7 +98,7 @@ export default function PlanGeneratorForm({
         startTime: string;
         durationMinutes: number;
         location?: string;
-        anchorType: 'class' | 'seminar' | 'workshop' | 'appointment' | 'other';
+        anchorType: "class" | "seminar" | "workshop" | "appointment" | "other";
         mustAttend: boolean;
         notes?: string;
       };
@@ -117,12 +121,17 @@ export default function PlanGeneratorForm({
 
   return (
     <div className="bg-surface rounded-xl border border-border p-6 shadow-lg">
-      <h2 className="text-2xl font-semibold text-text-primary mb-6">Generate Daily Plan</h2>
-      
+      <h2 className="text-2xl font-semibold text-text-primary mb-6">
+        Generate Daily Plan
+      </h2>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Wake Time */}
         <div>
-          <label htmlFor="wake-time" className="block text-sm font-medium text-text-primary mb-2">
+          <label
+            htmlFor="wake-time"
+            className="block text-sm font-medium text-text-primary mb-2"
+          >
             Wake Time
           </label>
           <input
@@ -138,7 +147,10 @@ export default function PlanGeneratorForm({
 
         {/* Sleep Time */}
         <div>
-          <label htmlFor="sleep-time" className="block text-sm font-medium text-text-primary mb-2">
+          <label
+            htmlFor="sleep-time"
+            className="block text-sm font-medium text-text-primary mb-2"
+          >
             Sleep Time
           </label>
           <input
@@ -163,14 +175,16 @@ export default function PlanGeneratorForm({
                 type="radio"
                 name="energy"
                 value="low"
-                checked={energyState === 'low'}
+                checked={energyState === "low"}
                 onChange={(e) => setEnergyState(e.target.value as EnergyState)}
                 className="mr-3 text-accent-primary focus:ring-accent-primary"
                 disabled={isGenerating}
               />
               <div>
                 <div className="font-medium text-text-primary">Low Energy</div>
-                <div className="text-sm text-text-muted">1 task maximum, more rest time</div>
+                <div className="text-sm text-text-muted">
+                  1 task maximum, more rest time
+                </div>
               </div>
             </label>
 
@@ -179,14 +193,18 @@ export default function PlanGeneratorForm({
                 type="radio"
                 name="energy"
                 value="medium"
-                checked={energyState === 'medium'}
+                checked={energyState === "medium"}
                 onChange={(e) => setEnergyState(e.target.value as EnergyState)}
                 className="mr-3 text-accent-primary focus:ring-accent-primary"
                 disabled={isGenerating}
               />
               <div>
-                <div className="font-medium text-text-primary">Medium Energy</div>
-                <div className="text-sm text-text-muted">2 tasks maximum, balanced schedule</div>
+                <div className="font-medium text-text-primary">
+                  Medium Energy
+                </div>
+                <div className="text-sm text-text-muted">
+                  2 tasks maximum, balanced schedule
+                </div>
               </div>
             </label>
 
@@ -195,14 +213,16 @@ export default function PlanGeneratorForm({
                 type="radio"
                 name="energy"
                 value="high"
-                checked={energyState === 'high'}
+                checked={energyState === "high"}
                 onChange={(e) => setEnergyState(e.target.value as EnergyState)}
                 className="mr-3 text-accent-primary focus:ring-accent-primary"
                 disabled={isGenerating}
               />
               <div>
                 <div className="font-medium text-text-primary">High Energy</div>
-                <div className="text-sm text-text-muted">3 tasks maximum, productive day</div>
+                <div className="text-sm text-text-muted">
+                  3 tasks maximum, productive day
+                </div>
               </div>
             </label>
           </div>
@@ -211,7 +231,9 @@ export default function PlanGeneratorForm({
         {/* Submit Button */}
         <div className="border border-border rounded-lg p-4 space-y-3">
           <label className="flex items-center justify-between gap-3">
-            <span className="text-sm font-medium text-text-primary">Add manual anchor for today</span>
+            <span className="text-sm font-medium text-text-primary">
+              Add manual anchor for today
+            </span>
             <input
               type="checkbox"
               checked={manualAnchorEnabled}
@@ -223,14 +245,20 @@ export default function PlanGeneratorForm({
 
           {manualAnchorRequired && (
             <p className="text-xs text-accent-warning">
-              A manual anchor is required because no calendar anchors were found for this day.
+              A manual anchor is required because no calendar anchors were found
+              for this day.
             </p>
           )}
 
           {manualAnchorEnabled && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
-                <label htmlFor="manual-anchor-title" className="block text-xs text-text-muted mb-1">Anchor title</label>
+                <label
+                  htmlFor="manual-anchor-title"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Anchor title
+                </label>
                 <input
                   id="manual-anchor-title"
                   type="text"
@@ -243,7 +271,12 @@ export default function PlanGeneratorForm({
               </div>
 
               <div>
-                <label htmlFor="manual-anchor-start" className="block text-xs text-text-muted mb-1">Start time</label>
+                <label
+                  htmlFor="manual-anchor-start"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Start time
+                </label>
                 <input
                   id="manual-anchor-start"
                   type="time"
@@ -255,21 +288,33 @@ export default function PlanGeneratorForm({
               </div>
 
               <div>
-                <label htmlFor="manual-anchor-duration" className="block text-xs text-text-muted mb-1">Duration (minutes)</label>
+                <label
+                  htmlFor="manual-anchor-duration"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Duration (minutes)
+                </label>
                 <input
                   id="manual-anchor-duration"
                   type="number"
                   min={15}
                   step={5}
                   value={manualAnchorDuration}
-                  onChange={(e) => setManualAnchorDuration(Number(e.target.value) || 60)}
+                  onChange={(e) =>
+                    setManualAnchorDuration(Number(e.target.value) || 60)
+                  }
                   className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary"
                   disabled={isGenerating}
                 />
               </div>
 
               <div>
-                <label htmlFor="manual-anchor-type" className="block text-xs text-text-muted mb-1">Anchor type</label>
+                <label
+                  htmlFor="manual-anchor-type"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Anchor type
+                </label>
                 <select
                   id="manual-anchor-type"
                   value={manualAnchorType}
@@ -294,11 +339,21 @@ export default function PlanGeneratorForm({
                   disabled={isGenerating}
                   className="h-4 w-4 text-accent-primary focus:ring-accent-primary"
                 />
-                <label htmlFor="manual-anchor-required" className="text-xs text-text-muted">Must attend</label>
+                <label
+                  htmlFor="manual-anchor-required"
+                  className="text-xs text-text-muted"
+                >
+                  Must attend
+                </label>
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="manual-anchor-location" className="block text-xs text-text-muted mb-1">Location (optional)</label>
+                <label
+                  htmlFor="manual-anchor-location"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Location (optional)
+                </label>
                 <input
                   id="manual-anchor-location"
                   type="text"
@@ -311,7 +366,12 @@ export default function PlanGeneratorForm({
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="manual-anchor-notes" className="block text-xs text-text-muted mb-1">Notes (optional)</label>
+                <label
+                  htmlFor="manual-anchor-notes"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Notes (optional)
+                </label>
                 <textarea
                   id="manual-anchor-notes"
                   value={manualAnchorNotes}
@@ -332,16 +392,42 @@ export default function PlanGeneratorForm({
         >
           {isGenerating ? (
             <>
-              <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
               Generating Plan...
             </>
           ) : (
             <>
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
               Generate Plan
             </>

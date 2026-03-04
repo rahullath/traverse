@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
-import Papa from 'papaparse';
+import React, { useState } from "react";
+import Papa from "papaparse";
 
 interface CSVImporterProps {
   onImport: (data: any[]) => void;
   onClose: () => void;
 }
 
-export const CSVImporter: React.FC<CSVImporterProps> = ({ onImport, onClose }) => {
+export const CSVImporter: React.FC<CSVImporterProps> = ({
+  onImport,
+  onClose,
+}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +45,9 @@ export const CSVImporter: React.FC<CSVImporterProps> = ({ onImport, onClose }) =
         )}
         {error && <p className="error-message">{error}</p>}
         <div className="modal-actions">
-          <button onClick={onClose} className="cancel-button">Cancel</button>
+          <button onClick={onClose} className="cancel-button">
+            Cancel
+          </button>
         </div>
       </div>
     </div>

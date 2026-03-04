@@ -1,8 +1,8 @@
 // Daily Plan Generator V1 - Plan Builder Service
 
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Location } from '../../types/uk-student-travel';
-import type { CalendarEvent } from '../../types/calendar';
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Location } from "../../types/uk-student-travel";
+import type { CalendarEvent } from "../../types/calendar";
 import type {
   DailyPlan,
   PlanInput,
@@ -12,9 +12,13 @@ import type {
   CreateDailyPlan,
   CreateTimeBlock,
   CreateExitTime,
-} from '../../types/daily-plan';
-import { calendarService } from '../calendar/calendar-service';
-import { ExitTimeCalculator, type Commitment, type ExitTimeResult } from './exit-time-calculator';
+} from "../../types/daily-plan";
+import { calendarService } from "../calendar/calendar-service";
+import {
+  ExitTimeCalculator,
+  type Commitment,
+  type ExitTimeResult,
+} from "./exit-time-calculator";
 import {
   createDailyPlan,
   createTimeBlocks,
@@ -25,16 +29,24 @@ import {
   updateTimeBlock,
   deleteTimeBlock,
   createTimeBlock,
-} from './database';
+} from "./database";
 
 // V2 Chain-Based Execution imports
-import { AnchorService } from '../anchors/anchor-service';
-import { ChainGenerator } from '../chains/chain-generator';
-import { LocationStateTracker } from '../chains/location-state';
-import { WakeRampGenerator } from '../chains/wake-ramp';
-import { DEFAULT_GATE_CONDITIONS } from '../chains/exit-gate';
-import type { ExecutionChain, HomeInterval, LocationPeriod, WakeRamp } from '../chains/types';
-import type { ChainCustomStep, ChainStepOverrides } from '../chains/step-customization';
+import { AnchorService } from "../anchors/anchor-service";
+import { ChainGenerator } from "../chains/chain-generator";
+import { LocationStateTracker } from "../chains/location-state";
+import { WakeRampGenerator } from "../chains/wake-ramp";
+import { DEFAULT_GATE_CONDITIONS } from "../chains/exit-gate";
+import type {
+  ExecutionChain,
+  HomeInterval,
+  LocationPeriod,
+  WakeRamp,
+} from "../chains/types";
+import type {
+  ChainCustomStep,
+  ChainStepOverrides,
+} from "../chains/step-customization";
 
 // Internal types for plan building
 interface Activity {
@@ -72,28 +84,28 @@ interface PlanInputs {
 // Meal scheduling constants for V1.2
 // Requirements: 1.1, 1.2, 1.3, 2.1, 5.1, 5.2, 5.3, 5.4
 const MEAL_WINDOWS = {
-  breakfast: { start: '06:30', end: '11:30' },
-  lunch: { start: '11:30', end: '15:30' },
-  dinner: { start: '17:00', end: '21:30' }
+  breakfast: { start: "06:30", end: "11:30" },
+  lunch: { start: "11:30", end: "15:30" },
+  dinner: { start: "17:00", end: "21:30" },
 };
 
 const MIN_MEAL_GAP_MINUTES = 180; // 3 hours
 
 const DEFAULT_MEAL_TIMES = {
-  breakfast: '09:30',
-  lunch: '13:00',
-  dinner: '19:00'
+  breakfast: "09:30",
+  lunch: "13:00",
+  dinner: "19:00",
 };
 
 // Meal durations (in minutes)
 const MEAL_DURATIONS = {
   breakfast: 15,
   lunch: 30,
-  dinner: 45
+  dinner: 45,
 };
 
 // Types for meal placement
-type MealType = 'breakfast' | 'lunch' | 'dinner';
+type MealType = "breakfast" | "lunch" | "dinner";
 
 interface MealPlacement {
   meal: MealType;
@@ -103,7 +115,7 @@ interface MealPlacement {
   skipReason?: string;
   metadata?: {
     targetTime?: Date;
-    placementReason?: 'anchor-aware' | 'default';
+    placementReason?: "anchor-aware" | "default";
   };
 }
 
@@ -111,7 +123,7 @@ interface MealPlacement {
  * Parse time string (HH:MM) and apply to a date
  */
 function parseTimeToDate(timeStr: string, baseDate: Date): Date {
-  const [hours, minutes] = timeStr.split(':').map(Number);
+  const [hours, minutes] = timeStr.split(":").map(Number);
   const result = new Date(baseDate);
   result.setHours(hours, minutes, 0, 0);
   return result;
@@ -123,7 +135,7 @@ function parseTimeToDate(timeStr: string, baseDate: Date): Date {
 function hasConflict(
   proposedStart: Date,
   proposedEnd: Date,
-  anchors: TimeBlock[]
+  anchors: TimeBlock[],
 ): boolean {
   for (const anchor of anchors) {
     const anchorStart = anchor.startTime.getTime();
@@ -145,13 +157,14 @@ function hasConflict(
  */
 function checkMealSpacing(
   proposedTime: Date,
-  previousMealEndTime: Date | null
+  previousMealEndTime: Date | null,
 ): boolean {
   if (!previousMealEndTime) {
     return true; // No previous meal, spacing is satisfied
   }
 
-  const gapMinutes = (proposedTime.getTime() - previousMealEndTime.getTime()) / 60000;
+  const gapMinutes =
+    (proposedTime.getTime() - previousMealEndTime.getTime()) / 60000;
   return gapMinutes >= MIN_MEAL_GAP_MINUTES;
 }
 
@@ -162,7 +175,7 @@ function checkMealSpacing(
 function clampToMealWindow(
   targetTime: Date,
   mealType: MealType,
-  now: Date
+  now: Date,
 ): Date | null {
   const window = MEAL_WINDOWS[mealType];
   const windowStart = parseTimeToDate(window.start, targetTime);
@@ -203,7 +216,7 @@ function findAvailableSlot(
   targetTime: Date,
   duration: number,
   anchors: TimeBlock[],
-  searchRangeMinutes: number = 30
+  searchRangeMinutes: number = 30,
 ): Date | null {
   // Try the target time first
   const targetEnd = new Date(targetTime.getTime() + duration * 60000);
@@ -240,63 +253,63 @@ function calculateMealTargetTime(
   mealType: MealType,
   anchors: TimeBlock[],
   wakeTime: Date,
-  now: Date
+  now: Date,
 ): Date {
   // If no anchors, use default times
   if (anchors.length === 0) {
     const defaultTime = parseTimeToDate(DEFAULT_MEAL_TIMES[mealType], wakeTime);
-    
+
     // Special handling for breakfast based on wake time
-    if (mealType === 'breakfast') {
+    if (mealType === "breakfast") {
       if (wakeTime.getHours() >= 9) {
         // If wake time is 9am or later, schedule breakfast 45 minutes after wake
         return new Date(wakeTime.getTime() + 45 * 60000);
       }
     }
-    
+
     return defaultTime;
   }
 
   // Anchor-aware placement
   switch (mealType) {
-    case 'breakfast': {
+    case "breakfast": {
       // Place near wake time if within breakfast window
       const breakfastTarget = new Date(wakeTime.getTime() + 45 * 60000);
       return breakfastTarget;
     }
 
-    case 'lunch': {
+    case "lunch": {
       // Find morning anchors (before 12:00)
       const noon = new Date(wakeTime);
       noon.setHours(12, 0, 0, 0);
-      
-      const morningAnchors = anchors.filter(a => a.endTime < noon);
-      
+
+      const morningAnchors = anchors.filter((a) => a.endTime < noon);
+
       if (morningAnchors.length > 0) {
         // Place after last morning anchor
         const lastMorningAnchor = morningAnchors[morningAnchors.length - 1];
         return new Date(lastMorningAnchor.endTime.getTime() + 30 * 60000);
       }
-      
+
       // Default to 12:30
       const lunchDefault = new Date(wakeTime);
       lunchDefault.setHours(12, 30, 0, 0);
       return lunchDefault;
     }
 
-    case 'dinner': {
+    case "dinner": {
       // Find evening anchors (after 15:00)
       const afternoon = new Date(wakeTime);
       afternoon.setHours(15, 0, 0, 0);
-      
-      const eveningAnchors = anchors.filter(a => a.endTime > afternoon);
-      
+
+      const eveningAnchors = anchors.filter((a) => a.endTime > afternoon);
+
       if (eveningAnchors.length > 0) {
         // Place after last evening anchor
         const lastEveningAnchor = eveningAnchors[eveningAnchors.length - 1];
         return new Date(lastEveningAnchor.endTime.getTime() + 30 * 60000);
       }
-      
+
       // Default to 19:00
       const dinnerDefault = new Date(wakeTime);
       dinnerDefault.setHours(19, 0, 0, 0);
@@ -309,10 +322,7 @@ function calculateMealTargetTime(
  * Check if a time falls within any home interval
  * Requirements: 8.5, 11.2, 17.5
  */
-function isInHomeInterval(
-  time: Date,
-  homeIntervals: HomeInterval[]
-): boolean {
+function isInHomeInterval(time: Date, homeIntervals: HomeInterval[]): boolean {
   if (homeIntervals.length === 0) {
     // If no home intervals provided (V1.2 mode), assume always at home
     return true;
@@ -320,7 +330,10 @@ function isInHomeInterval(
 
   const timeMs = time.getTime();
   for (const interval of homeIntervals) {
-    if (timeMs >= interval.start.getTime() && timeMs <= interval.end.getTime()) {
+    if (
+      timeMs >= interval.start.getTime() &&
+      timeMs <= interval.end.getTime()
+    ) {
       return true;
     }
   }
@@ -336,23 +349,27 @@ function placeMeals(
   wakeTime: Date,
   sleepTime: Date,
   now: Date,
-  homeIntervals: HomeInterval[] = [] // V2: Home intervals for location-aware placement
+  homeIntervals: HomeInterval[] = [], // V2: Home intervals for location-aware placement
 ): MealPlacement[] {
-  const meals: MealType[] = ['breakfast', 'lunch', 'dinner'];
+  const meals: MealType[] = ["breakfast", "lunch", "dinner"];
   const placements: MealPlacement[] = [];
   let previousMealEnd: Date | null = null;
 
-  console.log('[placeMeals] Starting meal placement');
-  console.log(`[placeMeals] Wake: ${wakeTime.toLocaleTimeString()}, Sleep: ${sleepTime.toLocaleTimeString()}, Now: ${now.toLocaleTimeString()}`);
+  console.log("[placeMeals] Starting meal placement");
+  console.log(
+    `[placeMeals] Wake: ${wakeTime.toLocaleTimeString()}, Sleep: ${sleepTime.toLocaleTimeString()}, Now: ${now.toLocaleTimeString()}`,
+  );
   console.log(`[placeMeals] Home intervals: ${homeIntervals.length}`);
 
   for (const meal of meals) {
     console.log(`[placeMeals] Processing ${meal}...`);
-    
+
     // 1. Calculate target time
     const targetTime = calculateMealTargetTime(meal, anchors, wakeTime, now);
-    console.log(`[placeMeals]   Target time calculated: ${targetTime.toLocaleTimeString()}`);
-    
+    console.log(
+      `[placeMeals]   Target time calculated: ${targetTime.toLocaleTimeString()}`,
+    );
+
     // 2. Clamp to meal window
     const clampedTime = clampToMealWindow(targetTime, meal, now);
     if (!clampedTime) {
@@ -360,24 +377,28 @@ function placeMeals(
       placements.push({
         meal,
         skipped: true,
-        skipReason: 'Past meal window',
+        skipReason: "Past meal window",
       });
       continue;
     }
-    console.log(`[placeMeals]   Clamped to window: ${clampedTime.toLocaleTimeString()}`);
-    
+    console.log(
+      `[placeMeals]   Clamped to window: ${clampedTime.toLocaleTimeString()}`,
+    );
+
     // 3. Check spacing constraint
     if (!checkMealSpacing(clampedTime, previousMealEnd)) {
-      console.log(`[placeMeals]   SKIP: Spacing constraint (previous meal ended at ${previousMealEnd?.toLocaleTimeString()})`);
+      console.log(
+        `[placeMeals]   SKIP: Spacing constraint (previous meal ended at ${previousMealEnd?.toLocaleTimeString()})`,
+      );
       placements.push({
         meal,
         skipped: true,
-        skipReason: 'Spacing constraint',
+        skipReason: "Spacing constraint",
       });
       continue;
     }
     console.log(`[placeMeals]   Spacing check passed`);
-    
+
     // 4. Find available slot
     const duration = MEAL_DURATIONS[meal];
     const slot = findAvailableSlot(clampedTime, duration, anchors);
@@ -386,12 +407,14 @@ function placeMeals(
       placements.push({
         meal,
         skipped: true,
-        skipReason: 'No valid slot',
+        skipReason: "No valid slot",
       });
       continue;
     }
-    console.log(`[placeMeals]   Available slot found: ${slot.toLocaleTimeString()}`);
-    
+    console.log(
+      `[placeMeals]   Available slot found: ${slot.toLocaleTimeString()}`,
+    );
+
     // 5. V2: Check if meal time falls in home interval
     // Requirements: 8.5, 11.2, 11.3, 17.5
     if (!isInHomeInterval(slot, homeIntervals)) {
@@ -399,27 +422,31 @@ function placeMeals(
       placements.push({
         meal,
         skipped: true,
-        skipReason: 'No home interval',
+        skipReason: "No home interval",
       });
       continue;
     }
     console.log(`[placeMeals]   Home interval check passed`);
-    
+
     // 6. Check if meal fits before sleep time
     const mealEnd = new Date(slot.getTime() + duration * 60000);
     if (mealEnd > sleepTime) {
-      console.log(`[placeMeals]   SKIP: Would exceed sleep time (${mealEnd.toLocaleTimeString()} > ${sleepTime.toLocaleTimeString()})`);
+      console.log(
+        `[placeMeals]   SKIP: Would exceed sleep time (${mealEnd.toLocaleTimeString()} > ${sleepTime.toLocaleTimeString()})`,
+      );
       placements.push({
         meal,
         skipped: true,
-        skipReason: 'Would exceed sleep time',
+        skipReason: "Would exceed sleep time",
       });
       continue;
     }
-    
+
     // 7. Place meal
-    const placementReason = anchors.length > 0 ? 'anchor-aware' : 'default';
-    console.log(`[placeMeals]   PLACED: ${slot.toLocaleTimeString()} - ${mealEnd.toLocaleTimeString()} (${placementReason})`);
+    const placementReason = anchors.length > 0 ? "anchor-aware" : "default";
+    console.log(
+      `[placeMeals]   PLACED: ${slot.toLocaleTimeString()} - ${mealEnd.toLocaleTimeString()} (${placementReason})`,
+    );
     placements.push({
       meal,
       time: slot,
@@ -430,18 +457,20 @@ function placeMeals(
         placementReason,
       },
     });
-    
+
     previousMealEnd = mealEnd;
   }
 
-  console.log(`[placeMeals] Completed: ${placements.filter(p => !p.skipped).length} meals placed, ${placements.filter(p => p.skipped).length} skipped`);
+  console.log(
+    `[placeMeals] Completed: ${placements.filter((p) => !p.skipped).length} meals placed, ${placements.filter((p) => p.skipped).length} skipped`,
+  );
   return placements;
 }
 
 export class PlanBuilderService {
   private supabase: SupabaseClient<any, any, any>;
   private exitTimeCalculator: ExitTimeCalculator;
-  
+
   // V2 Chain-Based Execution services
   private anchorService: AnchorService;
   private chainGenerator: ChainGenerator;
@@ -451,7 +480,7 @@ export class PlanBuilderService {
   constructor(supabase: SupabaseClient<any, any, any>) {
     this.supabase = supabase;
     this.exitTimeCalculator = new ExitTimeCalculator();
-    
+
     // Initialize V2 services
     this.anchorService = new AnchorService();
     this.chainGenerator = new ChainGenerator();
@@ -459,34 +488,49 @@ export class PlanBuilderService {
     this.wakeRampGenerator = new WakeRampGenerator();
   }
 
-  private async getUserChainStepOverrides(userId: string): Promise<ChainStepOverrides | undefined> {
+  private async getUserChainStepOverrides(
+    userId: string,
+  ): Promise<ChainStepOverrides | undefined> {
     const { data, error } = await this.supabase
-      .from('user_preferences')
-      .select('preferences')
-      .eq('user_id', userId)
+      .from("user_preferences")
+      .select("preferences")
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (error) {
-      console.warn('[Plan Builder] Failed to load chain step overrides, using defaults:', error.message);
+      console.warn(
+        "[Plan Builder] Failed to load chain step overrides, using defaults:",
+        error.message,
+      );
       return undefined;
     }
 
-    const preferences = data?.preferences && typeof data.preferences === 'object'
-      ? (data.preferences as Record<string, unknown>)
-      : {};
+    const preferences =
+      data?.preferences && typeof data.preferences === "object"
+        ? (data.preferences as Record<string, unknown>)
+        : {};
 
     const rawOverrides = preferences.chain_step_overrides;
-    if (!rawOverrides || typeof rawOverrides !== 'object' || Array.isArray(rawOverrides)) {
+    if (
+      !rawOverrides ||
+      typeof rawOverrides !== "object" ||
+      Array.isArray(rawOverrides)
+    ) {
       return undefined;
     }
 
     const overrides: ChainStepOverrides = {};
-    for (const [stepId, raw] of Object.entries(rawOverrides as Record<string, unknown>)) {
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    for (const [stepId, raw] of Object.entries(
+      rawOverrides as Record<string, unknown>,
+    )) {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
       const entry = raw as Record<string, unknown>;
       overrides[stepId] = {
-        name: typeof entry.name === 'string' ? entry.name : undefined,
-        duration_estimate: typeof entry.duration_estimate === 'number' ? entry.duration_estimate : undefined,
+        name: typeof entry.name === "string" ? entry.name : undefined,
+        duration_estimate:
+          typeof entry.duration_estimate === "number"
+            ? entry.duration_estimate
+            : undefined,
         disabled: entry.disabled === true,
       };
     }
@@ -494,32 +538,41 @@ export class PlanBuilderService {
     return Object.keys(overrides).length > 0 ? overrides : undefined;
   }
 
-  private async getUserChainCustomSteps(userId: string): Promise<ChainCustomStep[]> {
+  private async getUserChainCustomSteps(
+    userId: string,
+  ): Promise<ChainCustomStep[]> {
     const { data, error } = await this.supabase
-      .from('user_preferences')
-      .select('preferences')
-      .eq('user_id', userId)
+      .from("user_preferences")
+      .select("preferences")
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (error) {
-      console.warn('[Plan Builder] Failed to load custom chain steps, using none:', error.message);
+      console.warn(
+        "[Plan Builder] Failed to load custom chain steps, using none:",
+        error.message,
+      );
       return [];
     }
 
-    const preferences = data?.preferences && typeof data.preferences === 'object'
-      ? (data.preferences as Record<string, unknown>)
-      : {};
+    const preferences =
+      data?.preferences && typeof data.preferences === "object"
+        ? (data.preferences as Record<string, unknown>)
+        : {};
     const rawCustomSteps = Array.isArray(preferences.chain_custom_steps)
       ? preferences.chain_custom_steps
       : [];
 
     const customSteps: ChainCustomStep[] = [];
     for (const raw of rawCustomSteps) {
-      if (!raw || typeof raw !== 'object') continue;
+      if (!raw || typeof raw !== "object") continue;
       const record = raw as Record<string, unknown>;
-      const id = typeof record.id === 'string' ? record.id : '';
-      const name = typeof record.name === 'string' ? record.name : '';
-      const duration = typeof record.duration_estimate === 'number' ? record.duration_estimate : 1;
+      const id = typeof record.id === "string" ? record.id : "";
+      const name = typeof record.name === "string" ? record.name : "";
+      const duration =
+        typeof record.duration_estimate === "number"
+          ? record.duration_estimate
+          : 1;
       if (!id || !name) continue;
 
       customSteps.push({
@@ -528,7 +581,10 @@ export class PlanBuilderService {
         duration_estimate: duration,
         is_required: record.is_required !== false,
         can_skip_when_late: record.can_skip_when_late === true,
-        insert_after_id: typeof record.insert_after_id === 'string' ? record.insert_after_id : undefined,
+        insert_after_id:
+          typeof record.insert_after_id === "string"
+            ? record.insert_after_id
+            : undefined,
       });
     }
 
@@ -537,36 +593,44 @@ export class PlanBuilderService {
 
   private async getUserExitGateTemplate(userId: string) {
     const { data, error } = await this.supabase
-      .from('user_preferences')
-      .select('preferences')
-      .eq('user_id', userId)
+      .from("user_preferences")
+      .select("preferences")
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (error) {
-      console.warn('[Plan Builder] Failed to load exit gate template, using defaults:', error.message);
+      console.warn(
+        "[Plan Builder] Failed to load exit gate template, using defaults:",
+        error.message,
+      );
       return DEFAULT_GATE_CONDITIONS.map((condition) => ({ ...condition }));
     }
 
-    const preferences = data?.preferences && typeof data.preferences === 'object'
-      ? (data.preferences as Record<string, unknown>)
-      : {};
-    const template = preferences.exit_gate_template && typeof preferences.exit_gate_template === 'object'
-      ? (preferences.exit_gate_template as Record<string, unknown>)
-      : {};
-    const gateConditions = Array.isArray(template.gate_conditions) ? template.gate_conditions : null;
+    const preferences =
+      data?.preferences && typeof data.preferences === "object"
+        ? (data.preferences as Record<string, unknown>)
+        : {};
+    const template =
+      preferences.exit_gate_template &&
+      typeof preferences.exit_gate_template === "object"
+        ? (preferences.exit_gate_template as Record<string, unknown>)
+        : {};
+    const gateConditions = Array.isArray(template.gate_conditions)
+      ? template.gate_conditions
+      : null;
     if (!gateConditions || gateConditions.length === 0) {
       return DEFAULT_GATE_CONDITIONS.map((condition) => ({ ...condition }));
     }
 
     const parsed = [];
     for (const raw of gateConditions) {
-      if (!raw || typeof raw !== 'object') continue;
+      if (!raw || typeof raw !== "object") continue;
       const record = raw as Record<string, unknown>;
-      const id = typeof record.id === 'string' ? record.id : null;
+      const id = typeof record.id === "string" ? record.id : null;
       if (!id) continue;
       parsed.push({
         id,
-        name: typeof record.name === 'string' ? record.name : id,
+        name: typeof record.name === "string" ? record.name : id,
         satisfied: Boolean(record.satisfied),
       });
     }
@@ -592,71 +656,87 @@ export class PlanBuilderService {
 
   /**
    * Generate a daily plan
-   * 
+   *
    * Requirements: 1.1, 9.1, 12.1, 12.2, 12.3, 12.4, 12.5
    */
-  async generateDailyPlan(input: PlanInput, currentLocation: Location): Promise<DailyPlan> {
+  async generateDailyPlan(
+    input: PlanInput,
+    currentLocation: Location,
+  ): Promise<DailyPlan> {
     // Step 1: Compute plan start time (max of wake time or current time rounded up)
     const now = new Date();
     const roundedNow = this.roundUpToNext5Minutes(now);
-    const planStartTime = new Date(Math.max(input.wakeTime.getTime(), roundedNow.getTime()));
+    const planStartTime = new Date(
+      Math.max(input.wakeTime.getTime(), roundedNow.getTime()),
+    );
 
     // Step 2: Generate Wake Ramp (V2)
     // Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 10.1, 10.2
     const wakeRamp = this.wakeRampGenerator.generateWakeRamp(
       planStartTime,
       input.wakeTime,
-      input.energyState
+      input.energyState,
     );
-    
-    console.log('[V2 Chain Generation] Wake Ramp:', wakeRamp.skipped ? 'SKIPPED' : `${wakeRamp.duration} minutes`);
+
+    console.log(
+      "[V2 Chain Generation] Wake Ramp:",
+      wakeRamp.skipped ? "SKIPPED" : `${wakeRamp.duration} minutes`,
+    );
 
     // Step 3: Get anchors from calendar (V2)
     // Requirements: 1.1, 1.2, 1.3, 1.4, 1.5
-    const anchors = await this.anchorService.getAnchorsForDate(input.date, input.userId, this.supabase);
+    const anchors = await this.anchorService.getAnchorsForDate(
+      input.date,
+      input.userId,
+      this.supabase,
+    );
     console.log(`[V2 Chain Generation] Found ${anchors.length} anchors`);
-    
+
     // Check if calendar service failed (empty anchors could indicate error)
     // Requirements: Design - Error Handling - Calendar Service Failures
     const calendarServiceFailed = anchors.length === 0;
     if (calendarServiceFailed) {
-      console.warn('[V2 Chain Generation] No anchors found - calendar service may have failed or no events exist');
+      console.warn(
+        "[V2 Chain Generation] No anchors found - calendar service may have failed or no events exist",
+      );
     }
 
     // Step 4: Generate execution chains (V2)
     // Requirements: 12.1, 12.2, 12.3, 12.4
-    const chainStepOverrides = await this.getUserChainStepOverrides(input.userId);
+    const chainStepOverrides = await this.getUserChainStepOverrides(
+      input.userId,
+    );
     const chainCustomSteps = await this.getUserChainCustomSteps(input.userId);
 
-    const chains = await this.chainGenerator.generateChainsForDate(
-      anchors,
-      {
-        userId: input.userId,
-        date: input.date,
-        wakeTime: input.wakeTime,
-        sleepTime: input.sleepTime,
-        planStart: planStartTime,
-        allowNoAnchorFallback: false,
-        chainStepOverrides,
-        chainCustomSteps,
-        config: {
-          currentLocation,
-        },
-      }
+    const chains = await this.chainGenerator.generateChainsForDate(anchors, {
+      userId: input.userId,
+      date: input.date,
+      wakeTime: input.wakeTime,
+      sleepTime: input.sleepTime,
+      planStart: planStartTime,
+      allowNoAnchorFallback: false,
+      chainStepOverrides,
+      chainCustomSteps,
+      config: {
+        currentLocation,
+      },
+    });
+    console.log(
+      `[V2 Chain Generation] Generated ${chains.length} execution chains`,
     );
-    console.log(`[V2 Chain Generation] Generated ${chains.length} execution chains`);
 
     // Step 5: Calculate location periods and home intervals (V2)
     // Requirements: 8.1, 8.2, 8.3, 8.4, 17.1, 17.2, 17.3, 17.4
     const locationPeriods = this.locationStateTracker.calculateLocationPeriods(
       chains,
       planStartTime,
-      input.sleepTime
+      input.sleepTime,
     );
-    const homeIntervals = this.locationStateTracker.calculateHomeIntervals(
-      locationPeriods
+    const homeIntervals =
+      this.locationStateTracker.calculateHomeIntervals(locationPeriods);
+    console.log(
+      `[V2 Chain Generation] Calculated ${homeIntervals.length} home intervals`,
     );
-    console.log(`[V2 Chain Generation] Calculated ${homeIntervals.length} home intervals`);
 
     // Step 6: Gather inputs (V1.2 compatibility path)
     const inputs = await this.gatherInputs(input.userId, input.date);
@@ -674,11 +754,18 @@ export class PlanBuilderService {
         return recoveryEnd > latest ? recoveryEnd : latest;
       }, planStartTime);
 
-      const postChainStart = new Date(Math.max(latestRecoveryEnd.getTime(), planStartTime.getTime()));
-      const tailBlocks = this.generateTailPlan(postChainStart, input.sleepTime, input.energyState, 1);
+      const postChainStart = new Date(
+        Math.max(latestRecoveryEnd.getTime(), planStartTime.getTime()),
+      );
+      const tailBlocks = this.generateTailPlan(
+        postChainStart,
+        input.sleepTime,
+        input.energyState,
+        1,
+      );
       timeBlocks = tailBlocks as TimeBlock[];
 
-      console.log('[V2 Timeline] Chain-first mode enabled:', {
+      console.log("[V2 Timeline] Chain-first mode enabled:", {
         chains: chains.length,
         postChainStart: postChainStart.toLocaleString(),
         timelineTailBlocks: timeBlocks.length,
@@ -693,7 +780,7 @@ export class PlanBuilderService {
         currentLocation,
         planStartTime,
         input.energyState,
-        homeIntervals
+        homeIntervals,
       );
 
       timeBlocks = timelineResult.timeBlocks;
@@ -710,7 +797,7 @@ export class PlanBuilderService {
       chains,
       wakeRamp,
       locationPeriods,
-      homeIntervals
+      homeIntervals,
     );
 
     return plan;
@@ -718,7 +805,7 @@ export class PlanBuilderService {
 
   /**
    * Gather inputs for plan generation
-   * 
+   *
    * Requirements: 5.1, 7.1, 10.1
    */
   private async gatherInputs(userId: string, date: Date): Promise<PlanInputs> {
@@ -734,29 +821,31 @@ export class PlanBuilderService {
         startDate: startOfDay,
         endDate: endOfDay,
       },
-      this.supabase
+      this.supabase,
     );
 
     // Convert calendar events to commitments
     const commitments: Commitment[] = calendarEvents
-      .filter(event => event.event_type !== 'task') // Exclude task events
-      .map(event => ({
+      .filter((event) => event.event_type !== "task") // Exclude task events
+      .map((event) => ({
         id: event.id,
         title: event.title,
         startTime: new Date(event.start_time),
         endTime: new Date(event.end_time),
-        location: event.location ? this.parseLocation(event.location) : undefined,
+        location: event.location
+          ? this.parseLocation(event.location)
+          : undefined,
       }));
 
     // Fetch pending tasks (limit 10) directly from table to avoid external service coupling.
     let tasks: PlannerTask[] = [];
     try {
       const { data: pendingTasks, error: tasksError } = await this.supabase
-        .from('tasks')
-        .select('id, title, estimated_duration')
-        .eq('user_id', userId)
-        .eq('status', 'pending')
-        .order('deadline', { ascending: true })
+        .from("tasks")
+        .select("id, title, estimated_duration")
+        .eq("user_id", userId)
+        .eq("status", "pending")
+        .order("deadline", { ascending: true })
         .limit(10);
 
       if (tasksError) {
@@ -765,27 +854,31 @@ export class PlanBuilderService {
 
       tasks = (pendingTasks || []) as PlannerTask[];
     } catch (error) {
-      console.warn('Failed to fetch tasks, using empty task list:', error);
+      console.warn("Failed to fetch tasks, using empty task list:", error);
     }
 
     // Fetch active routines directly from table with graceful fallback.
     let routines: { morning?: PlannerRoutine; evening?: PlannerRoutine } = {};
     try {
       const { data: activeRoutines, error: routinesError } = await this.supabase
-        .from('uk_student_routines')
-        .select('id, routine_type, name, estimated_duration')
-        .eq('user_id', userId)
-        .eq('is_active', true);
+        .from("uk_student_routines")
+        .select("id, routine_type, name, estimated_duration")
+        .eq("user_id", userId)
+        .eq("is_active", true);
 
       if (routinesError) {
         throw routinesError;
       }
 
       const typedRoutines = (activeRoutines || []) as PlannerRoutine[];
-      routines.morning = typedRoutines.find(r => r.routine_type === 'morning');
-      routines.evening = typedRoutines.find(r => r.routine_type === 'evening');
+      routines.morning = typedRoutines.find(
+        (r) => r.routine_type === "morning",
+      );
+      routines.evening = typedRoutines.find(
+        (r) => r.routine_type === "evening",
+      );
     } catch (error) {
-      console.warn('Failed to fetch routines, will use defaults:', error);
+      console.warn("Failed to fetch routines, will use defaults:", error);
       // Fallback to defaults will be handled in buildActivityList
     }
 
@@ -808,10 +901,13 @@ export class PlanBuilderService {
 
   /**
    * Build activity list from inputs
-   * 
+   *
    * Requirements: 1.2, 7.2, 7.3, 10.2, 10.3, 10.4, 4.1, 4.2, 4.3
    */
-  private buildActivityList(inputs: PlanInputs, energyState: EnergyState): Activity[] {
+  private buildActivityList(
+    inputs: PlanInputs,
+    energyState: EnergyState,
+  ): Activity[] {
     const activities: Activity[] = [];
 
     // 1. Morning routine (if exists, else default 30min block)
@@ -819,7 +915,7 @@ export class PlanBuilderService {
     const morningRoutine = inputs.routines.morning;
     if (morningRoutine) {
       activities.push({
-        type: 'routine',
+        type: "routine",
         name: morningRoutine.name,
         duration: morningRoutine.estimated_duration || 30,
         isFixed: false,
@@ -828,8 +924,8 @@ export class PlanBuilderService {
     } else {
       // Default morning routine
       activities.push({
-        type: 'routine',
-        name: 'Morning Routine',
+        type: "routine",
+        name: "Morning Routine",
         duration: 30,
         isFixed: false,
       });
@@ -839,10 +935,10 @@ export class PlanBuilderService {
     // Requirement: 1.2
     for (const commitment of inputs.commitments) {
       const duration = Math.round(
-        (commitment.endTime.getTime() - commitment.startTime.getTime()) / 60000
+        (commitment.endTime.getTime() - commitment.startTime.getTime()) / 60000,
       );
       activities.push({
-        type: 'commitment',
+        type: "commitment",
         name: commitment.title,
         duration,
         isFixed: true,
@@ -860,13 +956,13 @@ export class PlanBuilderService {
     // Requirements: 10.2, 10.3, 10.4, 3.1, 3.2, 3.3, 3.4, 3.5
     const taskLimit = this.getTaskLimit(energyState);
     const selectedTasks = inputs.tasks.slice(0, taskLimit);
-    
+
     if (selectedTasks.length === 0) {
       // No tasks available - insert Primary Focus Block
       // Requirements: 3.1, 3.2, 3.3, 3.4
       activities.push({
-        type: 'task',
-        name: 'Primary Focus Block',
+        type: "task",
+        name: "Primary Focus Block",
         duration: 60, // 60 minutes
         isFixed: false,
       });
@@ -875,7 +971,7 @@ export class PlanBuilderService {
       // Requirement: 3.5
       for (const task of selectedTasks) {
         activities.push({
-          type: 'task',
+          type: "task",
           name: task.title,
           duration: task.estimated_duration || 60, // Default 60 minutes if not specified
           isFixed: false,
@@ -892,14 +988,14 @@ export class PlanBuilderService {
 
   /**
    * Get evening routine activity from inputs
-   * 
+   *
    * Requirements: 7.1, 7.2, 7.3
    */
   private getEveningRoutineActivity(inputs: PlanInputs): Activity {
     const eveningRoutine = inputs.routines.evening;
     if (eveningRoutine) {
       return {
-        type: 'routine',
+        type: "routine",
         name: eveningRoutine.name,
         duration: eveningRoutine.estimated_duration || 20,
         isFixed: false,
@@ -908,8 +1004,8 @@ export class PlanBuilderService {
     } else {
       // Default evening routine
       return {
-        type: 'routine',
-        name: 'Evening Routine',
+        type: "routine",
+        name: "Evening Routine",
         duration: 20,
         isFixed: false,
       };
@@ -918,16 +1014,16 @@ export class PlanBuilderService {
 
   /**
    * Get task limit based on energy state
-   * 
+   *
    * Requirements: 10.2, 10.3, 10.4
    */
   private getTaskLimit(energyState: EnergyState): number {
     switch (energyState) {
-      case 'low':
+      case "low":
         return 1;
-      case 'medium':
+      case "medium":
         return 2;
-      case 'high':
+      case "high":
         return 3;
       default:
         return 2; // Default to medium
@@ -936,7 +1032,7 @@ export class PlanBuilderService {
 
   /**
    * Create time blocks with pinned commitments and gap-fill scheduling
-   * 
+   *
    * Requirements: 1.1, 1.4, 1.5, 2.1, 7.1, 7.2, 7.3, 7.4, 7.5, 4.1, 4.2, 4.3, 4.4, 4.5, 8.5, 11.2, 11.3, 17.5
    */
   private async createTimeBlocksWithExitTimes(
@@ -947,11 +1043,18 @@ export class PlanBuilderService {
     currentLocation: Location,
     planStartTime: Date,
     energyState: EnergyState,
-    homeIntervals: HomeInterval[] = [] // V2: Home intervals for meal placement
-  ): Promise<{ timeBlocks: TimeBlock[]; exitTimes: ExitTimeResult[]; commitmentTravelMap: Map<string, number> }> {
+    homeIntervals: HomeInterval[] = [], // V2: Home intervals for meal placement
+  ): Promise<{
+    timeBlocks: TimeBlock[];
+    exitTimes: ExitTimeResult[];
+    commitmentTravelMap: Map<string, number>;
+  }> {
     const BUFFER_MINUTES = 5;
     const EVENING_ROUTINE_EARLIEST_TIME = 18; // 6:00 PM
-    const blocks: Omit<TimeBlock, 'id' | 'planId' | 'createdAt' | 'updatedAt'>[] = [];
+    const blocks: Omit<
+      TimeBlock,
+      "id" | "planId" | "createdAt" | "updatedAt"
+    >[] = [];
     const exitTimes: ExitTimeResult[] = [];
     const commitmentTravelMap = new Map<string, number>(); // Maps commitment ID to travel block sequence order
 
@@ -962,7 +1065,7 @@ export class PlanBuilderService {
     // Requirement: 2.1
     const exitTimeResults = await this.exitTimeCalculator.calculateExitTimes(
       inputs.commitments,
-      { currentLocation }
+      { currentLocation },
     );
     exitTimes.push(...exitTimeResults);
 
@@ -971,26 +1074,29 @@ export class PlanBuilderService {
     const anchorBlocks: TimeBlock[] = [];
 
     for (const commitment of inputs.commitments) {
-      const exitTimeResult = exitTimeResults.find(et => et.commitmentId === commitment.id);
-      
+      const exitTimeResult = exitTimeResults.find(
+        (et) => et.commitmentId === commitment.id,
+      );
+
       if (exitTimeResult) {
         // Add travel block
         const travelStart = exitTimeResult.exitTime;
         const travelEnd = new Date(
-          commitment.startTime.getTime() - exitTimeResult.preparationTime * 60000
+          commitment.startTime.getTime() -
+            exitTimeResult.preparationTime * 60000,
         );
 
         anchorBlocks.push({
-          id: '', // Will be set when saved
-          planId: '', // Will be set when saved
+          id: "", // Will be set when saved
+          planId: "", // Will be set when saved
           startTime: travelStart,
           endTime: travelEnd,
-          activityType: 'travel',
+          activityType: "travel",
           activityName: `Travel to ${commitment.title}`,
           activityId: commitment.id, // Store commitment ID in activityId
           isFixed: true,
           sequenceOrder: 0, // Will be set later
-          status: 'pending',
+          status: "pending",
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -998,16 +1104,16 @@ export class PlanBuilderService {
 
       // Add commitment block
       anchorBlocks.push({
-        id: '', // Will be set when saved
-        planId: '', // Will be set when saved
+        id: "", // Will be set when saved
+        planId: "", // Will be set when saved
         startTime: commitment.startTime,
         endTime: commitment.endTime,
-        activityType: 'commitment',
+        activityType: "commitment",
         activityName: commitment.title,
         activityId: commitment.id,
         isFixed: true,
         sequenceOrder: 0, // Will be set later
-        status: 'pending',
+        status: "pending",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -1022,23 +1128,39 @@ export class PlanBuilderService {
     // This ensures that when generating a plan late in the day (wake time > current time),
     // meals are evaluated relative to the wake time, not the actual current time
     const actualNow = new Date();
-    const effectiveNow = new Date(Math.max(actualNow.getTime(), wakeTime.getTime()));
-    const mealPlacements = placeMeals(anchorBlocks, wakeTime, sleepTime, effectiveNow, homeIntervals);
-    
+    const effectiveNow = new Date(
+      Math.max(actualNow.getTime(), wakeTime.getTime()),
+    );
+    const mealPlacements = placeMeals(
+      anchorBlocks,
+      wakeTime,
+      sleepTime,
+      effectiveNow,
+      homeIntervals,
+    );
+
     // Log meal placement decisions for debugging
     // Requirement: 9.4
-    console.log('[Meal Placement] Starting meal placement algorithm');
-    console.log(`[Meal Placement] Wake time: ${wakeTime.toLocaleTimeString()}, Sleep time: ${sleepTime.toLocaleTimeString()}`);
-    console.log(`[Meal Placement] Current time: ${effectiveNow.toLocaleTimeString()}`);
+    console.log("[Meal Placement] Starting meal placement algorithm");
+    console.log(
+      `[Meal Placement] Wake time: ${wakeTime.toLocaleTimeString()}, Sleep time: ${sleepTime.toLocaleTimeString()}`,
+    );
+    console.log(
+      `[Meal Placement] Current time: ${effectiveNow.toLocaleTimeString()}`,
+    );
     console.log(`[Meal Placement] Number of anchors: ${anchorBlocks.length}`);
-    
+
     for (const placement of mealPlacements) {
       if (placement.skipped) {
-        console.log(`[Meal Placement] ${placement.meal} SKIPPED: ${placement.skipReason}`);
+        console.log(
+          `[Meal Placement] ${placement.meal} SKIPPED: ${placement.skipReason}`,
+        );
       } else {
-        const targetTimeStr = placement.metadata?.targetTime?.toLocaleTimeString() || 'N/A';
-        const actualTimeStr = placement.time?.toLocaleTimeString() || 'N/A';
-        const placementReason = placement.metadata?.placementReason || 'unknown';
+        const targetTimeStr =
+          placement.metadata?.targetTime?.toLocaleTimeString() || "N/A";
+        const actualTimeStr = placement.time?.toLocaleTimeString() || "N/A";
+        const placementReason =
+          placement.metadata?.placementReason || "unknown";
         console.log(`[Meal Placement] ${placement.meal} PLACED:`);
         console.log(`  - Target time: ${targetTimeStr}`);
         console.log(`  - Actual time: ${actualTimeStr}`);
@@ -1050,7 +1172,7 @@ export class PlanBuilderService {
     // Step 4: Build the schedule
     // Schedule commitments, travel, and meals first, then fill gaps with tasks/routines
     // Requirements: 4.4, 4.5
-    const flexibleActivities = activities.filter(a => !a.isFixed);
+    const flexibleActivities = activities.filter((a) => !a.isFixed);
     let currentTime = new Date(wakeTime);
     let sequenceOrder = 1;
 
@@ -1058,13 +1180,14 @@ export class PlanBuilderService {
     const scheduledBlocks: Array<{
       startTime: Date;
       endTime: Date;
-      block: Omit<TimeBlock, 'id' | 'planId' | 'createdAt' | 'updatedAt'>;
+      block: Omit<TimeBlock, "id" | "planId" | "createdAt" | "updatedAt">;
       commitmentId?: string;
     }> = [];
 
     // Add anchor blocks
     for (const anchor of anchorBlocks) {
-      const commitmentId = anchor.activityType === 'travel' ? anchor.activityId : undefined;
+      const commitmentId =
+        anchor.activityType === "travel" ? anchor.activityId : undefined;
       scheduledBlocks.push({
         startTime: anchor.startTime,
         endTime: anchor.endTime,
@@ -1085,18 +1208,21 @@ export class PlanBuilderService {
     // Add meal blocks (only non-skipped meals)
     for (const placement of mealPlacements) {
       if (!placement.skipped && placement.time && placement.duration) {
-        const mealEnd = new Date(placement.time.getTime() + placement.duration * 60000);
+        const mealEnd = new Date(
+          placement.time.getTime() + placement.duration * 60000,
+        );
         scheduledBlocks.push({
           startTime: placement.time,
           endTime: mealEnd,
           block: {
             startTime: placement.time,
             endTime: mealEnd,
-            activityType: 'meal',
-            activityName: placement.meal.charAt(0).toUpperCase() + placement.meal.slice(1),
+            activityType: "meal",
+            activityName:
+              placement.meal.charAt(0).toUpperCase() + placement.meal.slice(1),
             isFixed: false,
             sequenceOrder: 0, // Will be set later
-            status: 'pending',
+            status: "pending",
             metadata: {
               targetTime: placement.metadata?.targetTime,
               placementReason: placement.metadata?.placementReason,
@@ -1107,7 +1233,9 @@ export class PlanBuilderService {
     }
 
     // Sort all scheduled blocks by start time
-    scheduledBlocks.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    scheduledBlocks.sort(
+      (a, b) => a.startTime.getTime() - b.startTime.getTime(),
+    );
 
     // Step 5: Fill gaps with flexible activities (tasks and routines)
     for (const scheduledBlock of scheduledBlocks) {
@@ -1116,10 +1244,15 @@ export class PlanBuilderService {
 
       while (flexibleActivities.length > 0 && currentTime < gapEnd) {
         const activity = flexibleActivities[0];
-        const activityEnd = new Date(currentTime.getTime() + activity.duration * 60000);
+        const activityEnd = new Date(
+          currentTime.getTime() + activity.duration * 60000,
+        );
 
         // Check if activity fits in gap (with buffer)
-        if (activityEnd.getTime() + BUFFER_MINUTES * 60000 <= gapEnd.getTime()) {
+        if (
+          activityEnd.getTime() + BUFFER_MINUTES * 60000 <=
+          gapEnd.getTime()
+        ) {
           // Add activity block
           blocks.push({
             startTime: new Date(currentTime),
@@ -1129,19 +1262,21 @@ export class PlanBuilderService {
             activityId: activity.activityId,
             isFixed: false,
             sequenceOrder: sequenceOrder++,
-            status: 'pending',
+            status: "pending",
           });
 
           // Add buffer
-          const bufferEnd = new Date(activityEnd.getTime() + BUFFER_MINUTES * 60000);
+          const bufferEnd = new Date(
+            activityEnd.getTime() + BUFFER_MINUTES * 60000,
+          );
           blocks.push({
             startTime: activityEnd,
             endTime: bufferEnd,
-            activityType: 'buffer',
-            activityName: 'Transition',
+            activityType: "buffer",
+            activityName: "Transition",
             isFixed: false,
             sequenceOrder: sequenceOrder++,
-            status: 'pending',
+            status: "pending",
           });
 
           currentTime = bufferEnd;
@@ -1153,7 +1288,10 @@ export class PlanBuilderService {
       }
 
       // Track travel block sequence order for exit time mapping
-      if (scheduledBlock.commitmentId && scheduledBlock.block.activityType === 'travel') {
+      if (
+        scheduledBlock.commitmentId &&
+        scheduledBlock.block.activityType === "travel"
+      ) {
         commitmentTravelMap.set(scheduledBlock.commitmentId, sequenceOrder);
       }
 
@@ -1166,15 +1304,17 @@ export class PlanBuilderService {
       currentTime = scheduledBlock.endTime;
 
       // Add buffer after scheduled block
-      const bufferEnd = new Date(currentTime.getTime() + BUFFER_MINUTES * 60000);
+      const bufferEnd = new Date(
+        currentTime.getTime() + BUFFER_MINUTES * 60000,
+      );
       blocks.push({
         startTime: new Date(currentTime),
         endTime: bufferEnd,
-        activityType: 'buffer',
-        activityName: 'Transition',
+        activityType: "buffer",
+        activityName: "Transition",
         isFixed: false,
         sequenceOrder: sequenceOrder++,
-        status: 'pending',
+        status: "pending",
       });
       currentTime = bufferEnd;
     }
@@ -1182,7 +1322,9 @@ export class PlanBuilderService {
     // Step 6: Fill remaining time after last scheduled block (excluding evening routine)
     while (flexibleActivities.length > 0 && currentTime < sleepTime) {
       const activity = flexibleActivities.shift()!;
-      const activityEnd = new Date(currentTime.getTime() + activity.duration * 60000);
+      const activityEnd = new Date(
+        currentTime.getTime() + activity.duration * 60000,
+      );
 
       // Don't exceed sleep time
       if (activityEnd > sleepTime) {
@@ -1198,20 +1340,22 @@ export class PlanBuilderService {
         activityId: activity.activityId,
         isFixed: false,
         sequenceOrder: sequenceOrder++,
-        status: 'pending',
+        status: "pending",
       });
 
       // Add buffer
-      const bufferEnd = new Date(activityEnd.getTime() + BUFFER_MINUTES * 60000);
+      const bufferEnd = new Date(
+        activityEnd.getTime() + BUFFER_MINUTES * 60000,
+      );
       if (bufferEnd <= sleepTime) {
         blocks.push({
           startTime: activityEnd,
           endTime: bufferEnd,
-          activityType: 'buffer',
-          activityName: 'Transition',
+          activityType: "buffer",
+          activityName: "Transition",
           isFixed: false,
           sequenceOrder: sequenceOrder++,
-          status: 'pending',
+          status: "pending",
         });
         currentTime = bufferEnd;
       } else {
@@ -1223,15 +1367,23 @@ export class PlanBuilderService {
     // Requirements: 7.1, 7.2, 7.3, 7.4, 7.5
     const eveningRoutineEarliestTime = new Date(wakeTime);
     eveningRoutineEarliestTime.setHours(EVENING_ROUTINE_EARLIEST_TIME, 0, 0, 0);
-    
+
     // Determine the earliest time evening routine can start
     // Requirement: 7.2, 7.3
-    const eveningRoutineMinStartTime = sleepTime.getHours() < EVENING_ROUTINE_EARLIEST_TIME
-      ? new Date(Math.max(currentTime.getTime(), planStartTime.getTime())) // If sleep time is before 6pm, start from current time
-      : new Date(Math.max(currentTime.getTime(), eveningRoutineEarliestTime.getTime(), planStartTime.getTime()));
+    const eveningRoutineMinStartTime =
+      sleepTime.getHours() < EVENING_ROUTINE_EARLIEST_TIME
+        ? new Date(Math.max(currentTime.getTime(), planStartTime.getTime())) // If sleep time is before 6pm, start from current time
+        : new Date(
+            Math.max(
+              currentTime.getTime(),
+              eveningRoutineEarliestTime.getTime(),
+              planStartTime.getTime(),
+            ),
+          );
 
     const eveningRoutineEnd = new Date(
-      eveningRoutineMinStartTime.getTime() + eveningRoutineActivity.duration * 60000
+      eveningRoutineMinStartTime.getTime() +
+        eveningRoutineActivity.duration * 60000,
     );
 
     // Check if evening routine fits before sleep time
@@ -1247,21 +1399,23 @@ export class PlanBuilderService {
         activityId: eveningRoutineActivity.activityId,
         isFixed: false,
         sequenceOrder: sequenceOrder++,
-        status: 'pending',
+        status: "pending",
       });
 
       // Add buffer after evening routine
       // Requirement: 7.4
-      const bufferEnd = new Date(eveningRoutineEnd.getTime() + BUFFER_MINUTES * 60000);
+      const bufferEnd = new Date(
+        eveningRoutineEnd.getTime() + BUFFER_MINUTES * 60000,
+      );
       if (bufferEnd <= sleepTime) {
         blocks.push({
           startTime: eveningRoutineEnd,
           endTime: bufferEnd,
-          activityType: 'buffer',
-          activityName: 'Transition',
+          activityType: "buffer",
+          activityName: "Transition",
           isFixed: false,
           sequenceOrder: sequenceOrder++,
-          status: 'pending',
+          status: "pending",
         });
       }
     }
@@ -1271,21 +1425,26 @@ export class PlanBuilderService {
     // This handles generating plans later in the day
     for (const block of blocks) {
       if (block.endTime <= planStartTime) {
-        block.status = 'skipped';
-        block.skipReason = 'Occurred before plan start';
+        block.status = "skipped";
+        block.skipReason = "Occurred before plan start";
       }
     }
 
     // Step 9: Detect if tail plan is needed and generate it
     // Requirement: 2.1
     const blocksAfterPlanStart = blocks.filter(
-      block => block.endTime > planStartTime && block.status === 'pending'
+      (block) => block.endTime > planStartTime && block.status === "pending",
     );
 
     if (blocksAfterPlanStart.length === 0) {
       // No blocks after plan start - generate tail plan
       // Requirement: 2.2, 2.3, 2.4, 2.5
-      const tailBlocks = this.generateTailPlan(planStartTime, sleepTime, energyState, sequenceOrder);
+      const tailBlocks = this.generateTailPlan(
+        planStartTime,
+        sleepTime,
+        energyState,
+        sequenceOrder,
+      );
       blocks.push(...tailBlocks);
     }
 
@@ -1299,17 +1458,19 @@ export class PlanBuilderService {
 
   /**
    * Generate hardcoded tail plan for late-day generation
-   * 
+   *
    * Requirements: 2.2, 2.3, 2.4, 2.5
    */
   private generateTailPlan(
     planStartTime: Date,
     sleepTime: Date,
     energyState: EnergyState,
-    startingSequenceOrder: number
-  ): Array<Omit<TimeBlock, 'id' | 'planId' | 'createdAt' | 'updatedAt'>> {
+    startingSequenceOrder: number,
+  ): Array<Omit<TimeBlock, "id" | "planId" | "createdAt" | "updatedAt">> {
     const BUFFER_MINUTES = 5;
-    const blocks: Array<Omit<TimeBlock, 'id' | 'planId' | 'createdAt' | 'updatedAt'>> = [];
+    const blocks: Array<
+      Omit<TimeBlock, "id" | "planId" | "createdAt" | "updatedAt">
+    > = [];
     let currentTime = new Date(planStartTime);
     let sequenceOrder = startingSequenceOrder;
 
@@ -1320,11 +1481,11 @@ export class PlanBuilderService {
       blocks.push({
         startTime: new Date(currentTime),
         endTime: resetEnd,
-        activityType: 'task',
-        activityName: 'Reset/Admin',
+        activityType: "task",
+        activityName: "Reset/Admin",
         isFixed: false,
         sequenceOrder: sequenceOrder++,
-        status: 'pending',
+        status: "pending",
       });
 
       // Add buffer
@@ -1333,11 +1494,11 @@ export class PlanBuilderService {
         blocks.push({
           startTime: resetEnd,
           endTime: bufferEnd,
-          activityType: 'buffer',
-          activityName: 'Transition',
+          activityType: "buffer",
+          activityName: "Transition",
           isFixed: false,
           sequenceOrder: sequenceOrder++,
-          status: 'pending',
+          status: "pending",
         });
         currentTime = bufferEnd;
       } else {
@@ -1347,17 +1508,17 @@ export class PlanBuilderService {
 
     // 2. Primary Focus Block (60 minutes) if energy ≠ low
     // Requirement: 2.3
-    if (energyState !== 'low') {
+    if (energyState !== "low") {
       const focusEnd = new Date(currentTime.getTime() + 60 * 60000);
       if (focusEnd <= sleepTime) {
         blocks.push({
           startTime: new Date(currentTime),
           endTime: focusEnd,
-          activityType: 'task',
-          activityName: 'Primary Focus Block',
+          activityType: "task",
+          activityName: "Primary Focus Block",
           isFixed: false,
           sequenceOrder: sequenceOrder++,
-          status: 'pending',
+          status: "pending",
         });
 
         // Add buffer
@@ -1366,11 +1527,11 @@ export class PlanBuilderService {
           blocks.push({
             startTime: focusEnd,
             endTime: bufferEnd,
-            activityType: 'buffer',
-            activityName: 'Transition',
+            activityType: "buffer",
+            activityName: "Transition",
             isFixed: false,
             sequenceOrder: sequenceOrder++,
-            status: 'pending',
+            status: "pending",
           });
           currentTime = bufferEnd;
         } else {
@@ -1386,11 +1547,11 @@ export class PlanBuilderService {
       blocks.push({
         startTime: new Date(currentTime),
         endTime: dinnerEnd,
-        activityType: 'meal',
-        activityName: 'Dinner',
+        activityType: "meal",
+        activityName: "Dinner",
         isFixed: false,
         sequenceOrder: sequenceOrder++,
-        status: 'pending',
+        status: "pending",
       });
 
       // Add buffer
@@ -1399,11 +1560,11 @@ export class PlanBuilderService {
         blocks.push({
           startTime: dinnerEnd,
           endTime: bufferEnd,
-          activityType: 'buffer',
-          activityName: 'Transition',
+          activityType: "buffer",
+          activityName: "Transition",
           isFixed: false,
           sequenceOrder: sequenceOrder++,
-          status: 'pending',
+          status: "pending",
         });
         currentTime = bufferEnd;
       } else {
@@ -1418,11 +1579,11 @@ export class PlanBuilderService {
       blocks.push({
         startTime: new Date(currentTime),
         endTime: eveningEnd,
-        activityType: 'routine',
-        activityName: 'Evening Routine',
+        activityType: "routine",
+        activityName: "Evening Routine",
         isFixed: false,
         sequenceOrder: sequenceOrder++,
-        status: 'pending',
+        status: "pending",
       });
 
       // Add final buffer
@@ -1431,11 +1592,11 @@ export class PlanBuilderService {
         blocks.push({
           startTime: eveningEnd,
           endTime: bufferEnd,
-          activityType: 'buffer',
-          activityName: 'Transition',
+          activityType: "buffer",
+          activityName: "Transition",
           isFixed: false,
           sequenceOrder: sequenceOrder++,
-          status: 'pending',
+          status: "pending",
         });
       }
     }
@@ -1445,7 +1606,7 @@ export class PlanBuilderService {
 
   /**
    * Save plan to database
-   * 
+   *
    * Requirements: 1.1, 9.1, 12.5, 18.1, 18.2, 18.3, 18.4
    */
   private async savePlan(
@@ -1456,14 +1617,16 @@ export class PlanBuilderService {
     chains: ExecutionChain[] = [],
     wakeRamp?: WakeRamp,
     locationPeriods: LocationPeriod[] = [],
-    homeIntervals: HomeInterval[] = []
+    homeIntervals: HomeInterval[] = [],
   ): Promise<DailyPlan> {
-    const userExitGateTemplate = await this.getUserExitGateTemplate(input.userId);
+    const userExitGateTemplate = await this.getUserExitGateTemplate(
+      input.userId,
+    );
 
     const normalizeTimeRangeForInsert = (
       start: Date,
       end: Date,
-      metadata?: Record<string, any>
+      metadata?: Record<string, any>,
     ): { startIso: string; endIso: string; metadata?: Record<string, any> } => {
       if (end.getTime() > start.getTime()) {
         return {
@@ -1474,10 +1637,13 @@ export class PlanBuilderService {
       }
 
       const adjustedEnd = new Date(start.getTime() + 60 * 1000);
-      console.warn('[Plan Builder] Invalid time block range detected; auto-adjusting end_time by +1 minute', {
-        start: start.toISOString(),
-        end: end.toISOString(),
-      });
+      console.warn(
+        "[Plan Builder] Invalid time block range detected; auto-adjusting end_time by +1 minute",
+        {
+          start: start.toISOString(),
+          end: end.toISOString(),
+        },
+      );
 
       return {
         startIso: start.toISOString(),
@@ -1493,17 +1659,19 @@ export class PlanBuilderService {
     // Calculate plan start time and generated_after_now flag
     const now = new Date();
     const roundedNow = this.roundUpToNext5Minutes(now);
-    const planStart = new Date(Math.max(input.wakeTime.getTime(), roundedNow.getTime()));
+    const planStart = new Date(
+      Math.max(input.wakeTime.getTime(), roundedNow.getTime()),
+    );
     const generatedAfterNow = planStart.getTime() > input.wakeTime.getTime();
 
     // Create daily plan record with V2 metadata
     const planData: CreateDailyPlan = {
       user_id: input.userId,
-      plan_date: input.date.toISOString().split('T')[0],
+      plan_date: input.date.toISOString().split("T")[0],
       wake_time: input.wakeTime.toISOString(),
       sleep_time: input.sleepTime.toISOString(),
       energy_state: input.energyState,
-      status: 'active',
+      status: "active",
       generated_after_now: generatedAfterNow,
       plan_start: planStart.toISOString(),
     };
@@ -1525,8 +1693,10 @@ export class PlanBuilderService {
           chain_id: chain.chain_id,
         };
 
-        if (roleType === 'exit-gate') {
-          role.gate_conditions = userExitGateTemplate.map((condition) => ({ ...condition }));
+        if (roleType === "exit-gate") {
+          role.gate_conditions = userExitGateTemplate.map((condition) => ({
+            ...condition,
+          }));
         }
 
         chainSequenceOrder += 1;
@@ -1546,7 +1716,7 @@ export class PlanBuilderService {
         const normalized = normalizeTimeRangeForInsert(
           new Date(step.start_time),
           new Date(step.end_time),
-          chainMetadata
+          chainMetadata,
         );
 
         chainTimeBlocksData.push({
@@ -1558,7 +1728,12 @@ export class PlanBuilderService {
           activity_id: chain.anchor_id,
           is_fixed: true,
           sequence_order: chainSequenceOrder,
-          status: step.status === 'completed' ? 'completed' : step.status === 'skipped' ? 'skipped' : 'pending',
+          status:
+            step.status === "completed"
+              ? "completed"
+              : step.status === "skipped"
+                ? "skipped"
+                : "pending",
           metadata: normalized.metadata,
         });
       }
@@ -1567,19 +1742,21 @@ export class PlanBuilderService {
     const chainSequenceOffset = chainTimeBlocksData.length;
 
     // Create non-chain timeline blocks after chain blocks.
-    const timeBlocksData: CreateTimeBlock[] = timeBlocks.map(block => {
-      const blockMetadata = block.metadata ? {
-        target_time: block.metadata.targetTime?.toISOString(),
-        placement_reason: block.metadata.placementReason,
-        skip_reason: block.metadata.skipReason,
-        // V2: Add chain metadata if present
-        ...(block.metadata as any),
-      } : undefined;
+    const timeBlocksData: CreateTimeBlock[] = timeBlocks.map((block) => {
+      const blockMetadata = block.metadata
+        ? {
+            target_time: block.metadata.targetTime?.toISOString(),
+            placement_reason: block.metadata.placementReason,
+            skip_reason: block.metadata.skipReason,
+            // V2: Add chain metadata if present
+            ...(block.metadata as any),
+          }
+        : undefined;
 
       const normalized = normalizeTimeRangeForInsert(
         block.startTime,
         block.endTime,
-        blockMetadata as Record<string, any> | undefined
+        blockMetadata as Record<string, any> | undefined,
       );
 
       return {
@@ -1597,19 +1774,23 @@ export class PlanBuilderService {
       };
     });
 
-    const createdBlocks = await createTimeBlocks(
-      this.supabase,
-      [...timeBlocksData, ...chainTimeBlocksData]
-    );
+    const createdBlocks = await createTimeBlocks(this.supabase, [
+      ...timeBlocksData,
+      ...chainTimeBlocksData,
+    ]);
 
     // Create exit times using the commitment-to-travel-block mapping
     const exitTimesData: CreateExitTime[] = [];
     for (const exitTime of exitTimes) {
       // Find the travel block using the sequence order from the map
-      const travelBlockSequenceOrder = commitmentTravelMap.get(exitTime.commitmentId);
+      const travelBlockSequenceOrder = commitmentTravelMap.get(
+        exitTime.commitmentId,
+      );
       if (travelBlockSequenceOrder !== undefined) {
         const travelBlock = createdBlocks.find(
-          block => block.sequenceOrder === travelBlockSequenceOrder + chainSequenceOffset
+          (block) =>
+            block.sequenceOrder ===
+            travelBlockSequenceOrder + chainSequenceOffset,
         );
 
         if (travelBlock) {
@@ -1634,17 +1815,18 @@ export class PlanBuilderService {
     const completePlan = await getDailyPlanByDateWithBlocks(
       this.supabase,
       input.userId,
-      input.date
+      input.date,
     );
 
     if (!completePlan) {
-      throw new Error('Failed to fetch created plan');
+      throw new Error("Failed to fetch created plan");
     }
 
     const stepIdToBlockId = new Map<string, string>();
     for (const block of createdBlocks) {
-      const metadataStepId = (block.metadata as any)?.step_id || (block.metadata as any)?.stepId;
-      if (typeof metadataStepId === 'string') {
+      const metadataStepId =
+        (block.metadata as any)?.step_id || (block.metadata as any)?.stepId;
+      if (typeof metadataStepId === "string") {
         stepIdToBlockId.set(metadataStepId, block.id);
       }
     }
@@ -1672,31 +1854,31 @@ export class PlanBuilderService {
 
   private mapChainRoleToActivityType(role: string): ActivityType {
     switch (role) {
-      case 'anchor':
-        return 'commitment';
-      case 'recovery':
-        return 'buffer';
-      case 'chain-step':
-      case 'exit-gate':
+      case "anchor":
+        return "commitment";
+      case "recovery":
+        return "buffer";
+      case "chain-step":
+      case "exit-gate":
       default:
-        return 'routine';
+        return "routine";
     }
   }
 
   /**
    * Degrade a plan by removing optional tasks and recomputing buffers
-   * 
+   *
    * Requirements: 4.2, 4.3, 4.4, 4.5
    */
   async degradePlan(planId: string): Promise<DailyPlan> {
     // Fetch the current plan with all blocks
     const plan = await getDailyPlanWithBlocks(this.supabase, planId);
     if (!plan) {
-      throw new Error('Plan not found');
+      throw new Error("Plan not found");
     }
 
     if (!plan.timeBlocks) {
-      throw new Error('Plan has no time blocks');
+      throw new Error("Plan has no time blocks");
     }
 
     const BUFFER_MINUTES = 5;
@@ -1704,33 +1886,35 @@ export class PlanBuilderService {
     // Step 1: Identify essential activities (fixed commitments, routines, meals, travel)
     // Requirement: 4.2, 4.3
     const essentialBlocks = plan.timeBlocks.filter(
-      block =>
+      (block) =>
         block.isFixed || // Fixed commitments and travel blocks
-        block.activityType === 'routine' ||
-        block.activityType === 'meal' ||
-        block.activityType === 'travel'
+        block.activityType === "routine" ||
+        block.activityType === "meal" ||
+        block.activityType === "travel",
     );
 
     // Step 2: Mark dropped tasks as skipped
     // Requirement: 4.5
     const droppedBlocks = plan.timeBlocks.filter(
-      block =>
+      (block) =>
         !essentialBlocks.includes(block) &&
-        block.activityType !== 'buffer' && // Don't mark buffers as skipped
-        block.status === 'pending' // Only mark pending blocks
+        block.activityType !== "buffer" && // Don't mark buffers as skipped
+        block.status === "pending", // Only mark pending blocks
     );
 
     // Update dropped blocks to skipped status
     for (const block of droppedBlocks) {
       await updateTimeBlock(this.supabase, block.id, {
-        status: 'skipped',
-        skip_reason: 'Dropped during degradation',
+        status: "skipped",
+        skip_reason: "Dropped during degradation",
       });
     }
 
     // Step 3: Delete all old buffer blocks (we'll recompute them)
     // Requirement: 4.4
-    const bufferBlocks = plan.timeBlocks.filter(block => block.activityType === 'buffer');
+    const bufferBlocks = plan.timeBlocks.filter(
+      (block) => block.activityType === "buffer",
+    );
     for (const buffer of bufferBlocks) {
       await deleteTimeBlock(this.supabase, buffer.id);
     }
@@ -1744,7 +1928,7 @@ export class PlanBuilderService {
 
     // Sort essential blocks by their original start time
     const sortedEssentials = [...essentialBlocks].sort(
-      (a, b) => a.startTime.getTime() - b.startTime.getTime()
+      (a, b) => a.startTime.getTime() - b.startTime.getTime(),
     );
 
     let currentTime = plan.wakeTime;
@@ -1753,10 +1937,16 @@ export class PlanBuilderService {
     for (const essentialBlock of sortedEssentials) {
       // For fixed activities (commitments and travel), use their scheduled time
       // For flexible activities (routines, meals), schedule from current time
-      const startTime = essentialBlock.isFixed ? essentialBlock.startTime : currentTime;
+      const startTime = essentialBlock.isFixed
+        ? essentialBlock.startTime
+        : currentTime;
       const endTime = essentialBlock.isFixed
         ? essentialBlock.endTime
-        : new Date(startTime.getTime() + (essentialBlock.endTime.getTime() - essentialBlock.startTime.getTime()));
+        : new Date(
+            startTime.getTime() +
+              (essentialBlock.endTime.getTime() -
+                essentialBlock.startTime.getTime()),
+          );
 
       // Update the essential block with new sequence order and times
       await updateTimeBlock(this.supabase, essentialBlock.id, {
@@ -1777,18 +1967,18 @@ export class PlanBuilderService {
 
       // Add new buffer after this block
       const bufferEnd = new Date(endTime.getTime() + BUFFER_MINUTES * 60000);
-      
+
       // Don't add buffer if it would exceed sleep time
       if (bufferEnd <= plan.sleepTime) {
         const newBuffer = await createTimeBlock(this.supabase, {
           plan_id: planId,
           start_time: endTime.toISOString(),
           end_time: bufferEnd.toISOString(),
-          activity_type: 'buffer',
-          activity_name: 'Transition',
+          activity_type: "buffer",
+          activity_name: "Transition",
           is_fixed: false,
           sequence_order: sequenceOrder++,
-          status: 'pending',
+          status: "pending",
         });
 
         rebuiltBlocks.push({
@@ -1805,21 +1995,22 @@ export class PlanBuilderService {
     // Step 5: Update plan status to "degraded"
     // Requirement: 4.4
     await updateDailyPlan(this.supabase, planId, {
-      status: 'degraded',
+      status: "degraded",
     });
 
     // Fetch and return the updated plan
     const degradedPlan = await getDailyPlanWithBlocks(this.supabase, planId);
     if (!degradedPlan) {
-      throw new Error('Failed to fetch degraded plan');
+      throw new Error("Failed to fetch degraded plan");
     }
 
     return degradedPlan;
   }
 }
 
-
 // Export a factory function to create the service
-export function createPlanBuilderService(supabase: SupabaseClient<any, any, any>): PlanBuilderService {
+export function createPlanBuilderService(
+  supabase: SupabaseClient<any, any, any>,
+): PlanBuilderService {
   return new PlanBuilderService(supabase);
 }

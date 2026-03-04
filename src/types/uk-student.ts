@@ -4,7 +4,7 @@
 export interface Location {
   name: string;
   coordinates: [number, number]; // [latitude, longitude]
-  type: 'home' | 'university' | 'gym' | 'store' | 'transport' | 'other';
+  type: "home" | "university" | "gym" | "store" | "transport" | "other";
 }
 
 export interface Coordinates {
@@ -24,7 +24,7 @@ export interface InventoryItem {
   store?: string;
   cost?: number;
   category: string;
-  location: 'fridge' | 'pantry' | 'freezer';
+  location: "fridge" | "pantry" | "freezer";
   created_at: Date;
   updated_at: Date;
 }
@@ -109,7 +109,7 @@ export interface ShoppingItem {
   unit: string;
   estimated_cost?: number;
   store_preference?: string;
-  priority: 'essential' | 'preferred' | 'optional';
+  priority: "essential" | "preferred" | "optional";
   category: string;
 }
 
@@ -134,7 +134,7 @@ export interface TravelRoute {
   user_id: string;
   from_location: string;
   to_location: string;
-  preferred_method: 'bike' | 'train' | 'walk' | 'bus';
+  preferred_method: "bike" | "train" | "walk" | "bus";
   duration_minutes: number;
   cost_pence: number;
   weather_conditions: WeatherConditions;
@@ -148,7 +148,7 @@ export interface RouteInfo {
   distance: number; // meters
   duration: number; // minutes
   elevation: number; // meters
-  difficulty: 'easy' | 'moderate' | 'hard';
+  difficulty: "easy" | "moderate" | "hard";
   weather_suitability: number; // 0-1 score
   safety_rating: number; // 1-5 stars
   cost: number; // pence
@@ -165,7 +165,7 @@ export interface TravelPlan {
 
 export interface WeatherConditions {
   temperature?: number; // celsius
-  condition?: 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'windy';
+  condition?: "sunny" | "cloudy" | "rainy" | "snowy" | "windy";
   precipitation_chance?: number; // 0-100%
   wind_speed?: number; // km/h
 }
@@ -181,12 +181,12 @@ export interface UKStudentExpense {
   id: string;
   user_id: string;
   amount: number;
-  currency: 'GBP' | 'USD' | 'EUR';
+  currency: "GBP" | "USD" | "EUR";
   description?: string;
   category: string;
   store?: string;
   location?: string;
-  payment_method: 'monzo' | 'iq-prepaid' | 'icici-uk' | 'cash' | 'card';
+  payment_method: "monzo" | "iq-prepaid" | "icici-uk" | "cash" | "card";
   receipt_data: ReceiptData;
   transaction_date: Date;
   created_at: Date;
@@ -212,9 +212,9 @@ export interface ReceiptItem {
 }
 
 export interface UKBankAccount {
-  type: 'monzo' | 'iq-prepaid' | 'icici-uk';
+  type: "monzo" | "iq-prepaid" | "icici-uk";
   balance: number;
-  currency: 'GBP';
+  currency: "GBP";
   last_sync: Date;
   transactions: Transaction[];
 }
@@ -254,7 +254,7 @@ export interface BudgetAnalysis {
 
 export interface BudgetHealth {
   score: number; // 0-100
-  status: 'good' | 'warning' | 'critical';
+  status: "good" | "warning" | "critical";
   recommendations: string[];
 }
 
@@ -270,7 +270,7 @@ export interface AcademicEvent {
   id: string;
   user_id: string;
   title: string;
-  type: 'class' | 'assignment' | 'exam' | 'deadline' | 'study_session';
+  type: "class" | "assignment" | "exam" | "deadline" | "study_session";
   start_time: Date;
   end_time?: Date;
   location?: string;
@@ -290,7 +290,7 @@ export interface Assignment {
   due_date: Date;
   estimated_hours: number;
   progress: number; // 0-100%
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
   breakdown_tasks: AssignmentTask[];
 }
 
@@ -306,11 +306,17 @@ export interface AssignmentTask {
 export interface Routine {
   id: string;
   user_id: string;
-  routine_type: 'morning' | 'evening' | 'skincare' | 'laundry' | 'gym' | 'study';
+  routine_type:
+    | "morning"
+    | "evening"
+    | "skincare"
+    | "laundry"
+    | "gym"
+    | "study";
   name: string;
   steps: RoutineStep[];
   estimated_duration: number; // minutes
-  frequency: 'daily' | 'weekly' | 'monthly' | 'custom';
+  frequency: "daily" | "weekly" | "monthly" | "custom";
   last_completed?: Date;
   completion_streak: number;
   is_active: boolean;
@@ -340,11 +346,11 @@ export interface RoutineCompletion {
 export interface Store {
   id: string;
   name: string;
-  type: 'store' | 'university' | 'gym' | 'home' | 'transport' | 'other';
+  type: "store" | "university" | "gym" | "home" | "transport" | "other";
   address?: string;
   coordinates?: Coordinates;
   opening_hours: OpeningHours;
-  price_level: 'budget' | 'mid' | 'premium';
+  price_level: "budget" | "mid" | "premium";
   user_rating?: 1 | 2 | 3 | 4 | 5;
   notes?: string;
   is_active: boolean;
@@ -373,7 +379,7 @@ export interface UKStudentPreferences {
   id: string;
   user_id: string;
   home_location: string;
-  transport_preference: 'bike' | 'train' | 'mixed';
+  transport_preference: "bike" | "train" | "mixed";
   cooking_time_limits: CookingTimeLimits;
   dietary_restrictions: string[];
   bulk_cooking_frequency: number; // days
@@ -392,10 +398,10 @@ export interface CookingTimeLimits {
 }
 
 export interface TransportPreferences {
-  preferred_method: 'bike' | 'train' | 'mixed';
+  preferred_method: "bike" | "train" | "mixed";
   weather_threshold: number; // 0-1, below which to avoid cycling
-  cost_sensitivity: 'low' | 'medium' | 'high';
-  time_sensitivity: 'low' | 'medium' | 'high';
+  cost_sensitivity: "low" | "medium" | "high";
+  time_sensitivity: "low" | "medium" | "high";
 }
 
 export interface DietaryPreferences {
@@ -403,27 +409,35 @@ export interface DietaryPreferences {
   allergies: string[];
   preferred_cuisines: string[];
   cooking_skill_level: 1 | 2 | 3 | 4 | 5;
-  meal_prep_preference: 'daily' | 'batch' | 'mixed';
+  meal_prep_preference: "daily" | "batch" | "mixed";
 }
 
 // Utility Types
 export interface Alert {
   id: string;
-  type: 'budget_exceeded' | 'expiry_warning' | 'weather_alert' | 'routine_reminder';
+  type:
+    | "budget_exceeded"
+    | "expiry_warning"
+    | "weather_alert"
+    | "routine_reminder";
   title: string;
   message: string;
-  severity: 'info' | 'warning' | 'error';
+  severity: "info" | "warning" | "error";
   created_at: Date;
   dismissed?: boolean;
 }
 
 export interface Recommendation {
   id: string;
-  type: 'cost_saving' | 'time_optimization' | 'health_improvement' | 'routine_adjustment';
+  type:
+    | "cost_saving"
+    | "time_optimization"
+    | "health_improvement"
+    | "routine_adjustment";
   title: string;
   description: string;
   potential_benefit: string;
-  effort_required: 'low' | 'medium' | 'high';
+  effort_required: "low" | "medium" | "high";
   confidence: number; // 0-1
 }
 
@@ -465,10 +479,10 @@ export interface MealPlanningServiceConfig {
 }
 
 export interface FinanceServiceConfig {
-  supported_banks: ('monzo' | 'iq-prepaid' | 'icici-uk')[];
-  ocr_service: 'google-vision' | 'aws-textract' | 'azure-cognitive';
+  supported_banks: ("monzo" | "iq-prepaid" | "icici-uk")[];
+  ocr_service: "google-vision" | "aws-textract" | "azure-cognitive";
   ocr_api_key: string;
-  default_currency: 'GBP';
+  default_currency: "GBP";
 }
 
 // Dashboard and UI Types
@@ -502,13 +516,13 @@ export interface UKStudentError {
   timestamp: Date;
 }
 
-export type UKStudentErrorCode = 
-  | 'INVALID_LOCATION'
-  | 'BUDGET_EXCEEDED'
-  | 'RECIPE_NOT_FOUND'
-  | 'WEATHER_API_ERROR'
-  | 'TRANSPORT_API_ERROR'
-  | 'OCR_PROCESSING_ERROR'
-  | 'INVALID_MEAL_PLAN'
-  | 'ROUTINE_CONFLICT'
-  | 'ACADEMIC_SCHEDULE_ERROR';
+export type UKStudentErrorCode =
+  | "INVALID_LOCATION"
+  | "BUDGET_EXCEEDED"
+  | "RECIPE_NOT_FOUND"
+  | "WEATHER_API_ERROR"
+  | "TRANSPORT_API_ERROR"
+  | "OCR_PROCESSING_ERROR"
+  | "INVALID_MEAL_PLAN"
+  | "ROUTINE_CONFLICT"
+  | "ACADEMIC_SCHEDULE_ERROR";

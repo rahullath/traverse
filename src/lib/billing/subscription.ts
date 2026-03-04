@@ -1,4 +1,9 @@
-export type SubscriptionStatus = 'trial' | 'active' | 'premium' | 'cancelled' | 'past_due';
+export type SubscriptionStatus =
+  | "trial"
+  | "active"
+  | "premium"
+  | "cancelled"
+  | "past_due";
 
 export interface BillingSnapshot {
   status: SubscriptionStatus;
@@ -7,19 +12,25 @@ export interface BillingSnapshot {
   isAccessAllowed: boolean;
 }
 
-export function getBillingSnapshot(preferences: Record<string, any> | null | undefined): BillingSnapshot {
-  const status = (preferences?.subscription_status || 'trial') as SubscriptionStatus;
-  const trialEndDate = typeof preferences?.trial_end_date === 'string'
-    ? preferences.trial_end_date
-    : undefined;
+export function getBillingSnapshot(
+  preferences: Record<string, any> | null | undefined,
+): BillingSnapshot {
+  const status = (preferences?.subscription_status ||
+    "trial") as SubscriptionStatus;
+  const trialEndDate =
+    typeof preferences?.trial_end_date === "string"
+      ? preferences.trial_end_date
+      : undefined;
 
   const trialMs = trialEndDate ? new Date(trialEndDate).getTime() : NaN;
-  const isTrialExpired = Number.isFinite(trialMs) ? trialMs < Date.now() : false;
+  const isTrialExpired = Number.isFinite(trialMs)
+    ? trialMs < Date.now()
+    : false;
 
   const isAccessAllowed =
-    status === 'active' ||
-    status === 'premium' ||
-    (status === 'trial' && !isTrialExpired);
+    status === "active" ||
+    status === "premium" ||
+    (status === "trial" && !isTrialExpired);
 
   return {
     status,

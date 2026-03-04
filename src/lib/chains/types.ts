@@ -1,7 +1,7 @@
 // Chain-Based Execution Engine (V2) - Core Types
 
-import type { TimeBlock } from '../../types/daily-plan';
-import type { Anchor } from '../anchors/types';
+import type { TimeBlock } from "../../types/daily-plan";
+import type { Anchor } from "../anchors/types";
 
 /**
  * Chain Step - Single node in execution chain
@@ -97,7 +97,7 @@ export interface GateCondition {
 /**
  * Location State - Simple boolean (at_home vs not_home)
  */
-export type LocationState = 'at_home' | 'not_home';
+export type LocationState = "at_home" | "not_home";
 
 /**
  * Location Period - Time period with location state
@@ -148,7 +148,7 @@ export interface TimeBlockMetadata {
   target_time?: string;
   placement_reason?: string;
   skip_reason?: string;
-  
+
   // New V2 fields
   role?: {
     type: ChainStepRole;
@@ -185,7 +185,7 @@ export interface DailyPlanV2Response {
   plan_id: string;
   date: string;
   time_blocks: TimeBlock[];
-  
+
   // New V2 fields
   chains: ExecutionChain[];
   home_intervals: HomeInterval[];
@@ -198,34 +198,48 @@ export interface DailyPlanV2Response {
 /**
  * Anchor Type - Classification of calendar events
  */
-export type AnchorType = 'class' | 'seminar' | 'workshop' | 'appointment' | 'other';
+export type AnchorType =
+  | "class"
+  | "seminar"
+  | "workshop"
+  | "appointment"
+  | "other";
 
 /**
  * Chain Step Status
  */
-export type ChainStepStatus = 'pending' | 'in-progress' | 'completed' | 'skipped';
+export type ChainStepStatus =
+  | "pending"
+  | "in-progress"
+  | "completed"
+  | "skipped";
 
 /**
  * Chain Step Role
  */
-export type ChainStepRole = 'anchor' | 'chain-step' | 'exit-gate' | 'recovery';
+export type ChainStepRole = "anchor" | "chain-step" | "exit-gate" | "recovery";
 
 /**
  * Chain Status
  */
-export type ChainStatus = 'pending' | 'in-progress' | 'completed' | 'failed';
+export type ChainStatus = "pending" | "in-progress" | "completed" | "failed";
 
 /**
  * Exit Gate Status
  */
-export type ExitGateStatus = 'blocked' | 'ready';
+export type ExitGateStatus = "blocked" | "ready";
 
 /**
  * Commitment Envelope Type
  */
-export type CommitmentEnvelopeType = 'prep' | 'travel_there' | 'anchor' | 'travel_back' | 'recovery';
+export type CommitmentEnvelopeType =
+  | "prep"
+  | "travel_there"
+  | "anchor"
+  | "travel_back"
+  | "recovery";
 
 /**
  * Energy State (from V1, re-exported for convenience)
  */
-export type EnergyState = 'low' | 'medium' | 'high';
+export type EnergyState = "low" | "medium" | "high";

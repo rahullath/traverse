@@ -1,29 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import type { CalendarSource, CalendarEvent, CreateCalendarSourceRequest, UpdateCalendarSourceRequest } from '../../types/calendar';
-import { CalendarSourceManager } from './CalendarSourceManager';
-import { UnifiedCalendarView } from './UnifiedCalendarView';
-import '../../styles/task-calendar-integration.css';
+import React, { useState, useEffect } from "react";
+import type {
+  CalendarSource,
+  CalendarEvent,
+  CreateCalendarSourceRequest,
+  UpdateCalendarSourceRequest,
+} from "../../types/calendar";
+import { CalendarSourceManager } from "./CalendarSourceManager";
+import { UnifiedCalendarView } from "./UnifiedCalendarView";
+import "../../styles/task-calendar-integration.css";
 
 interface CalendarPageWrapperProps {
   userId: string;
 }
 
 // This component will fetch data and handle interactions
-const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => {
+const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({
+  userId,
+}) => {
   const [sources, setSources] = useState<CalendarSource[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTasks, setShowTasks] = useState(true);
-  const [selectedView, setSelectedView] = useState<'day' | 'week' | 'month'>('week');
+  const [selectedView, setSelectedView] = useState<"day" | "week" | "month">(
+    "week",
+  );
   const [showNewEventModal, setShowNewEventModal] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null,
+  );
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   const fetchData = async () => {
     try {
       const [sourcesRes, eventsRes] = await Promise.all([
-        fetch('/api/calendar/sources'),
-        fetch('/api/calendar/events')
+        fetch("/api/calendar/sources"),
+        fetch("/api/calendar/events"),
       ]);
       const sourcesData = await sourcesRes.json();
       const eventsData = await eventsRes.json();
@@ -47,16 +58,18 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
   };
 
   // Filter events based on showTasks setting
-  const filteredEvents = showTasks ? events : events.filter(e => e.event_type !== 'task');
+  const filteredEvents = showTasks
+    ? events
+    : events.filter((e) => e.event_type !== "task");
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const handleAddSource = async (source: CreateCalendarSourceRequest) => {
-    const response = await fetch('/api/calendar/sources', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/calendar/sources", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(source),
     });
     if (response.ok) {
@@ -64,20 +77,23 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
     }
   };
 
-  const handleUpdateSource = async (id: string, updates: UpdateCalendarSourceRequest) => {
-     const response = await fetch(`/api/calendar/sources?id=${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+  const handleUpdateSource = async (
+    id: string,
+    updates: UpdateCalendarSourceRequest,
+  ) => {
+    const response = await fetch(`/api/calendar/sources?id=${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
     if (response.ok) {
       fetchData();
     }
   };
-  
+
   const handleDeleteSource = async (id: string) => {
     const response = await fetch(`/api/calendar/sources?id=${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
     if (response.ok) {
       fetchData();
@@ -86,7 +102,7 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
 
   const handleSyncSource = async (id: string) => {
     const response = await fetch(`/api/calendar/sync?source_id=${id}`, {
-      method: 'POST',
+      method: "POST",
     });
     if (response.ok) {
       fetchData();
@@ -94,9 +110,9 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
   };
 
   const handleCreateEvent = async (eventData: any) => {
-    const response = await fetch('/api/calendar/events', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/calendar/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(eventData),
     });
     if (response.ok) {
@@ -104,7 +120,7 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
       fetchData(); // Refresh events
     } else {
       const errorData = await response.json();
-      console.error('Failed to create event:', errorData);
+      console.error("Failed to create event:", errorData);
       // You could show an error message to the user here
     }
   };
@@ -114,30 +130,33 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
   };
 
   const handleUpdateEvent = async (eventData: any) => {
-    const response = await fetch(`/api/calendar/events?id=${editingEvent?.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(eventData),
-    });
+    const response = await fetch(
+      `/api/calendar/events?id=${editingEvent?.id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(eventData),
+      },
+    );
     if (response.ok) {
       setEditingEvent(null);
       fetchData(); // Refresh events
     } else {
       const errorData = await response.json();
-      console.error('Failed to update event:', errorData);
+      console.error("Failed to update event:", errorData);
       // You could show an error message to the user here
     }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
     const response = await fetch(`/api/calendar/events?id=${eventId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
     if (response.ok) {
       fetchData(); // Refresh events
     } else {
       const errorData = await response.json();
-      console.error('Failed to delete event:', errorData);
+      console.error("Failed to delete event:", errorData);
       // You could show an error message to the user here
     }
   };
@@ -150,28 +169,28 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
     <>
       <div className="calendar-controls">
         <div className="view-controls">
-          <button 
-            className={selectedView === 'day' ? 'active' : ''}
-            onClick={() => setSelectedView('day')}
+          <button
+            className={selectedView === "day" ? "active" : ""}
+            onClick={() => setSelectedView("day")}
           >
             Day
           </button>
-          <button 
-            className={selectedView === 'week' ? 'active' : ''}
-            onClick={() => setSelectedView('week')}
+          <button
+            className={selectedView === "week" ? "active" : ""}
+            onClick={() => setSelectedView("week")}
           >
             Week
           </button>
-          <button 
-            className={selectedView === 'month' ? 'active' : ''}
-            onClick={() => setSelectedView('month')}
+          <button
+            className={selectedView === "month" ? "active" : ""}
+            onClick={() => setSelectedView("month")}
           >
             Month
           </button>
         </div>
 
         <div className="event-actions">
-          <button 
+          <button
             onClick={() => setShowNewEventModal(true)}
             className="btn btn-primary"
             disabled={sources.length === 0}
@@ -180,7 +199,7 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
             New Event
           </button>
         </div>
-        
+
         <div className="display-options">
           <label className="toggle-option">
             <input
@@ -202,11 +221,11 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
           onSyncSource={handleSyncSource}
         />
       </div>
-      
+
       <div className="calendar-section">
-        <UnifiedCalendarView 
-          events={filteredEvents} 
-          sources={sources} 
+        <UnifiedCalendarView
+          events={filteredEvents}
+          sources={sources}
           viewType={selectedView}
           onEventClick={handleEventClick}
           onEventUpdate={() => fetchData()} // Refresh when events change
@@ -221,11 +240,15 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
         </div>
         <div className="stat-item">
           <span className="stat-label">Task Events:</span>
-          <span className="stat-value">{events.filter(e => e.event_type === 'task').length}</span>
+          <span className="stat-value">
+            {events.filter((e) => e.event_type === "task").length}
+          </span>
         </div>
         <div className="stat-item">
           <span className="stat-label">Calendar Events:</span>
-          <span className="stat-value">{events.filter(e => e.event_type !== 'task').length}</span>
+          <span className="stat-value">
+            {events.filter((e) => e.event_type !== "task").length}
+          </span>
         </div>
       </div>
 
@@ -242,7 +265,7 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({ userId }) => 
       {selectedEvent && (
         <EventDetailsModal
           event={selectedEvent}
-          source={sources.find(s => s.id === selectedEvent.source_id)}
+          source={sources.find((s) => s.id === selectedEvent.source_id)}
           onClose={() => setSelectedEvent(null)}
           onEdit={(event) => {
             setSelectedEvent(null);
@@ -272,34 +295,42 @@ interface NewEventModalProps {
   onClose: () => void;
 }
 
-const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClose }) => {
+const NewEventModal: React.FC<NewEventModalProps> = ({
+  sources,
+  onSubmit,
+  onClose,
+}) => {
   const [loading, setLoading] = useState(false);
-  const [eventType, setEventType] = useState<'class' | 'meeting' | 'personal' | 'workout' | 'task' | 'break' | 'meal'>('personal');
+  const [eventType, setEventType] = useState<
+    "class" | "meeting" | "personal" | "workout" | "task" | "break" | "meal"
+  >("personal");
 
   // Get today's date in YYYY-MM-DD format for default values
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  const defaultStartTime = `${todayStr}T${today.getHours().toString().padStart(2, '0')}:00`;
-  const defaultEndTime = `${todayStr}T${(today.getHours() + 1).toString().padStart(2, '0')}:00`;
+  const todayStr = today.toISOString().split("T")[0];
+  const defaultStartTime = `${todayStr}T${today.getHours().toString().padStart(2, "0")}:00`;
+  const defaultEndTime = `${todayStr}T${(today.getHours() + 1).toString().padStart(2, "0")}:00`;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const formData = new FormData(e.currentTarget);
       const eventData = {
-        title: formData.get('title') as string,
-        description: formData.get('description') as string,
-        start_time: new Date(formData.get('start_time') as string).toISOString(),
-        end_time: new Date(formData.get('end_time') as string).toISOString(),
-        location: formData.get('location') as string,
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        start_time: new Date(
+          formData.get("start_time") as string,
+        ).toISOString(),
+        end_time: new Date(formData.get("end_time") as string).toISOString(),
+        location: formData.get("location") as string,
         event_type: eventType,
-        flexibility: formData.get('flexibility') as string,
-        importance: formData.get('importance') as string,
-        source_id: formData.get('source_id') as string,
+        flexibility: formData.get("flexibility") as string,
+        importance: formData.get("importance") as string,
+        source_id: formData.get("source_id") as string,
       };
-      
+
       await onSubmit(eventData);
     } finally {
       setLoading(false);
@@ -311,16 +342,18 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClos
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Create New Event</h3>
-          <button onClick={onClose} className="modal-close">&times;</button>
+          <button onClick={onClose} className="modal-close">
+            &times;
+          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Event Title *</label>
-            <input 
-              type="text" 
-              name="title" 
-              required 
+            <input
+              type="text"
+              name="title"
+              required
               placeholder="Meeting with team, Doctor appointment, etc."
               autoFocus
             />
@@ -330,7 +363,7 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClos
             <label>Calendar Source *</label>
             <select name="source_id" required>
               <option value="">Select a calendar</option>
-              {sources.map(source => (
+              {sources.map((source) => (
                 <option key={source.id} value={source.id}>
                   {source.name} ({source.type})
                 </option>
@@ -341,9 +374,9 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClos
 
           <div className="form-group">
             <label>Event Type</label>
-            <select 
-              name="event_type" 
-              value={eventType} 
+            <select
+              name="event_type"
+              value={eventType}
               onChange={(e) => setEventType(e.target.value as any)}
             >
               <option value="personal">Personal</option>
@@ -358,18 +391,18 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClos
           <div className="form-row">
             <div className="form-group">
               <label>Start Time *</label>
-              <input 
-                type="datetime-local" 
-                name="start_time" 
+              <input
+                type="datetime-local"
+                name="start_time"
                 required
                 defaultValue={defaultStartTime}
               />
             </div>
             <div className="form-group">
               <label>End Time *</label>
-              <input 
-                type="datetime-local" 
-                name="end_time" 
+              <input
+                type="datetime-local"
+                name="end_time"
                 required
                 defaultValue={defaultEndTime}
               />
@@ -378,9 +411,9 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClos
 
           <div className="form-group">
             <label>Location</label>
-            <input 
-              type="text" 
-              name="location" 
+            <input
+              type="text"
+              name="location"
               placeholder="Conference room, address, URL, etc."
             />
             <small>Physical location, address, or meeting link</small>
@@ -388,8 +421,8 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClos
 
           <div className="form-group">
             <label>Description</label>
-            <textarea 
-              name="description" 
+            <textarea
+              name="description"
               rows={3}
               placeholder="Event details, agenda, notes..."
             />
@@ -400,8 +433,12 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClos
               <label>Flexibility</label>
               <select name="flexibility" defaultValue="moveable">
                 <option value="fixed">Fixed (cannot be moved)</option>
-                <option value="moveable">Moveable (can reschedule if needed)</option>
-                <option value="flexible">Flexible (very easy to reschedule)</option>
+                <option value="moveable">
+                  Moveable (can reschedule if needed)
+                </option>
+                <option value="flexible">
+                  Flexible (very easy to reschedule)
+                </option>
               </select>
             </div>
             <div className="form-group">
@@ -416,11 +453,19 @@ const NewEventModal: React.FC<NewEventModalProps> = ({ sources, onSubmit, onClos
           </div>
 
           <div className="modal-actions">
-            <button type="button" onClick={onClose} className="btn btn-secondary">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary"
+            >
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="btn btn-primary">
-              {loading ? 'Creating...' : 'Create Event'}
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary"
+            >
+              {loading ? "Creating..." : "Create Event"}
             </button>
           </div>
         </form>
@@ -438,30 +483,40 @@ interface EventDetailsModalProps {
   onDelete: (eventId: string) => Promise<void>;
 }
 
-const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, source, onClose, onEdit, onDelete }) => {
+const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
+  event,
+  source,
+  onClose,
+  onEdit,
+  onDelete,
+}) => {
   const [loading, setLoading] = useState(false);
 
   const formatDateTime = (dateTime: string | Date) => {
     const date = new Date(dateTime);
     return {
-      date: date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      date: date.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       }),
-      time: date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      })
+      time: date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }),
     };
   };
 
   const startDateTime = formatDateTime(event.start_time);
   const endDateTime = formatDateTime(event.end_time);
-  const duration = Math.round((new Date(event.end_time).getTime() - new Date(event.start_time).getTime()) / (1000 * 60));
-  const isTaskEvent = event.event_type === 'task';
+  const duration = Math.round(
+    (new Date(event.end_time).getTime() -
+      new Date(event.start_time).getTime()) /
+      (1000 * 60),
+  );
+  const isTaskEvent = event.event_type === "task";
 
   const handleDelete = async () => {
     if (confirm(`Delete "${event.title}"? This action cannot be undone.`)) {
@@ -477,37 +532,54 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, source, on
   const openLocationLink = () => {
     if (event.location) {
       // Check if it's a URL
-      if (event.location.startsWith('http://') || event.location.startsWith('https://')) {
-        window.open(event.location, '_blank');
-      } else if (event.location.includes('meet.google.com') || event.location.includes('zoom.us')) {
+      if (
+        event.location.startsWith("http://") ||
+        event.location.startsWith("https://")
+      ) {
+        window.open(event.location, "_blank");
+      } else if (
+        event.location.includes("meet.google.com") ||
+        event.location.includes("zoom.us")
+      ) {
         // Handle meeting links that might not have http prefix
-        window.open(`https://${event.location}`, '_blank');
+        window.open(`https://${event.location}`, "_blank");
       } else {
         // Treat as address and open in maps
-        window.open(`https://maps.google.com?q=${encodeURIComponent(event.location)}`, '_blank');
+        window.open(
+          `https://maps.google.com?q=${encodeURIComponent(event.location)}`,
+          "_blank",
+        );
       }
     }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content event-details-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-content event-details-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <div className="event-header">
             <div className="event-title-section">
               <h3>{event.title}</h3>
               {isTaskEvent && <span className="task-badge">Task</span>}
-              <div className="event-type-badge" style={{ backgroundColor: source?.color || '#3b82f6' }}>
+              <div
+                className="event-type-badge"
+                style={{ backgroundColor: source?.color || "#3b82f6" }}
+              >
                 {event.event_type}
               </div>
             </div>
             <div className="event-source">
-              <span style={{ color: source?.color || '#3b82f6' }}>
-                📅 {source?.name || 'Unknown Calendar'}
+              <span style={{ color: source?.color || "#3b82f6" }}>
+                📅 {source?.name || "Unknown Calendar"}
               </span>
             </div>
           </div>
-          <button onClick={onClose} className="modal-close">&times;</button>
+          <button onClick={onClose} className="modal-close">
+            &times;
+          </button>
         </div>
 
         <div className="event-details-content">
@@ -515,13 +587,15 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, source, on
             <h4>📅 Date & Time</h4>
             <div className="time-details">
               <div className="time-row">
-                <strong>Start:</strong> {startDateTime.date} at {startDateTime.time}
+                <strong>Start:</strong> {startDateTime.date} at{" "}
+                {startDateTime.time}
               </div>
               <div className="time-row">
                 <strong>End:</strong> {endDateTime.date} at {endDateTime.time}
               </div>
               <div className="time-row">
-                <strong>Duration:</strong> {Math.floor(duration / 60)}h {duration % 60}m
+                <strong>Duration:</strong> {Math.floor(duration / 60)}h{" "}
+                {duration % 60}m
               </div>
             </div>
           </div>
@@ -531,11 +605,15 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, source, on
               <h4>📍 Location</h4>
               <div className="location-details">
                 <span className="location-text">{event.location}</span>
-                <button 
+                <button
                   onClick={openLocationLink}
                   className="btn btn-sm btn-secondary location-link"
                 >
-                  {event.location.includes('http') || event.location.includes('meet') || event.location.includes('zoom') ? '🔗 Join' : '📍 Open in Maps'}
+                  {event.location.includes("http") ||
+                  event.location.includes("meet") ||
+                  event.location.includes("zoom")
+                    ? "🔗 Join"
+                    : "📍 Open in Maps"}
                 </button>
               </div>
             </div>
@@ -552,13 +630,13 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, source, on
             <h4>⚙️ Event Properties</h4>
             <div className="properties-grid">
               <div className="property">
-                <strong>Importance:</strong> 
+                <strong>Importance:</strong>
                 <span className={`importance-badge ${event.importance}`}>
                   {event.importance}
                 </span>
               </div>
               <div className="property">
-                <strong>Flexibility:</strong> 
+                <strong>Flexibility:</strong>
                 <span className={`flexibility-badge ${event.flexibility}`}>
                   {event.flexibility}
                 </span>
@@ -571,18 +649,15 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({ event, source, on
           <button onClick={onClose} className="btn btn-secondary">
             Close
           </button>
-          <button 
-            onClick={() => onEdit(event)} 
-            className="btn btn-primary"
-          >
+          <button onClick={() => onEdit(event)} className="btn btn-primary">
             ✏️ Edit
           </button>
-          <button 
+          <button
             onClick={handleDelete}
             disabled={loading}
             className="btn btn-danger"
           >
-            {loading ? 'Deleting...' : '🗑️ Delete'}
+            {loading ? "Deleting..." : "🗑️ Delete"}
           </button>
         </div>
       </div>
@@ -598,9 +673,16 @@ interface EditEventModalProps {
   onClose: () => void;
 }
 
-const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmit, onClose }) => {
+const EditEventModal: React.FC<EditEventModalProps> = ({
+  event,
+  sources,
+  onSubmit,
+  onClose,
+}) => {
   const [loading, setLoading] = useState(false);
-  const [eventType, setEventType] = useState<'class' | 'meeting' | 'personal' | 'workout' | 'task' | 'break' | 'meal'>(event.event_type);
+  const [eventType, setEventType] = useState<
+    "class" | "meeting" | "personal" | "workout" | "task" | "break" | "meal"
+  >(event.event_type);
 
   // Format dates for datetime-local input
   const formatDateTimeLocal = (dateTime: string | Date) => {
@@ -611,21 +693,23 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const formData = new FormData(e.currentTarget);
       const eventData = {
-        title: formData.get('title') as string,
-        description: formData.get('description') as string,
-        start_time: new Date(formData.get('start_time') as string).toISOString(),
-        end_time: new Date(formData.get('end_time') as string).toISOString(),
-        location: formData.get('location') as string,
+        title: formData.get("title") as string,
+        description: formData.get("description") as string,
+        start_time: new Date(
+          formData.get("start_time") as string,
+        ).toISOString(),
+        end_time: new Date(formData.get("end_time") as string).toISOString(),
+        location: formData.get("location") as string,
         event_type: eventType,
-        flexibility: formData.get('flexibility') as string,
-        importance: formData.get('importance') as string,
-        source_id: formData.get('source_id') as string,
+        flexibility: formData.get("flexibility") as string,
+        importance: formData.get("importance") as string,
+        source_id: formData.get("source_id") as string,
       };
-      
+
       await onSubmit(eventData);
     } finally {
       setLoading(false);
@@ -637,16 +721,18 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3>Edit Event</h3>
-          <button onClick={onClose} className="modal-close">&times;</button>
+          <button onClick={onClose} className="modal-close">
+            &times;
+          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Event Title *</label>
-            <input 
-              type="text" 
-              name="title" 
-              required 
+            <input
+              type="text"
+              name="title"
+              required
               defaultValue={event.title}
               placeholder="Meeting with team, Doctor appointment, etc."
               autoFocus
@@ -657,7 +743,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
             <label>Calendar Source *</label>
             <select name="source_id" required defaultValue={event.source_id}>
               <option value="">Select a calendar</option>
-              {sources.map(source => (
+              {sources.map((source) => (
                 <option key={source.id} value={source.id}>
                   {source.name} ({source.type})
                 </option>
@@ -668,9 +754,9 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
 
           <div className="form-group">
             <label>Event Type</label>
-            <select 
-              name="event_type" 
-              value={eventType} 
+            <select
+              name="event_type"
+              value={eventType}
               onChange={(e) => setEventType(e.target.value as any)}
             >
               <option value="personal">Personal</option>
@@ -685,18 +771,18 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
           <div className="form-row">
             <div className="form-group">
               <label>Start Time *</label>
-              <input 
-                type="datetime-local" 
-                name="start_time" 
+              <input
+                type="datetime-local"
+                name="start_time"
                 required
                 defaultValue={formatDateTimeLocal(event.start_time)}
               />
             </div>
             <div className="form-group">
               <label>End Time *</label>
-              <input 
-                type="datetime-local" 
-                name="end_time" 
+              <input
+                type="datetime-local"
+                name="end_time"
                 required
                 defaultValue={formatDateTimeLocal(event.end_time)}
               />
@@ -705,10 +791,10 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
 
           <div className="form-group">
             <label>Location</label>
-            <input 
-              type="text" 
-              name="location" 
-              defaultValue={event.location || ''}
+            <input
+              type="text"
+              name="location"
+              defaultValue={event.location || ""}
               placeholder="Conference room, address, URL, etc."
             />
             <small>Physical location, address, or meeting link</small>
@@ -716,10 +802,10 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
 
           <div className="form-group">
             <label>Description</label>
-            <textarea 
-              name="description" 
+            <textarea
+              name="description"
               rows={3}
-              defaultValue={event.description || ''}
+              defaultValue={event.description || ""}
               placeholder="Event details, agenda, notes..."
             />
           </div>
@@ -729,8 +815,12 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
               <label>Flexibility</label>
               <select name="flexibility" defaultValue={event.flexibility}>
                 <option value="fixed">Fixed (cannot be moved)</option>
-                <option value="moveable">Moveable (can reschedule if needed)</option>
-                <option value="flexible">Flexible (very easy to reschedule)</option>
+                <option value="moveable">
+                  Moveable (can reschedule if needed)
+                </option>
+                <option value="flexible">
+                  Flexible (very easy to reschedule)
+                </option>
               </select>
             </div>
             <div className="form-group">
@@ -745,11 +835,19 @@ const EditEventModal: React.FC<EditEventModalProps> = ({ event, sources, onSubmi
           </div>
 
           <div className="modal-actions">
-            <button type="button" onClick={onClose} className="btn btn-secondary">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn btn-secondary"
+            >
               Cancel
             </button>
-            <button type="submit" disabled={loading} className="btn btn-primary">
-              {loading ? 'Updating...' : 'Update Event'}
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary"
+            >
+              {loading ? "Updating..." : "Update Event"}
             </button>
           </div>
         </form>

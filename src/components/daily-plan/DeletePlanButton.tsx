@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 interface DeletePlanButtonProps {
   planId: string;
   onDeleted: () => void;
 }
 
-export default function DeletePlanButton({ planId, onDeleted }: DeletePlanButtonProps) {
+export default function DeletePlanButton({
+  planId,
+  onDeleted,
+}: DeletePlanButtonProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -13,18 +16,18 @@ export default function DeletePlanButton({ planId, onDeleted }: DeletePlanButton
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/daily-plan/${planId}/delete`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete plan');
+        throw new Error("Failed to delete plan");
       }
 
       // Notify parent component
       onDeleted();
     } catch (error) {
-      console.error('Error deleting plan:', error);
-      alert('Failed to delete plan. Please try again.');
+      console.error("Error deleting plan:", error);
+      alert("Failed to delete plan. Please try again.");
     } finally {
       setIsDeleting(false);
       setShowConfirm(false);
@@ -43,7 +46,7 @@ export default function DeletePlanButton({ planId, onDeleted }: DeletePlanButton
             disabled={isDeleting}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isDeleting ? 'Deleting...' : 'Yes, Delete Plan'}
+            {isDeleting ? "Deleting..." : "Yes, Delete Plan"}
           </button>
           <button
             onClick={() => setShowConfirm(false)}

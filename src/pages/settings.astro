@@ -14,6 +14,7 @@ const preferences = await serverAuth.getUserPreferences(user.id);
 
 const enabledModules = Array.isArray(preferences?.enabled_modules) ? preferences.enabled_modules : ['daily-plan', 'habits', 'calendar'];
 const theme = typeof preferences?.theme === 'string' ? preferences.theme : 'dark';
+const recalcOnOpen = typeof preferences?.recalc_on_open === 'boolean' ? preferences.recalc_on_open : false;
 ---
 
 <DashboardLayout title="Settings - MeshOS" user={user}>
@@ -37,6 +38,29 @@ const theme = typeof preferences?.theme === 'string' ? preferences.theme : 'dark
         <div>
           <button type="submit" class="px-4 py-2 rounded-lg bg-accent-primary text-white text-sm font-medium hover:bg-accent-primary/90 transition-colors">Save appearance</button>
         </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 class="text-lg font-semibold text-text-primary mb-2">Daily Plan</h2>
+      <p class="text-sm text-text-secondary mb-4">
+        Configure how your daily plan behaves in the Mirror view.
+      </p>
+      <form id="daily-plan-form" class="space-y-4">
+        <label class="inline-flex items-center gap-3 rounded-lg border border-border bg-surface-hover/50 px-4 py-3 cursor-pointer">
+          <input 
+            type="checkbox" 
+            id="recalc-on-open" 
+            name="recalc_on_open" 
+            checked={recalcOnOpen}
+            class="rounded"
+          />
+          <div class="flex-1">
+            <span class="text-text-primary font-medium block">Recalculate plan on open</span>
+            <span class="text-sm text-text-secondary">When enabled, your plan regenerates from current time each time you open the Mirror view</span>
+          </div>
+        </label>
+        <button type="submit" class="px-4 py-2 rounded-lg border border-border text-text-secondary text-sm font-medium hover:text-text-primary hover:bg-surface-hover transition-colors">Save daily plan settings</button>
       </form>
     </section>
 
@@ -128,6 +152,21 @@ const theme = typeof preferences?.theme === 'string' ? preferences.theme : 'dark
 
     const result = await response.json();
     showMessage(response.ok ? 'Modules saved' : (result?.error || 'Save failed'), !response.ok);
+  });
+
+  document.getElementById('daily-plan-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const recalcOnOpen = document.getElementById('recalc-on-open')?.checked || false;
+
+    const response = await fetch('/api/auth/preferences', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recalc_on_open: recalcOnOpen }),
+    });
+
+    const result = await response.json();
+    showMessage(response.ok ? 'Daily plan settings saved' : (result?.error || 'Save failed'), !response.ok);
   });
 
   const DEFAULT_EXIT_GATE_CONDITIONS = [

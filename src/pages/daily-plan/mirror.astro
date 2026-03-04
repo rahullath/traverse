@@ -1,0 +1,33 @@
+---
+// src/pages/daily-plan/mirror.astro
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { createServerAuth } from '../../lib/auth/simple-multi-user';
+import MirrorUI from '../../components/daily-plan/MirrorUI';
+import { isFeatureEnabled } from '../../lib/feature-flags';
+
+// Check if triage mirror feature is enabled
+if (!isFeatureEnabled('TRIAGE_MIRROR_ENABLED')) {
+  return new Response('Mirror view is currently disabled', { status: 503 });
+}
+
+// Require authentication
+const serverAuth = createServerAuth(Astro.cookies);
+const user = await serverAuth.getUser();
+
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<DashboardLayout title="Mirror View - MeshOS" user={user}>
+  <div class="app-content-wrap">
+    <!-- Minimal header -->
+    <div class="mb-4">
+      <h1 class="text-xl font-semibold text-text-primary">Mirror View</h1>
+      <p class="text-sm text-text-muted mt-1">Real-time plan adaptation and triage</p>
+    </div>
+
+    <!-- Mirror UI Content -->
+    <MirrorUI client:load userId={user.id} />
+  </div>
+</DashboardLayout>

@@ -1,9 +1,9 @@
 // src/lib/auth/types.ts - TypeScript interfaces for auth state management
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import type { Database } from '../../types/supabase';
+import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
+import type { Database } from "../../types/supabase";
 
 // Core user profile type from database
-export type UserProfile = Database['public']['Tables']['profiles']['Row'];
+export type UserProfile = Database["public"]["Tables"]["profiles"]["Row"];
 
 // Enhanced user type with profile data
 export interface User {
@@ -45,14 +45,24 @@ export interface AuthState {
 export interface AuthContextType extends AuthState {
   // Authentication methods
   signInWithEmail: (email: string, password: string) => Promise<User | null>;
-  signUpWithEmail: (email: string, password: string, fullName?: string) => Promise<User | null>;
-  signInWithOAuth: (provider: 'google' | 'github' | 'apple') => Promise<{ url: string } | null>;
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    fullName?: string,
+  ) => Promise<User | null>;
+  signInWithOAuth: (
+    provider: "google" | "github" | "apple",
+  ) => Promise<{ url: string } | null>;
   signOut: () => Promise<boolean>;
-  
+
   // Token management
   refreshTokenBalance: () => Promise<void>;
-  deductTokens: (amount: number, description: string, metadata?: any) => Promise<boolean>;
-  
+  deductTokens: (
+    amount: number,
+    description: string,
+    metadata?: any,
+  ) => Promise<boolean>;
+
   // User data management
   refreshUserData: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
@@ -80,7 +90,7 @@ export interface SignInData {
 }
 
 // OAuth provider options
-export type OAuthProvider = 'google' | 'github' | 'apple';
+export type OAuthProvider = "google" | "github" | "apple";
 
 // Session storage interface
 export interface SessionStorage {
@@ -94,7 +104,7 @@ export interface AuthConfig {
   autoRefreshToken?: boolean;
   persistSession?: boolean;
   detectSessionInUrl?: boolean;
-  flowType?: 'implicit' | 'pkce';
+  flowType?: "implicit" | "pkce";
   storage?: SessionStorage;
 }
 
@@ -115,7 +125,7 @@ export interface WaitlistStatus {
 
 // User preferences interface
 export interface UserPreferences {
-  theme?: 'light' | 'dark' | 'system';
+  theme?: "light" | "dark" | "system";
   timezone?: string;
   language?: string;
   notifications?: {
@@ -131,7 +141,7 @@ export interface UserPreferences {
 
 // Onboarding state interface
 export interface OnboardingState {
-  currentStep: 'profile' | 'preferences' | 'modules' | 'complete';
+  currentStep: "profile" | "preferences" | "modules" | "complete";
   completedSteps: string[];
   isComplete: boolean;
   profileData?: Partial<UserProfile>;
