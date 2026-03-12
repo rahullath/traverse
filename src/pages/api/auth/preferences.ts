@@ -13,6 +13,12 @@ function getDefaultPreferences() {
     ai_proactivity_level: 3,
     data_retention_days: 365,
     share_analytics: false,
+    show_completion_controls: false,
+    show_recovery_blocks: true,
+    enable_usage_analytics: false,
+    keystone_activity: null,
+    max_late_minutes_default: 0,
+    strict_late_default: true,
     subscription_status: "trial",
     trial_end_date: new Date(
       Date.now() + 30 * 24 * 60 * 60 * 1000,
@@ -139,6 +145,14 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       "share_analytics",
       "onboarding_profile",
       "recalc_on_open",
+      "show_completion_controls",
+      "show_recovery_blocks",
+      "enable_usage_analytics",
+      "keystone_activity",
+      "derived_planner_defaults",
+      "onboarding_presets",
+      "max_late_minutes_default",
+      "strict_late_default",
     ];
 
     const sanitizedUpdates = Object.keys(updates)

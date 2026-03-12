@@ -87,10 +87,21 @@ export interface TimeBlockMetadata {
   chain_id?: string;
   step_id?: string;
   anchor_id?: string;
+  anchor_title?: string;
+  anchor_start?: string;
+  anchor_end?: string;
+  anchor_location?: string;
+  anchor_type?: string;
+  max_late_minutes?: number;
 
   // Location state tracking
   // Requirements: 18.3
   location_state?: "at_home" | "not_home";
+
+  triage?: {
+    is_keystone?: boolean;
+    [key: string]: unknown;
+  };
 
   // Commitment envelope tracking
   // Requirements: 18.4
@@ -104,11 +115,36 @@ export interface TimeBlockMetadata {
       | "recovery";
   };
 
+  timing_signals?: {
+    suggested_start_by: string;
+    ready_to_leave_by: string;
+    anchor_at: string;
+    effective_arrival_deadline: string;
+    max_late_minutes: number;
+    travel_duration_minutes: number;
+    selected_departure_slot?: string;
+    next_feasible_departure_slot?: string;
+  };
+
+  anchor_constraints?: {
+    max_late_minutes?: number;
+    strict_by_default?: boolean;
+  };
+
+  travel_profile?: {
+    label?: string;
+    selected_slot?: string;
+    next_feasible_slot?: string;
+    source?: "profile" | "fallback";
+    used_slots?: boolean;
+  };
+
   // Error handling metadata
   // Design: Error Handling
   fallback_used?: boolean;
   fallback_reason?: string;
   template_fallback?: boolean;
+  no_calendar_fallback?: boolean;
   original_anchor_type?: string;
   fallback_template?: string;
 

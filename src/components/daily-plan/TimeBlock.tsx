@@ -32,6 +32,8 @@ interface TimeBlockProps {
   onRecalculateAll: () => void;
   onDelete?: (blockId: string) => Promise<void>;
   onRefresh?: () => void;
+  // Mirror V2 props (Req 4.3, 4.4)
+  showCompletionControls?: boolean; // Default true for backward compatibility
 }
 
 /**
@@ -56,6 +58,7 @@ export default function TimeBlock({
   onRecalculateAll,
   onDelete,
   onRefresh,
+  showCompletionControls = true, // Default true for backward compatibility (Req 4.3, 4.4)
 }: TimeBlockProps) {
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [skipReason, setSkipReason] = useState("");
@@ -109,7 +112,7 @@ export default function TimeBlock({
     return currentTime > end && block.status === "pending";
   };
 
-  // Get visual state class for block
+  // Get visual state class for block - Mirror V2: Only three states (Req 3.1, 3.2, 3.5)
   const getBlockStateClass = (): string => {
     if (block.status === "completed") {
       return "bg-green-500/10 border-green-500/40";
@@ -117,16 +120,11 @@ export default function TimeBlock({
     if (block.status === "skipped") {
       return "bg-gray-500/10 border-gray-500/40";
     }
-    if (isLateBlock()) {
-      return "bg-red-500/10 border-red-500/40";
-    }
-    if (isCurrentBlock()) {
-      return "bg-accent-primary/10 border-accent-primary shadow-md";
-    }
+    // Pending state - always neutral, no time-based color changes (Req 3.4, 3.5)
     return "bg-surface-primary border-border-primary";
   };
 
-  // Get text color class for block
+  // Get text color class for block - Mirror V2: Neutral for pending (Req 3.2)
   const getBlockTextClass = (): string => {
     if (block.status === "completed") {
       return "text-text-muted line-through";
@@ -134,9 +132,7 @@ export default function TimeBlock({
     if (block.status === "skipped") {
       return "text-text-muted";
     }
-    if (isCurrentBlock()) {
-      return "text-accent-primary font-semibold";
-    }
+    // Pending state - always neutral text color
     return "text-text-primary";
   };
 
@@ -353,16 +349,7 @@ export default function TimeBlock({
               <h3 className={`text-lg font-semibold ${getBlockTextClass()}`}>
                 {block.activityName}
               </h3>
-              {isCurrent && (
-                <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-accent-primary/20 text-accent-primary rounded animate-pulse">
-                  Current
-                </span>
-              )}
-              {isLate && (
-                <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-500/20 text-red-400 rounded">
-                  Late
-                </span>
-              )}
+              {/* Mirror V2: Removed "Current" and "Late" badges - no time-based visual indicators (Req 3.4) */}
             </div>
 
             {/* Envelope Label */}
@@ -427,9 +414,9 @@ export default function TimeBlock({
             )}
           </div>
 
-          {/* Completion Controls */}
+          {/* Completion Controls - Mirror V2: Hidden by default unless showCompletionControls is true (Req 4.3, 4.4) */}
           <div className="flex items-center gap-2 ml-4">
-            {block.status === "pending" && (
+            {block.status === "pending" && showCompletionControls && (
               <>
                 {/* Complete Button - 44x44px minimum touch target */}
                 <button
@@ -539,14 +526,17 @@ export default function TimeBlock({
 
       {/* Skip Reason Modal */}
       {showSkipModal && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="timeblock-skip-title"
         >
           <div className="bg-surface-primary border border-border-primary rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 id="timeblock-skip-title" className="text-lg font-semibold text-text-primary mb-4">
+            <h3
+              id="timeblock-skip-title"
+              className="text-lg font-semibold text-text-primary mb-4"
+            >
               Skip Reason
             </h3>
             <p className="text-sm text-text-muted mb-4">
@@ -600,14 +590,17 @@ export default function TimeBlock({
 
       {/* Context Menu (Long Press) */}
       {showContextMenu && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="context-menu-title"
         >
           <div className="bg-surface-primary border border-border-primary rounded-xl p-4 max-w-xs w-full mx-4">
-            <h3 id="context-menu-title" className="text-lg font-semibold text-text-primary mb-4">
+            <h3
+              id="context-menu-title"
+              className="text-lg font-semibold text-text-primary mb-4"
+            >
               Quick Actions
             </h3>
             <div className="space-y-2" role="menu">

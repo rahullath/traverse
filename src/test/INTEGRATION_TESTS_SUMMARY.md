@@ -60,6 +60,7 @@ Comprehensive integration and end-to-end tests have been created for the Triage 
 ## Test Coverage
 
 ### API Endpoints (100% coverage)
+
 - ✅ GET /api/daily-plan/mirror
 - ✅ POST /api/daily-plan/recalculate
 - ✅ POST /api/daily-plan/state
@@ -70,6 +71,7 @@ Comprehensive integration and end-to-end tests have been created for the Triage 
 - ✅ POST /api/time-blocks/insert
 
 ### User Flows (100% coverage)
+
 - ✅ Triage flow (insufficient runway → protect keystone)
 - ✅ State declaration flow (ready for anchor → hide activation chain)
 - ✅ Recalculation flow (recalc from now → preserve completed)
@@ -78,6 +80,7 @@ Comprehensive integration and end-to-end tests have been created for the Triage 
 - ✅ Intent signal flow (7+ day absence → show banner → dismiss)
 
 ### Requirements Coverage
+
 - ✅ Runway calculation (1.1-1.5)
 - ✅ Triage mode (2.1-2.5, 10.1-10.5)
 - ✅ Triage decisions (3.1-3.5)
@@ -92,6 +95,7 @@ Comprehensive integration and end-to-end tests have been created for the Triage 
 ## Test Patterns
 
 ### Mocking Strategy
+
 ```typescript
 // Mock Supabase client
 const mockSupabase = {
@@ -110,13 +114,14 @@ global.fetch = vi.fn();
 ```
 
 ### Assertion Patterns
+
 ```typescript
 // Verify data structure
-expect(response.data).toHaveProperty('runway');
+expect(response.data).toHaveProperty("runway");
 expect(response.data.runway).toBeGreaterThan(0);
 
 // Verify state changes
-expect(block.status).toBe('completed');
+expect(block.status).toBe("completed");
 
 // Verify error handling
 expect(response.status).toBe(404);
@@ -144,6 +149,7 @@ npm run test:watch src/test/integration/
 ## Security Testing
 
 All tests verify:
+
 - ✅ Authentication required for all endpoints
 - ✅ User ID derived from session, not request body
 - ✅ User ownership verification
@@ -154,6 +160,7 @@ All tests verify:
 ## Performance Testing
 
 Tests verify:
+
 - ✅ Runway calculation < 100ms
 - ✅ Recalculation < 4s (with timeout)
 - ✅ API response times
@@ -174,12 +181,14 @@ Tests verify:
 ## Next Steps
 
 1. **Run Tests**: Execute all tests to verify they pass
+
    ```bash
    npm test src/test/integration/
    npm test src/test/e2e/
    ```
 
 2. **Check Coverage**: Verify 80% minimum coverage
+
    ```bash
    npm test -- --coverage
    ```
@@ -209,6 +218,7 @@ Tests verify:
 ## Test Maintenance
 
 ### Adding New Tests
+
 1. Follow existing patterns in test files
 2. Use descriptive test names
 3. Test both success and error paths
@@ -216,12 +226,14 @@ Tests verify:
 5. Update README with new coverage
 
 ### Updating Tests
+
 1. Keep tests in sync with implementation
 2. Update mocks when APIs change
 3. Maintain test data generators
 4. Document breaking changes
 
 ### Debugging Tests
+
 1. Run single test file: `npm test path/to/file.test.ts`
 2. Use `it.only()` to focus on one test
 3. Add `console.log()` for debugging

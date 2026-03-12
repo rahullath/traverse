@@ -163,7 +163,10 @@ export function TriagePrompt({
               </svg>
             </div>
             <div className="flex-1">
-              <h3 id="triage-title" className="text-lg font-semibold text-text-primary">
+              <h3
+                id="triage-title"
+                className="text-lg font-semibold text-text-primary"
+              >
                 Insufficient Time
               </h3>
               <p className="mt-1 text-sm text-text-secondary">
@@ -178,7 +181,11 @@ export function TriagePrompt({
           </div>
 
           {/* Triage Options */}
-          <div className="space-y-2" role="group" aria-labelledby="triage-title">
+          <div
+            className="space-y-2"
+            role="group"
+            aria-labelledby="triage-title"
+          >
             {triageState.options.map((option, index) => (
               <button
                 key={option.id}

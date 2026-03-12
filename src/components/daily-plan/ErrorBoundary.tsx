@@ -1,4 +1,4 @@
-import React, { Component, type ReactNode } from 'react';
+import React, { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -15,7 +15,10 @@ interface ErrorBoundaryState {
  * Error boundary component for catching and handling React errors
  * Provides user-friendly error messages and logging capabilities
  */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -27,7 +30,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to console in development
-    console.error('ErrorBoundary caught error:', error, errorInfo);
+    console.error("ErrorBoundary caught error:", error, errorInfo);
 
     // Call custom error handler if provided
     if (this.props.onError) {
@@ -74,17 +77,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   Something went wrong
                 </h3>
                 <p className="mt-2 text-sm text-text-secondary">
-                  We encountered an unexpected error. Please try refreshing the page or contact
-                  support if the problem persists.
+                  We encountered an unexpected error. Please try refreshing the
+                  page or contact support if the problem persists.
                 </p>
-                {process.env.NODE_ENV === 'development' && (
+                {process.env.NODE_ENV === "development" && (
                   <details className="mt-4">
                     <summary className="text-xs text-text-tertiary cursor-pointer hover:text-text-secondary">
                       Error details (dev only)
                     </summary>
                     <pre className="mt-2 text-xs text-text-tertiary overflow-auto p-2 bg-background rounded border border-border">
                       {this.state.error.message}
-                      {'\n\n'}
+                      {"\n\n"}
                       {this.state.error.stack}
                     </pre>
                   </details>
@@ -119,7 +122,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
  */
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<ErrorBoundaryProps, 'children'>,
+  errorBoundaryProps?: Omit<ErrorBoundaryProps, "children">,
 ) {
   return function WithErrorBoundary(props: P) {
     return (

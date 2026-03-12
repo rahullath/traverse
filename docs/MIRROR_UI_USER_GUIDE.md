@@ -16,7 +16,7 @@ Mirror UI displays your day as a vertical timeline with:
 
 - **Current time indicator**: A line showing where you are in your day
 - **Time blocks**: Each activity with start/end times, duration, and name
-- **Visual states**: 
+- **Visual states**:
   - Pending (default color)
   - Current (highlighted)
   - Completed (green checkmark)
@@ -30,32 +30,38 @@ When you open Mirror UI within 2 hours of an anchor, you'll see a prompt asking 
 #### State Options
 
 **"Starting my day"**
+
 - Shows your full activation chain from now
 - All steps marked as pending
 - Use when: You're beginning your day and ready to follow the plan
 
 **"Ready for anchor"**
+
 - Hides activation chain steps
 - Shows only departure time, travel, anchor, and recovery
 - Use when: You've completed prep and are ready to leave
 
 **"Mid-chain"**
+
 - Prompts you to select which step you're on
 - Marks prior steps as completed
 - Shows remaining steps
 - Use when: You're partway through your chain
 
 **"At anchor"**
+
 - Marks prep and travel as completed
 - Highlights the anchor block
 - Use when: You've arrived at your commitment
 
 **"Missed it"**
+
 - Marks anchor and related steps as skipped
 - Shows remaining timeline
 - Use when: You missed the anchor and need to move on
 
 **"Just checking"**
+
 - Shows full timeline without changes
 - Use when: You're just looking at your plan
 
@@ -66,6 +72,7 @@ When you don't have enough time for planned activities (runway < required durati
 #### What You'll See
 
 A prominent banner showing:
+
 - Time remaining until next anchor (runway)
 - Time needed for all planned activities (required duration)
 - The most important activity to protect (keystone)
@@ -73,16 +80,19 @@ A prominent banner showing:
 #### Your Options
 
 **Protect Keystone**
+
 - Keeps only the most critical activity and the anchor
 - Removes prep and recovery steps
 - Use when: You want to make the anchor but need to cut corners
 
 **Skip Anchor**
+
 - Marks the anchor as skipped
 - Removes entire commitment envelope
 - Use when: You've decided not to attend
 
 **Recalculate**
+
 - Generates a fresh plan from current time
 - Uses existing plan generation logic
 - Use when: You want a completely new plan
@@ -93,7 +103,8 @@ A prominent banner showing:
 
 **Desktop**: Click the checkmark button on any time block
 
-**Mobile**: 
+**Mobile**:
+
 - Swipe right to mark complete
 - Tap the checkmark button
 
@@ -102,6 +113,7 @@ A prominent banner showing:
 **Desktop**: Click the skip button
 
 **Mobile**:
+
 - Swipe left to skip
 - Tap the skip button
 - You'll be prompted for a skip reason
@@ -149,11 +161,13 @@ Enable edit mode using the toggle in the header.
 Each commitment envelope displays:
 
 **"Start at [TIME]" label**
+
 - Shows when you need to begin the chain
 - Displays countdown if before start time
 - Shows how late if after start time
 
 **"Complete by [TIME]" banner**
+
 - Shows deadline for completing all prep steps
 - Displays time remaining in human-readable format
 - Changes to warning color if you're past deadline
@@ -165,6 +179,7 @@ Each commitment envelope displays:
 Click "Recalculate from Now" in the header to generate a fresh plan starting from current time.
 
 **What happens:**
+
 - Existing plan is replaced
 - New chains generated from now
 - Completed steps are preserved (matched by time)
@@ -177,6 +192,7 @@ Click "Recalculate from Now" in the header to generate a fresh plan starting fro
 Enable "Recalculate plan on open" in Settings to automatically regenerate your plan each time you open Mirror UI.
 
 **Use when:**
+
 - You want fresh plans every time
 - Your schedule changes frequently
 - You prefer starting from "now" rather than seeing broken plans
@@ -186,6 +202,7 @@ Enable "Recalculate plan on open" in Settings to automatically regenerate your p
 If you haven't created a plan for 7+ consecutive days, you'll see a neutral banner asking: "Need a plan today?"
 
 **Options:**
+
 - "Yes, generate plan" → Takes you to plan generation
 - "No, not today" → Dismisses until next session
 
@@ -202,6 +219,7 @@ This is a gentle re-engagement prompt, not a guilt trip.
 ### Bottom Sheet Prompts
 
 State declaration and triage prompts slide up from the bottom with:
+
 - Backdrop overlay
 - Swipe-down to dismiss
 - Safe area inset support
@@ -209,6 +227,7 @@ State declaration and triage prompts slide up from the bottom with:
 ### Responsive Design
 
 Mirror UI adapts to screen sizes from 320px to 1920px:
+
 - Mobile: Stacked vertical layout
 - Tablet: Optimized spacing
 - Desktop: Full-width timeline
@@ -248,21 +267,25 @@ All buttons meet 44x44px minimum touch target size.
 ## Troubleshooting
 
 **Mirror UI won't load**
+
 - Check your internet connection
 - Ensure you're logged in
 - Try refreshing the page
 
 **Recalculation times out**
+
 - You may have too many anchors (6+)
 - Try again - it usually succeeds on retry
 - Consider removing some anchors
 
 **State prompt doesn't show**
+
 - You may have declared state in the last 30 minutes
 - You may not be within 2 hours of an anchor
 - This is normal behavior
 
 **Completion state not saving**
+
 - Check your internet connection
 - Ensure you're logged in
 - Try marking the step again

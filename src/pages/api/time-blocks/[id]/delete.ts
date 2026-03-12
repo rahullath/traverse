@@ -1,9 +1,6 @@
 import type { APIRoute } from "astro";
 import { ServerAuth } from "../../../../lib/auth/simple-multi-user";
-import {
-  handleApiError,
-  logError,
-} from "../../../../lib/triage/error-handler";
+import { handleApiError, logError } from "../../../../lib/triage/error-handler";
 
 /**
  * DELETE /api/time-blocks/[id]/delete

@@ -1,143 +1,117 @@
-// Reality check: User-initiated "Can I make it?" assessment
-// Philosophy: Neutral options, no warnings, no judgment
-// Shows what's possible, not what you "should" do
+// Reality Check Prompt Component
+// Requirements: 7.3, 7.4, 7.5, 16.1, 16.4, 16.5
 
-import React from 'react';
-import type { TimeBlock } from '@/types/daily-plan';
+import React from "react";
+import type { RealityCheckResult } from "@/lib/display/reality-check";
 
-export interface RealityCheckResult {
-  canMakeIt: boolean;
-  possibleSteps: TimeBlock[];
-  skippableSteps: TimeBlock[];
-  departureTime: Date | null;
-  minutesAvailable: number;
-}
-
-export interface RealityCheckPromptProps {
+interface RealityCheckPromptProps {
   result: RealityCheckResult;
-  anchor: TimeBlock;
-  onSelectOption: (option: 'full' | 'minimal' | 'skip') => void;
+  onSelectAlternative: (alternativeId: string) => void;
   onDismiss: () => void;
 }
 
+/**
+ * User-initiated reality check prompt
+ *
+ * Displays what activities are possible given current time,
+ * using neutral language without judgment.
+ *
+ * Requirements: 7.3, 7.4, 7.5, 16.1, 16.4, 16.5
+ */
 export function RealityCheckPrompt({
   result,
-  anchor,
-  onSelectOption,
+  onSelectAlternative,
   onDismiss,
 }: RealityCheckPromptProps) {
-  const { canMakeIt, possibleSteps, departureTime, minutesAvailable } = result;
-  
   return (
-    <div className="mb-6 p-4 bg-surface-primary border border-border-primary rounded-lg">
-      <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg font-medium text-text-primary">
-          Reality Check
-        </h3>
-        <button
-          onClick={onDismiss}
-          className="p-1 text-text-secondary hover:text-text-primary rounded transition-colors"
-          aria-label="Dismiss"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
+    <div
+      className="rounded-lg border border-border bg-surface-primary p-4 shadow-sm"
+      role="region"
+      aria-label="Reality check results"
+    >
+      {/* Main result - neutral language (Req 7.3, 7.5) */}
       <div className="mb-4">
-        <p className="text-sm text-text-secondary">
-          {anchor.activityName} at {formatTime(anchor.startTime)}
-        </p>
-        <p className="text-sm text-text-tertiary mt-1">
-          You have {minutesAvailable} minutes available
-        </p>
+        <h3 className="mb-2 text-lg font-medium text-text-primary">
+          You have time for:
+        </h3>
+        {result.possibleSteps.length > 0 ? (
+          <ul className="space-y-1 text-text-secondary">
+            {result.possibleSteps.map((step) => (
+              <li key={step.id} className="flex items-center gap-2">
+                <span className="text-accent-primary">•</span>
+                <span>
+                  {step.activityName} (
+                  {Math.floor(
+                    (step.endTime.getTime() - step.startTime.getTime()) / 60000,
+                  )}{" "}
+                  min)
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-text-secondary">
+            You have time to head straight to your anchor.
+          </p>
+        )}
       </div>
 
-      {canMakeIt ? (
-        <div className="space-y-3">
-          <div className="p-3 bg-background rounded-lg">
-            <p className="text-sm font-medium text-text-primary mb-2">
-              You have time for:
-            </p>
-            <ul className="space-y-1">
-              {possibleSteps.map((step) => (
-                <li key={step.id} className="text-sm text-text-secondary flex items-center gap-2">
-                  <span className="text-success">✓</span>
-                  {step.activityName} ({getDuration(step)} min)
-                </li>
-              ))}
-            </ul>
-            {departureTime && (
-              <p className="text-sm text-text-tertiary mt-2">
-                Leave by {formatTime(departureTime)}
-              </p>
-            )}
-          </div>
-
-          <button
-            onClick={() => onSelectOption('full')}
-            className="w-full px-4 py-3 bg-accent-primary text-white rounded-lg hover:bg-accent-primary/90 transition-colors text-sm font-medium"
-          >
-            Show me the full chain
-          </button>
+      {/* Time summary */}
+      <div className="mb-4 rounded bg-surface-secondary p-3 text-sm">
+        <div className="flex justify-between text-text-secondary">
+          <span>Time available:</span>
+          <span className="font-medium text-text-primary">
+            {result.runway} min
+          </span>
         </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="p-3 bg-background rounded-lg">
-            <p className="text-sm text-text-secondary mb-3">
-              Not enough time for the full chain. You could:
-            </p>
-            
-            {possibleSteps.length > 0 && (
-              <div className="mb-3">
-                <p className="text-xs font-medium text-text-tertiary mb-1">
-                  Quick version:
-                </p>
-                <ul className="space-y-1">
-                  {possibleSteps.map((step) => (
-                    <li key={step.id} className="text-sm text-text-secondary flex items-center gap-2">
-                      <span>•</span>
-                      {step.activityName} ({getDuration(step)} min)
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        {result.possibleSteps.length > 0 && (
+          <div className="mt-1 flex justify-between text-text-secondary">
+            <span>Time needed:</span>
+            <span className="font-medium text-text-primary">
+              {result.possibleSteps.reduce((sum, step) => {
+                const duration = Math.floor(
+                  (step.endTime.getTime() - step.startTime.getTime()) / 60000,
+                );
+                return sum + duration;
+              }, 0)}{" "}
+              min
+            </span>
           </div>
+        )}
+      </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {possibleSteps.length > 0 && (
+      {/* Alternative options (Req 7.4) */}
+      {result.alternatives.length > 0 && (
+        <div className="mb-4">
+          <h4 className="mb-2 text-sm font-medium text-text-secondary">Or:</h4>
+          <div className="space-y-2">
+            {result.alternatives.map((alt) => (
               <button
-                onClick={() => onSelectOption('minimal')}
-                className="px-4 py-3 bg-surface-secondary border border-border text-text-primary rounded-lg hover:bg-surface-hover transition-colors text-sm font-medium"
+                key={alt.id}
+                onClick={() => onSelectAlternative(alt.id)}
+                className="w-full rounded border border-border bg-surface-secondary px-3 py-2 text-left transition-colors hover:border-accent-primary hover:bg-surface-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-background"
+                type="button"
               >
-                Quick version
+                <div className="font-medium text-text-primary">{alt.label}</div>
+                <div className="text-sm text-text-secondary">
+                  {alt.description}
+                </div>
               </button>
-            )}
-            <button
-              onClick={() => onSelectOption('skip')}
-              className="px-4 py-3 bg-surface-secondary border border-border text-text-primary rounded-lg hover:bg-surface-hover transition-colors text-sm font-medium"
-            >
-              Skip this anchor
-            </button>
+            ))}
           </div>
         </div>
       )}
+
+      {/* Dismiss button */}
+      <div className="flex justify-end">
+        <button
+          onClick={onDismiss}
+          className="rounded px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-background"
+          type="button"
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
-  );
-}
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-}
-
-function getDuration(block: TimeBlock): number {
-  return Math.floor(
-    (block.endTime.getTime() - block.startTime.getTime()) / 60000
   );
 }

@@ -25,7 +25,6 @@ Mirror V2 transforms the daily plan interface from a judgment-based plan tracker
 
 ### High-Level Component Structure
 
-
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        MirrorUI                             │
@@ -132,7 +131,6 @@ Mirror V2 transforms the daily plan interface from a judgment-based plan tracker
 └─────────────────────────────────────────────────────────────┘
 ```
 
-
 ### Data Flow
 
 ```
@@ -168,6 +166,7 @@ AnalyticsService Records Passive Telemetry
 **Purpose**: Replace StateDeclarationPrompt with user-need-focused interface
 
 **Props**:
+
 ```typescript
 interface IntentPromptProps {
   anchors: TimeBlock[];
@@ -179,18 +178,19 @@ interface IntentPromptProps {
 ```
 
 **Behavior**:
+
 - Displays "What do you need?" as primary heading (Req 11.2)
 - Shows anchor information if anchors exist
 - Offers three options: "Full morning chain", "Just keystone + anchor", "Check if I can make it" (Req 11.3)
 - For no-anchor days, shows FreeActivationPrompt instead
 - Stores selected intent in session state
 
-
 #### AnchorInfoCard
 
 **Purpose**: Display anchor information neutrally without deadline pressure
 
 **Props**:
+
 ```typescript
 interface AnchorInfoCardProps {
   anchor: TimeBlock;
@@ -202,6 +202,7 @@ interface AnchorInfoCardProps {
 ```
 
 **Behavior**:
+
 - Shows "Anchor at [time]" format (Req 2.1)
 - Displays time remaining as "(in X hours)" without countdown timer (Req 2.2)
 - Uses neutral colors, no red or warning states (Req 2.4)
@@ -209,6 +210,7 @@ interface AnchorInfoCardProps {
 - For multi-anchor days, supports collapsed/expanded states (Req 12.2, 12.3)
 
 **Styling**:
+
 - Larger text for anchor time
 - Neutral background color from theme
 - No color changes based on time proximity
@@ -219,6 +221,7 @@ interface AnchorInfoCardProps {
 **Purpose**: Prominently display departure time as critical waypoint
 
 **Props**:
+
 ```typescript
 interface DepartureWaypointProps {
   departureTime: Date;
@@ -229,6 +232,7 @@ interface DepartureWaypointProps {
 ```
 
 **Behavior**:
+
 - Displays "Leave by [time]" in larger text than chain steps (Req 6.2)
 - Shows both clock time and countdown "(in X hours Y minutes)" (Req 6.3)
 - Uses neutral styling when > 10 minutes away (Req 19.1)
@@ -237,16 +241,17 @@ interface DepartureWaypointProps {
 - Maintains calm presentation even after departure time passes (Req 19.5)
 
 **Styling**:
+
 - Font size hierarchy: Anchor (largest) → Departure (prominent) → Chain steps (smaller) (Req 6.4)
 - Gentle highlight: font-weight 600 or 2px border with accent color at 40% opacity (Req 19.3)
 - Distinct visual separation from chain steps
-
 
 #### ChainStartSelector
 
 **Purpose**: Allow flexible chain start time selection
 
 **Props**:
+
 ```typescript
 interface ChainStartSelectorProps {
   onSelectStart: (startTime: ChainStartTime) => void;
@@ -254,21 +259,23 @@ interface ChainStartSelectorProps {
 }
 
 type ChainStartTime =
-  | { type: 'now' }
-  | { type: 'in_minutes'; minutes: number }
-  | { type: 'at_time'; time: Date }
-  | { type: 'when_ready' }; // No times shown
+  | { type: "now" }
+  | { type: "in_minutes"; minutes: number }
+  | { type: "at_time"; time: Date }
+  | { type: "when_ready" }; // No times shown
 
-type ChainStartMode = 'now' | 'in_10' | 'in_30' | 'custom' | 'when_ready';
+type ChainStartMode = "now" | "in_10" | "in_30" | "custom" | "when_ready";
 ```
 
 **Behavior**:
+
 - Offers five options: "Now", "In 10 minutes", "In 30 minutes", "Custom time", "When ready" (Req 8.2)
 - When "When ready" selected, timeline shows sequence without clock times (Req 8.3)
 - Stores last selected mode in sessionStorage (Req 8.5)
 - Triggers timeline regeneration with chosen start point (Req 8.4)
 
 **UI Layout**:
+
 ```
 Start chain:
 ○ Now
@@ -285,6 +292,7 @@ Start chain:
 **Purpose**: User-initiated assessment of what's possible given current time
 
 **Props**:
+
 ```typescript
 interface RealityCheckPromptProps {
   possibleSteps: string[];
@@ -304,12 +312,14 @@ interface RealityCheckAlternative {
 ```
 
 **Behavior**:
+
 - Displays possible steps in neutral language "You have time for: [steps]" (Req 7.3)
 - Offers alternative options "Or: [simplified options]" (Req 7.4)
 - Never uses judgment language like "late", "behind", "missed" (Req 7.5)
 - Triggered only by user clicking "Can I make it?" button (Req 7.1)
 
 **Example Display**:
+
 ```
 You have time for:
 • Quick shower (10 min)
@@ -322,12 +332,12 @@ Or:
 [Show me everything anyway]
 ```
 
-
 #### FreeActivationPrompt
 
 **Purpose**: Support activation on days without anchors
 
 **Props**:
+
 ```typescript
 interface FreeActivationPromptProps {
   keystoneActivity: string | null;
@@ -337,6 +347,7 @@ interface FreeActivationPromptProps {
 ```
 
 **Behavior**:
+
 - Detects when no anchor blocks exist (Req 10.1)
 - Displays "No anchors today. Want to run your activation chain?" (Req 10.2)
 - Includes ChainStartSelector for flexible start times (Req 10.3)
@@ -345,6 +356,7 @@ interface FreeActivationPromptProps {
 - Emphasizes keystone as primary daily goal (Req 10.5)
 
 **UI Layout**:
+
 ```
 No anchors today
 
@@ -361,6 +373,7 @@ Or just focus on:
 #### MirrorUI (Primary Container)
 
 **Changes**:
+
 - Add state for `showRealityCheck` and `displayMode`
 - Replace automatic triage activation with manual trigger (Req 1.1)
 - Add "Can I make it?" button that sets `showRealityCheck = true` (Req 1.2)
@@ -370,17 +383,20 @@ Or just focus on:
 - Display neutral pivot options when anchor has passed (Req 13.3)
 
 **New State**:
+
 ```typescript
-const [displayMode, setDisplayMode] = useState<DisplayIntent>('full_chain');
+const [displayMode, setDisplayMode] = useState<DisplayIntent>("full_chain");
 const [showRealityCheck, setShowRealityCheck] = useState(false);
-const [chainStartTime, setChainStartTime] = useState<ChainStartTime>({ type: 'now' });
+const [chainStartTime, setChainStartTime] = useState<ChainStartTime>({
+  type: "now",
+});
 const [showIntentPrompt, setShowIntentPrompt] = useState(true);
 ```
-
 
 #### Timeline
 
 **Changes**:
+
 - Display durations instead of clock times for chain steps (Req 5.1)
 - Show clock times only for anchors and departure waypoints (Req 5.2, 5.4, 5.5)
 - Hide completion controls by default unless `show_completion_controls` preference is true (Req 4.3, 4.4)
@@ -392,6 +408,7 @@ const [showIntentPrompt, setShowIntentPrompt] = useState(true);
 - Hide recovery blocks when `show_recovery_blocks` preference is false (Req 21.3)
 
 **New Props**:
+
 ```typescript
 interface TimelineProps {
   timeBlocks: TimeBlock[];
@@ -410,18 +427,19 @@ interface TimelineProps {
 ```
 
 **Display Logic**:
+
 ```typescript
 function getBlockDisplayTime(block: TimeBlock, showTimes: boolean): string {
   if (!showTimes) {
     return `${block.duration} min`;
   }
-  
+
   const envelopeType = block.metadata?.commitment_envelope?.envelope_type;
-  
-  if (envelopeType === 'anchor' || envelopeType === 'travel_there') {
+
+  if (envelopeType === "anchor" || envelopeType === "travel_there") {
     return formatClockTime(block.startTime);
   }
-  
+
   return `${block.duration} min`;
 }
 ```
@@ -429,6 +447,7 @@ function getBlockDisplayTime(block: TimeBlock, showTimes: boolean): string {
 #### TimeBlock
 
 **Changes**:
+
 - Remove time-based color changes (Req 3.1, 3.4)
 - Display duration or clock time based on block type (Req 5.1-5.5)
 - Hide completion checkbox when `showCompletionControls` is false (Req 4.3)
@@ -436,31 +455,33 @@ function getBlockDisplayTime(block: TimeBlock, showTimes: boolean): string {
 - Add keystone indicator when block is identified as keystone (Req 9.5)
 
 **Visual States**:
+
 ```typescript
-type BlockVisualState = 'pending' | 'completed' | 'skipped';
+type BlockVisualState = "pending" | "completed" | "skipped";
 
 function getBlockStyles(status: BlockVisualState): string {
   switch (status) {
-    case 'completed':
-      return 'bg-success/10 border-success';
-    case 'skipped':
-      return 'bg-surface-secondary border-border opacity-60';
-    case 'pending':
+    case "completed":
+      return "bg-success/10 border-success";
+    case "skipped":
+      return "bg-surface-secondary border-border opacity-60";
+    case "pending":
     default:
-      return 'bg-surface-primary border-border';
+      return "bg-surface-primary border-border";
   }
 }
 ```
 
-
 #### MirrorHeader
 
 **Changes**:
+
 - Add display mode switcher buttons (Req 11.5)
 - Add keystone shortcut button "Just show me [keystone]" (Req 17.2, 17.5)
 - Keep existing recalculate and token balance display
 
 **New Props**:
+
 ```typescript
 interface MirrorHeaderProps {
   editMode: boolean;
@@ -488,18 +509,18 @@ interface MirrorHeaderProps {
 ```typescript
 // Display intent options
 type DisplayIntent =
-  | 'full_chain'           // Show everything
-  | 'keystone_focus'       // Show only keystone + anchor
-  | 'reality_check'        // Show what's possible now
-  | 'anchor_only'          // Just show the anchor
-  | 'rest_of_day';         // Skip current anchor, show what's next
+  | "full_chain" // Show everything
+  | "keystone_focus" // Show only keystone + anchor
+  | "reality_check" // Show what's possible now
+  | "anchor_only" // Just show the anchor
+  | "rest_of_day"; // Skip current anchor, show what's next
 
 // Chain start time options
 type ChainStartTime =
-  | { type: 'now' }
-  | { type: 'in_minutes'; minutes: number }
-  | { type: 'at_time'; time: Date }
-  | { type: 'when_ready' }; // No times, just sequence
+  | { type: "now" }
+  | { type: "in_minutes"; minutes: number }
+  | { type: "at_time"; time: Date }
+  | { type: "when_ready" }; // No times, just sequence
 
 // Display mode state (stored in sessionStorage)
 interface DisplayModeState {
@@ -510,20 +531,19 @@ interface DisplayModeState {
 }
 ```
 
-
 ### Telemetry Event Types
 
 ```typescript
 // Optional usage analytics events (requires enable_usage_analytics = true)
 interface AppOpenEvent {
-  event_type: 'app_open';
+  event_type: "app_open";
   timestamp: Date;
   had_anchor_today: boolean;
   time_until_next_anchor: number | null; // minutes
 }
 
 interface AnchorViewEvent {
-  event_type: 'anchor_view';
+  event_type: "anchor_view";
   timestamp: Date;
   anchor_id: string;
   anchor_time: Date;
@@ -532,21 +552,21 @@ interface AnchorViewEvent {
 }
 
 interface KeystoneViewEvent {
-  event_type: 'keystone_view';
+  event_type: "keystone_view";
   timestamp: Date;
   keystone_type: string;
   display_mode: DisplayIntent;
 }
 
 interface DisplayModeSwitch {
-  event_type: 'display_mode_switch';
+  event_type: "display_mode_switch";
   timestamp: Date;
   from_mode: DisplayIntent;
   to_mode: DisplayIntent;
 }
 
 interface RealityCheckRequest {
-  event_type: 'reality_check_request';
+  event_type: "reality_check_request";
   timestamp: Date;
   runway: number;
   required_duration: number;
@@ -558,7 +578,7 @@ interface InferredAnchorAttendance {
   anchor_id: string;
   anchor_time: Date;
   likely_attended: boolean;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   inference_reason: string;
 }
 
@@ -572,9 +592,9 @@ interface CompletionMetrics {
 
 // Qualitative feedback (always optional, separate from usage analytics)
 interface FeltHelpfulFeedback {
-  event_type: 'felt_helpful_feedback';
+  event_type: "felt_helpful_feedback";
   timestamp: Date;
-  response: 'yes' | 'somewhat' | 'not_really';
+  response: "yes" | "somewhat" | "not_really";
   date: string; // YYYY-MM-DD
 }
 ```
@@ -585,21 +605,20 @@ interface FeltHelpfulFeedback {
 interface MirrorV2Preferences {
   // Completion tracking (default: false)
   show_completion_controls: boolean;
-  
+
   // Recovery blocks (default: true)
   show_recovery_blocks: boolean;
-  
+
   // Keystone activity (user-defined or inferred)
   keystone_activity: string | null;
-  
+
   // Usage analytics opt-in (default: false)
   enable_usage_analytics: boolean;
-  
+
   // Felt helpful feedback tracking
   felt_helpful_dismissed_dates: string[]; // YYYY-MM-DD format
 }
 ```
-
 
 ### Database Schema
 
@@ -615,18 +634,18 @@ CREATE TABLE mirror_telemetry_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_mirror_telemetry_user_time 
+CREATE INDEX idx_mirror_telemetry_user_time
   ON mirror_telemetry_events(user_id, timestamp DESC);
-CREATE INDEX idx_mirror_telemetry_event_type 
+CREATE INDEX idx_mirror_telemetry_event_type
   ON mirror_telemetry_events(event_type);
-CREATE INDEX idx_mirror_telemetry_user_event 
+CREATE INDEX idx_mirror_telemetry_user_event
   ON mirror_telemetry_events(user_id, event_type);
 ```
 
 #### Updates to user_preferences Table
 
 ```sql
-ALTER TABLE user_preferences 
+ALTER TABLE user_preferences
 ADD COLUMN IF NOT EXISTS show_completion_controls BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS show_recovery_blocks BOOLEAN DEFAULT TRUE,
 ADD COLUMN IF NOT EXISTS keystone_activity TEXT,
@@ -645,6 +664,7 @@ ADD COLUMN IF NOT EXISTS enable_usage_analytics BOOLEAN DEFAULT FALSE;
 **Location**: `src/lib/display/display-mode-service.ts`
 
 **Interface**:
+
 ```typescript
 class DisplayModeService {
   /**
@@ -653,7 +673,7 @@ class DisplayModeService {
    */
   getDisplayOptions(
     timeBlocks: TimeBlock[],
-    currentTime: Date
+    currentTime: Date,
   ): DisplayOption[];
 
   /**
@@ -663,26 +683,20 @@ class DisplayModeService {
   applyDisplayMode(
     timeBlocks: TimeBlock[],
     mode: DisplayIntent,
-    keystoneId?: string
+    keystoneId?: string,
   ): TimeBlock[];
 
   /**
    * Identify next anchor for multi-anchor scenarios
    * Req 12.5
    */
-  getNextAnchor(
-    timeBlocks: TimeBlock[],
-    currentTime: Date
-  ): TimeBlock | null;
+  getNextAnchor(timeBlocks: TimeBlock[], currentTime: Date): TimeBlock | null;
 
   /**
    * Check if anchor has passed
    * Req 13.1
    */
-  hasAnchorPassed(
-    anchor: TimeBlock,
-    currentTime: Date
-  ): boolean;
+  hasAnchorPassed(anchor: TimeBlock, currentTime: Date): boolean;
 
   /**
    * Get pivot options for passed anchor
@@ -691,11 +705,10 @@ class DisplayModeService {
   getPivotOptions(
     timeBlocks: TimeBlock[],
     passedAnchor: TimeBlock,
-    currentTime: Date
+    currentTime: Date,
   ): PivotOption[];
 }
 ```
-
 
 **Implementation Details**:
 
@@ -709,32 +722,32 @@ applyDisplayMode(
   switch (mode) {
     case 'full_chain':
       return timeBlocks;
-    
+
     case 'keystone_focus':
       // Show only keystone and anchor blocks (Req 9.2)
-      return timeBlocks.filter(block => 
-        block.id === keystoneId || 
+      return timeBlocks.filter(block =>
+        block.id === keystoneId ||
         block.metadata?.role?.type === 'anchor'
       );
-    
+
     case 'anchor_only':
       // Show only anchor blocks
-      return timeBlocks.filter(block => 
+      return timeBlocks.filter(block =>
         block.metadata?.role?.type === 'anchor'
       );
-    
+
     case 'rest_of_day':
       // Show all blocks after current time
       const now = new Date();
-      return timeBlocks.filter(block => 
+      return timeBlocks.filter(block =>
         block.startTime > now
       );
-    
+
     case 'reality_check':
       // Show blocks that fit within runway
       // Handled by RealityCheckService
       return timeBlocks;
-    
+
     default:
       return timeBlocks;
   }
@@ -743,12 +756,12 @@ applyDisplayMode(
 // Next anchor identification (Req 12.5)
 getNextAnchor(timeBlocks: TimeBlock[], currentTime: Date): TimeBlock | null {
   const futureAnchors = timeBlocks
-    .filter(block => 
+    .filter(block =>
       block.metadata?.role?.type === 'anchor' &&
       block.startTime > currentTime
     )
     .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
-  
+
   return futureAnchors[0] || null;
 }
 
@@ -765,6 +778,7 @@ hasAnchorPassed(anchor: TimeBlock, currentTime: Date): boolean {
 **Location**: `src/lib/display/reality-check.ts`
 
 **Interface**:
+
 ```typescript
 class RealityCheckService {
   /**
@@ -774,7 +788,7 @@ class RealityCheckService {
   calculatePossibleSteps(
     timeBlocks: TimeBlock[],
     runway: number,
-    nextAnchor: TimeBlock
+    nextAnchor: TimeBlock,
   ): RealityCheckResult;
 
   /**
@@ -784,16 +798,14 @@ class RealityCheckService {
   generateAlternatives(
     timeBlocks: TimeBlock[],
     runway: number,
-    keystoneId: string
+    keystoneId: string,
   ): RealityCheckAlternative[];
 
   /**
    * Format result in neutral language
    * Req 7.3, 7.5
    */
-  formatRealityCheck(
-    result: RealityCheckResult
-  ): string;
+  formatRealityCheck(result: RealityCheckResult): string;
 }
 
 interface RealityCheckResult {
@@ -812,7 +824,6 @@ interface RealityCheckAlternative {
 }
 ```
 
-
 **Implementation Details**:
 
 ```typescript
@@ -822,20 +833,20 @@ calculatePossibleSteps(
   runway: number,
   nextAnchor: TimeBlock
 ): RealityCheckResult {
-  const chainBlocks = timeBlocks.filter(block => 
+  const chainBlocks = timeBlocks.filter(block =>
     block.startTime < nextAnchor.startTime &&
     block.metadata?.anchor_id === nextAnchor.activityId
   );
-  
+
   let accumulatedDuration = 0;
   const possibleSteps: TimeBlock[] = [];
   const skippedSteps: TimeBlock[] = [];
-  
+
   // Sort by start time (backward from anchor)
-  const sortedBlocks = [...chainBlocks].sort((a, b) => 
+  const sortedBlocks = [...chainBlocks].sort((a, b) =>
     b.startTime.getTime() - a.startTime.getTime()
   );
-  
+
   for (const block of sortedBlocks) {
     if (accumulatedDuration + block.duration <= runway) {
       possibleSteps.unshift(block);
@@ -844,13 +855,13 @@ calculatePossibleSteps(
       skippedSteps.unshift(block);
     }
   }
-  
+
   const alternatives = this.generateAlternatives(
     timeBlocks,
     runway,
     this.findKeystoneId(timeBlocks, nextAnchor.activityId)
   );
-  
+
   return {
     possibleSteps,
     skippedSteps,
@@ -866,7 +877,7 @@ generateAlternatives(
   keystoneId: string
 ): RealityCheckAlternative[] {
   const alternatives: RealityCheckAlternative[] = [];
-  
+
   // Option 1: Keystone only
   const keystoneBlock = timeBlocks.find(b => b.id === keystoneId);
   if (keystoneBlock && keystoneBlock.duration <= runway) {
@@ -878,7 +889,7 @@ generateAlternatives(
       estimatedDuration: keystoneBlock.duration
     });
   }
-  
+
   // Option 2: Skip everything, just go
   alternatives.push({
     id: 'skip_all',
@@ -887,7 +898,7 @@ generateAlternatives(
     steps: [],
     estimatedDuration: 0
   });
-  
+
   // Option 3: Show everything anyway
   alternatives.push({
     id: 'show_all',
@@ -896,7 +907,7 @@ generateAlternatives(
     steps: timeBlocks,
     estimatedDuration: timeBlocks.reduce((sum, b) => sum + b.duration, 0)
   });
-  
+
   return alternatives;
 }
 ```
@@ -908,6 +919,7 @@ generateAlternatives(
 **Location**: `src/lib/monitoring/analytics.ts` (extend existing)
 
 **New Methods**:
+
 ```typescript
 class AnalyticsService {
   /**
@@ -923,7 +935,7 @@ class AnalyticsService {
   async recordAppOpen(
     userId: string,
     hadAnchorToday: boolean,
-    timeUntilNextAnchor: number | null
+    timeUntilNextAnchor: number | null,
   ): Promise<void>;
 
   /**
@@ -934,7 +946,7 @@ class AnalyticsService {
     userId: string,
     anchorId: string,
     anchorTime: Date,
-    currentTime: Date
+    currentTime: Date,
   ): Promise<void>;
 
   /**
@@ -944,7 +956,7 @@ class AnalyticsService {
   async recordKeystoneView(
     userId: string,
     keystoneType: string,
-    displayMode: DisplayIntent
+    displayMode: DisplayIntent,
   ): Promise<void>;
 
   /**
@@ -954,7 +966,7 @@ class AnalyticsService {
   async recordDisplayModeSwitch(
     userId: string,
     fromMode: DisplayIntent,
-    toMode: DisplayIntent
+    toMode: DisplayIntent,
   ): Promise<void>;
 
   /**
@@ -965,7 +977,7 @@ class AnalyticsService {
     userId: string,
     runway: number,
     requiredDuration: number,
-    anchorId: string
+    anchorId: string,
   ): Promise<void>;
 
   /**
@@ -975,7 +987,7 @@ class AnalyticsService {
   async inferAnchorAttendance(
     userId: string,
     anchorId: string,
-    anchorTime: Date
+    anchorTime: Date,
   ): Promise<InferredAnchorAttendance | null>;
 
   /**
@@ -984,8 +996,8 @@ class AnalyticsService {
    */
   async recordFeltHelpfulFeedback(
     userId: string,
-    response: 'yes' | 'somewhat' | 'not_really',
-    date: string
+    response: "yes" | "somewhat" | "not_really",
+    date: string,
   ): Promise<void>;
 
   /**
@@ -994,11 +1006,10 @@ class AnalyticsService {
    */
   shouldRecordCompletionMetrics(
     enableAnalytics: boolean,
-    showCompletionControls: boolean
+    showCompletionControls: boolean,
   ): boolean;
 }
 ```
-
 
 **Implementation Details**:
 
@@ -1010,7 +1021,7 @@ async isAnalyticsEnabled(userId: string): Promise<boolean> {
     .select('enable_usage_analytics')
     .eq('user_id', userId)
     .single();
-  
+
   return data?.enable_usage_analytics === true;
 }
 
@@ -1025,7 +1036,7 @@ async recordAppOpen(
   if (!enabled) {
     return; // Silently skip if disabled
   }
-  
+
   // Record event
   await this.supabase
     .from('mirror_telemetry_events')
@@ -1051,14 +1062,14 @@ async inferAnchorAttendance(
   if (!enabled) {
     return null; // Cannot infer without analytics data
   }
-  
+
   // Query app opens after anchor time
   const appOpensAfterAnchor = await this.getAppOpens(
     userId,
     anchorTime,
     new Date(anchorTime.getTime() + 4 * 60 * 60 * 1000) // 4 hours after
   );
-  
+
   if (appOpensAfterAnchor.length === 0) {
     return {
       anchor_id: anchorId,
@@ -1068,12 +1079,12 @@ async inferAnchorAttendance(
       inference_reason: 'No app opens after anchor time'
     };
   }
-  
+
   // If opened within 30 min after anchor, high confidence they attended
-  const openedSoon = appOpensAfterAnchor.some(open => 
+  const openedSoon = appOpensAfterAnchor.some(open =>
     open.timestamp.getTime() - anchorTime.getTime() < 30 * 60 * 1000
   );
-  
+
   if (openedSoon) {
     return {
       anchor_id: anchorId,
@@ -1083,7 +1094,7 @@ async inferAnchorAttendance(
       inference_reason: 'App opened within 30 minutes after anchor'
     };
   }
-  
+
   // Opened later, medium confidence
   return {
     anchor_id: anchorId,
@@ -1110,6 +1121,7 @@ shouldRecordCompletionMetrics(
 **Location**: `src/lib/display/serializer.ts`
 
 **Interface**:
+
 ```typescript
 class DisplayModeSerializer {
   /**
@@ -1139,14 +1151,15 @@ class DisplayModeSerializer {
 ```
 
 **Implementation**:
+
 ```typescript
 class DisplayModeSerializer {
   private readonly VALID_MODES: DisplayIntent[] = [
-    'full_chain',
-    'keystone_focus',
-    'reality_check',
-    'anchor_only',
-    'rest_of_day'
+    "full_chain",
+    "keystone_focus",
+    "reality_check",
+    "anchor_only",
+    "rest_of_day",
   ];
 
   serialize(state: DisplayModeState): string {
@@ -1156,17 +1169,17 @@ class DisplayModeSerializer {
   deserialize(json: string): DisplayModeState {
     try {
       const parsed = JSON.parse(json);
-      
+
       // Validate mode (Req 22.3)
       if (!this.validate(parsed.mode)) {
         return this.getDefaultState();
       }
-      
+
       return {
         mode: parsed.mode,
         startTime: parsed.startTime,
         showTimes: parsed.showTimes ?? true,
-        timestamp: new Date(parsed.timestamp)
+        timestamp: new Date(parsed.timestamp),
       };
     } catch (error) {
       // Return default on parse error (Req 22.4)
@@ -1179,20 +1192,19 @@ class DisplayModeSerializer {
   }
 
   getDefault(): DisplayIntent {
-    return 'full_chain';
+    return "full_chain";
   }
 
   private getDefaultState(): DisplayModeState {
     return {
-      mode: 'full_chain',
-      startTime: { type: 'now' },
+      mode: "full_chain",
+      startTime: { type: "now" },
       showTimes: true,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 }
 ```
-
 
 ### TelemetrySerializer
 
@@ -1201,6 +1213,7 @@ class DisplayModeSerializer {
 **Location**: `src/lib/monitoring/telemetry-serializer.ts`
 
 **Interface**:
+
 ```typescript
 class TelemetrySerializer {
   /**
@@ -1222,25 +1235,26 @@ class TelemetrySerializer {
   validate(event: any): boolean;
 }
 
-type PassiveTelemetryEvent = 
-  | AppOpenEvent 
-  | AnchorViewEvent 
-  | KeystoneViewEvent 
-  | DisplayModeSwitch 
+type PassiveTelemetryEvent =
+  | AppOpenEvent
+  | AnchorViewEvent
+  | KeystoneViewEvent
+  | DisplayModeSwitch
   | RealityCheckRequest
   | FeltHelpfulFeedback;
 ```
 
 **Implementation**:
+
 ```typescript
 class TelemetrySerializer {
   private readonly VALID_EVENT_TYPES = [
-    'app_open',
-    'anchor_view',
-    'keystone_view',
-    'display_mode_switch',
-    'reality_check_request',
-    'felt_helpful_feedback'
+    "app_open",
+    "anchor_view",
+    "keystone_view",
+    "display_mode_switch",
+    "reality_check_request",
+    "felt_helpful_feedback",
   ];
 
   serialize(event: PassiveTelemetryEvent): string {
@@ -1248,24 +1262,24 @@ class TelemetrySerializer {
     const serialized = {
       event_type: event.event_type,
       timestamp: event.timestamp.toISOString(),
-      event_data: this.extractEventData(event)
+      event_data: this.extractEventData(event),
     };
-    
+
     return JSON.stringify(serialized);
   }
 
   deserialize(json: string): PassiveTelemetryEvent {
     const parsed = JSON.parse(json);
-    
+
     // Validate timestamp format and event_type (Req 23.4)
     if (!this.validate(parsed)) {
-      throw new Error('Invalid telemetry event');
+      throw new Error("Invalid telemetry event");
     }
-    
+
     return {
       event_type: parsed.event_type,
       timestamp: new Date(parsed.timestamp),
-      ...parsed.event_data
+      ...parsed.event_data,
     } as PassiveTelemetryEvent;
   }
 
@@ -1274,18 +1288,18 @@ class TelemetrySerializer {
     if (!event.event_type || !event.timestamp) {
       return false;
     }
-    
+
     // Validate event_type (Req 23.4)
     if (!this.VALID_EVENT_TYPES.includes(event.event_type)) {
       return false;
     }
-    
+
     // Validate timestamp format (Req 23.4)
     const timestamp = new Date(event.timestamp);
     if (isNaN(timestamp.getTime())) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -1303,11 +1317,13 @@ class TelemetrySerializer {
 #### GET /api/daily-plan/mirror
 
 **Changes**:
+
 - No longer auto-calculates triage state
 - Returns triage state as inactive by default
 - Adds display mode suggestions
 
 **Response**:
+
 ```typescript
 {
   time_blocks: TimeBlock[];
@@ -1324,7 +1340,6 @@ class TelemetrySerializer {
 }
 ```
 
-
 ### New Endpoints
 
 #### POST /api/daily-plan/reality-check
@@ -1332,6 +1347,7 @@ class TelemetrySerializer {
 **Purpose**: User-initiated reality check calculation
 
 **Request**:
+
 ```typescript
 {
   anchor_id: string;
@@ -1339,6 +1355,7 @@ class TelemetrySerializer {
 ```
 
 **Response**:
+
 ```typescript
 {
   possible_steps: TimeBlock[];
@@ -1351,59 +1368,63 @@ class TelemetrySerializer {
 ```
 
 **Implementation**:
+
 ```typescript
 export async function POST({ request, cookies }: APIContext) {
   const serverAuth = createServerAuth(cookies);
   const user = await serverAuth.requireAuth();
-  
+
   const { anchor_id } = await request.json();
-  
+
   // Get current plan
   const plan = await getPlanForToday(user.id);
   if (!plan) {
-    return new Response(JSON.stringify({ error: 'No plan found' }), {
-      status: 404
+    return new Response(JSON.stringify({ error: "No plan found" }), {
+      status: 404,
     });
   }
-  
+
   // Calculate runway
   const runway = calculateRunway(plan.time_blocks, new Date());
-  
+
   // Get reality check
   const realityCheckService = new RealityCheckService();
-  const anchor = plan.time_blocks.find(b => b.activityId === anchor_id);
-  
+  const anchor = plan.time_blocks.find((b) => b.activityId === anchor_id);
+
   if (!anchor) {
-    return new Response(JSON.stringify({ error: 'Anchor not found' }), {
-      status: 404
+    return new Response(JSON.stringify({ error: "Anchor not found" }), {
+      status: 404,
     });
   }
-  
+
   const result = realityCheckService.calculatePossibleSteps(
     plan.time_blocks,
     runway.runway || 0,
-    anchor
+    anchor,
   );
-  
+
   // Record telemetry (Req 7.1)
   await analyticsService.recordRealityCheckRequest(
     user.id,
     runway.runway || 0,
     runway.required_duration || 0,
-    anchor_id
+    anchor_id,
   );
-  
-  return new Response(JSON.stringify({
-    possible_steps: result.possibleSteps,
-    skipped_steps: result.skippedSteps,
-    can_make_anchor: result.canMakeAnchor,
-    alternatives: result.alternatives,
-    runway: runway.runway,
-    required_duration: runway.required_duration
-  }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
+
+  return new Response(
+    JSON.stringify({
+      possible_steps: result.possibleSteps,
+      skipped_steps: result.skippedSteps,
+      can_make_anchor: result.canMakeAnchor,
+      alternatives: result.alternatives,
+      runway: runway.runway,
+      required_duration: runway.required_duration,
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
 }
 ```
 
@@ -1412,6 +1433,7 @@ export async function POST({ request, cookies }: APIContext) {
 **Purpose**: Record passive telemetry events
 
 **Request**:
+
 ```typescript
 {
   event_type: string;
@@ -1420,6 +1442,7 @@ export async function POST({ request, cookies }: APIContext) {
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -1427,64 +1450,66 @@ export async function POST({ request, cookies }: APIContext) {
 ```
 
 **Implementation**:
+
 ```typescript
 export async function POST({ request, cookies }: APIContext) {
   const serverAuth = createServerAuth(cookies);
   const user = await serverAuth.requireAuth();
-  
+
   const { event_type, event_data } = await request.json();
-  
+
   // Validate event type
   const serializer = new TelemetrySerializer();
   const event = {
     event_type,
     timestamp: new Date(),
-    ...event_data
+    ...event_data,
   };
-  
+
   if (!serializer.validate(event)) {
-    return new Response(JSON.stringify({ error: 'Invalid event' }), {
-      status: 400
+    return new Response(JSON.stringify({ error: "Invalid event" }), {
+      status: 400,
     });
   }
-  
+
   // Store in database
   const { error } = await serverAuth.supabase
-    .from('mirror_telemetry_events')
+    .from("mirror_telemetry_events")
     .insert({
       user_id: user.id,
       event_type,
       event_data,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-  
+
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500
+      status: 500,
     });
   }
-  
+
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { "Content-Type": "application/json" },
   });
 }
 ```
-
 
 #### POST /api/analytics/felt-helpful
 
 **Purpose**: Record felt helpful feedback
 
 **Request**:
+
 ```typescript
 {
-  response: 'yes' | 'somewhat' | 'not_really';
+  response: "yes" | "somewhat" | "not_really";
   date: string; // YYYY-MM-DD
 }
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -1493,13 +1518,14 @@ export async function POST({ request, cookies }: APIContext) {
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system—essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system—essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Property Reflection
 
 After analyzing all acceptance criteria, I identified several areas where properties can be consolidated:
 
 **Redundancy Analysis**:
+
 1. Properties about display mode filtering (9.2, 11.4, 12.1, 12.2) can be combined into comprehensive display mode properties
 2. Properties about neutral styling (2.4, 3.4, 19.4) can be consolidated into a single "no warning colors" property
 3. Properties about sessionStorage (18.1, 18.2, 18.3) are all testing the same round-trip behavior
@@ -1507,6 +1533,7 @@ After analyzing all acceptance criteria, I identified several areas where proper
 5. Serialization properties (22.5, 23.5) are both round-trip properties
 
 **Consolidated Properties**:
+
 - Display mode filtering → Single property about correct filtering for all modes
 - Neutral colors → Single property about absence of warning colors across all states
 - SessionStorage persistence → Single round-trip property
@@ -1515,214 +1542,211 @@ After analyzing all acceptance criteria, I identified several areas where proper
 
 ### Property 1: Automatic Triage Suppression
 
-*For any* runway calculation where runway < required_duration, the Mirror UI should NOT automatically display the triage prompt without user interaction.
+_For any_ runway calculation where runway < required_duration, the Mirror UI should NOT automatically display the triage prompt without user interaction.
 
 **Validates: Requirements 1.1, 1.5**
 
 ### Property 2: User-Initiated Reality Check
 
-*For any* user activation of the "Can I make it?" button, the system should calculate and display reality check results showing which steps fit within available runway.
+_For any_ user activation of the "Can I make it?" button, the system should calculate and display reality check results showing which steps fit within available runway.
 
 **Validates: Requirements 1.3, 1.4, 7.2**
 
-
 ### Property 3: Neutral Time Display Format
 
-*For any* time remaining value, the AnchorInfoCard should display it in neutral format "(in X hours)" without countdown timers or urgency indicators.
+_For any_ time remaining value, the AnchorInfoCard should display it in neutral format "(in X hours)" without countdown timers or urgency indicators.
 
 **Validates: Requirements 2.2, 2.5**
 
 ### Property 4: No Warning Colors
 
-*For any* timeline block state or time condition, the system should NOT use red, orange, yellow, or warning colors in the display.
+_For any_ timeline block state or time condition, the system should NOT use red, orange, yellow, or warning colors in the display.
 
 **Validates: Requirements 2.4, 3.4, 19.4**
 
 ### Property 5: Visual State Constraint
 
-*For any* timeline block, the visual state should be exactly one of: pending (neutral), completed (green), or skipped (gray), with no time-based color changes.
+_For any_ timeline block, the visual state should be exactly one of: pending (neutral), completed (green), or skipped (gray), with no time-based color changes.
 
 **Validates: Requirements 3.1, 3.2, 3.5**
 
 ### Property 6: Completion Controls Visibility
 
-*For any* timeline display, completion controls should be visible if and only if the user preference `show_completion_controls` is true.
+_For any_ timeline display, completion controls should be visible if and only if the user preference `show_completion_controls` is true.
 
 **Validates: Requirements 4.3, 4.4**
 
 ### Property 7: Duration vs Clock Time Display
 
-*For any* time block, the display should show duration format "X min" if envelope_type is not "anchor" or "travel_there", and clock time otherwise.
+_For any_ time block, the display should show duration format "X min" if envelope_type is not "anchor" or "travel_there", and clock time otherwise.
 
 **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5**
 
 ### Property 8: Departure Waypoint Prominence
 
-*For any* travel_there block, the DepartureWaypoint component should display both clock time and countdown, with larger text than chain steps and neutral styling when more than 10 minutes away.
+_For any_ travel_there block, the DepartureWaypoint component should display both clock time and countdown, with larger text than chain steps and neutral styling when more than 10 minutes away.
 
 **Validates: Requirements 6.2, 6.3, 6.5**
 
 ### Property 9: Reality Check Neutral Language
 
-*For any* reality check result, the displayed text should use neutral language patterns ("You have time for") and should NOT contain judgment terms ("late", "behind", "missed").
+_For any_ reality check result, the displayed text should use neutral language patterns ("You have time for") and should NOT contain judgment terms ("late", "behind", "missed").
 
 **Validates: Requirements 7.3, 7.5**
 
 ### Property 10: Chain Start Time Regeneration
 
-*For any* user-selected start time, the timeline should be regenerated with blocks recalculated from the chosen start point.
+_For any_ user-selected start time, the timeline should be regenerated with blocks recalculated from the chosen start point.
 
 **Validates: Requirements 8.4**
 
 ### Property 11: When Ready Mode Suppresses Times
 
-*For any* timeline in "when ready" mode, all blocks should display duration format without clock times.
+_For any_ timeline in "when ready" mode, all blocks should display duration format without clock times.
 
 **Validates: Requirements 8.3**
 
 ### Property 12: Display Mode Filtering
 
-*For any* display mode selection, the timeline should show exactly the blocks specified by that mode: full_chain (all blocks), keystone_focus (keystone + anchor only), anchor_only (anchors only), rest_of_day (future blocks only).
+_For any_ display mode selection, the timeline should show exactly the blocks specified by that mode: full_chain (all blocks), keystone_focus (keystone + anchor only), anchor_only (anchors only), rest_of_day (future blocks only).
 
 **Validates: Requirements 9.2, 11.4, 12.1, 12.2**
 
 ### Property 13: Keystone Focus Filtering
 
-*For any* timeline in keystone_focus mode, the visible blocks should be exactly the keystone block and anchor block, with all other blocks hidden.
+_For any_ timeline in keystone_focus mode, the visible blocks should be exactly the keystone block and anchor block, with all other blocks hidden.
 
 **Validates: Requirements 9.2**
 
 ### Property 14: No-Anchor Detection
 
-*For any* set of time blocks without anchor blocks, the system should detect the no-anchor condition and display the FreeActivationPrompt.
+_For any_ set of time blocks without anchor blocks, the system should detect the no-anchor condition and display the FreeActivationPrompt.
 
 **Validates: Requirements 10.1, 10.4**
 
-
 ### Property 15: Next Anchor Identification
 
-*For any* set of anchor blocks and current time, the "next anchor" should be identified as the first anchor with start time after current time, sorted chronologically.
+_For any_ set of anchor blocks and current time, the "next anchor" should be identified as the first anchor with start time after current time, sorted chronologically.
 
 **Validates: Requirements 12.5**
 
 ### Property 16: Passed Anchor Detection
 
-*For any* anchor block and current time, the system should detect the passed anchor condition when current time > anchor start time.
+_For any_ anchor block and current time, the system should detect the passed anchor condition when current time > anchor start time.
 
 **Validates: Requirements 13.1**
 
 ### Property 17: Display Mode Switch Persistence
 
-*For any* display mode selection, switching modes and then switching back should restore the original mode correctly.
+_For any_ display mode selection, switching modes and then switching back should restore the original mode correctly.
 
 **Validates: Requirements 11.5**
 
 ### Property 18: Optional Analytics Event Recording
 
-*For any* optional analytics event (app_open, anchor_view, keystone_view), the event should be recorded with timestamp, event_type, and event_data fields ONLY when enable_usage_analytics is true.
+_For any_ optional analytics event (app_open, anchor_view, keystone_view), the event should be recorded with timestamp, event_type, and event_data fields ONLY when enable_usage_analytics is true.
 
 **Validates: Requirements 14.2, 14.3, 14.6**
 
 ### Property 19: Anchor Attendance Inference
 
-*For any* anchor and app open after the anchor's end time, the system should infer likely attendance with appropriate confidence level.
+_For any_ anchor and app open after the anchor's end time, the system should infer likely attendance with appropriate confidence level.
 
 **Validates: Requirements 14.3**
 
 ### Property 20: Conditional Completion Metrics
 
-*For any* user session, completion metrics (completion_rate, steps_completed) should be recorded if and only if BOTH enable_usage_analytics AND show_completion_controls are true.
+_For any_ user session, completion metrics (completion_rate, steps_completed) should be recorded if and only if BOTH enable_usage_analytics AND show_completion_controls are true.
 
 **Validates: Requirements 15.3, 15.4**
 
 ### Property 21: Inferred Metrics Calculation
 
-*For any* user with enable_usage_analytics enabled, the system should calculate inferred metrics (likely_anchor_attendance, preferred_display_mode) from collected analytics events.
+_For any_ user with enable_usage_analytics enabled, the system should calculate inferred metrics (likely_anchor_attendance, preferred_display_mode) from collected analytics events.
 
 **Validates: Requirements 15.2**
 
 ### Property 22: Judgment Language Absence
 
-*For any* rendered Mirror UI component, the displayed text should NOT contain the forbidden terms: "running late", "behind schedule", "missed it", "failed", "should have started".
+_For any_ rendered Mirror UI component, the displayed text should NOT contain the forbidden terms: "running late", "behind schedule", "missed it", "failed", "should have started".
 
 **Validates: Requirements 16.1, 16.4, 16.5**
 
 ### Property 23: Keystone Shortcut Mode Switch
 
-*For any* keystone shortcut activation, the display mode should switch to keystone_focus and show only the keystone and anchor blocks.
+_For any_ keystone shortcut activation, the display mode should switch to keystone_focus and show only the keystone and anchor blocks.
 
 **Validates: Requirements 17.3**
 
 ### Property 24: SessionStorage Round-Trip
 
-*For any* valid display mode state, serializing to sessionStorage then deserializing should produce an equivalent state.
+_For any_ valid display mode state, serializing to sessionStorage then deserializing should produce an equivalent state.
 
 **Validates: Requirements 18.1, 18.2, 18.3**
 
 ### Property 25: SessionStorage Day Boundary
 
-*For any* display mode stored in sessionStorage, when the calendar day changes (midnight in user's timezone), the previous day's entry should be cleared.
+_For any_ display mode stored in sessionStorage, when the calendar day changes (midnight in user's timezone), the previous day's entry should be cleared.
 
 **Validates: Requirements 18.4**
 
 ### Property 26: Gentle Highlight Timing
 
-*For any* departure waypoint, gentle highlight styling should be applied if and only if current time is within 10 minutes of departure time.
+_For any_ departure waypoint, gentle highlight styling should be applied if and only if current time is within 10 minutes of departure time.
 
 **Validates: Requirements 19.1, 19.2**
 
-
 ### Property 27: Felt Helpful Frequency Limit
 
-*For any* calendar day, the "Did this help today?" prompt should appear at most once, regardless of how many times the user opens the app.
+_For any_ calendar day, the "Did this help today?" prompt should appear at most once, regardless of how many times the user opens the app.
 
 **Validates: Requirements 20.3, 20.5**
 
 ### Property 28: Felt Helpful Recording
 
-*For any* felt helpful response selection, the response should be recorded without requiring additional explanation or input.
+_For any_ felt helpful response selection, the response should be recorded without requiring additional explanation or input.
 
 **Validates: Requirements 20.4**
 
 ### Property 29: Recovery Block Visibility
 
-*For any* timeline display, recovery blocks should be visible if and only if the user preference `show_recovery_blocks` is true.
+_For any_ timeline display, recovery blocks should be visible if and only if the user preference `show_recovery_blocks` is true.
 
 **Validates: Requirements 21.2, 21.3**
 
 ### Property 30: Display Mode Serialization Round-Trip
 
-*For any* valid DisplayMode object, serializing then deserializing should produce an equivalent object.
+_For any_ valid DisplayMode object, serializing then deserializing should produce an equivalent object.
 
 **Validates: Requirements 22.5**
 
 ### Property 31: Display Mode Validation Default
 
-*For any* invalid DisplayMode value encountered during deserialization, the system should return the default value "full_chain".
+_For any_ invalid DisplayMode value encountered during deserialization, the system should return the default value "full_chain".
 
 **Validates: Requirements 22.4**
 
 ### Property 32: Analytics Event Serialization Round-Trip
 
-*For any* valid Optional_Usage_Analytics event, serializing then deserializing should produce an equivalent event object.
+_For any_ valid Optional_Usage_Analytics event, serializing then deserializing should produce an equivalent event object.
 
 **Validates: Requirements 23.5**
 
 ### Property 33: Analytics Event Required Fields
 
-*For any* serialized analytics event, the JSON should include timestamp, event_type, and event_data fields.
+_For any_ serialized analytics event, the JSON should include timestamp, event_type, and event_data fields.
 
 **Validates: Requirements 23.2**
 
 ### Property 34: Analytics Event Validation
 
-*For any* analytics event deserialization, the system should validate timestamp format and event_type values against allowed enums.
+_For any_ analytics event deserialization, the system should validate timestamp format and event_type values against allowed enums.
 
 **Validates: Requirements 23.4**
 
 ### Property 35: Judgment Language Detection Test
 
-*For any* Mirror UI component file, the test suite should detect and fail if the file contains forbidden judgment terms.
+_For any_ Mirror UI component file, the test suite should detect and fail if the file contains forbidden judgment terms.
 
 **Validates: Requirements 24.2, 24.4**
 
@@ -1731,44 +1755,50 @@ After analyzing all acceptance criteria, I identified several areas where proper
 ### User-Facing Errors
 
 **No Plan Found**:
+
 - Scenario: User opens Mirror UI without generating a plan
 - Response: Display friendly message with "Generate Plan" button
 - No error tracking needed (expected state)
 
 **Reality Check Calculation Failure**:
+
 - Scenario: Reality check service fails to calculate possible steps
 - Response: Display neutral message "Unable to calculate right now. Try again?"
 - Log error for debugging
 - Don't block user from viewing timeline
 
 **Telemetry Recording Failure**:
+
 - Scenario: Network error or database issue when recording telemetry
 - Response: Fail silently, don't interrupt user experience
 - Log error for monitoring
 - Retry on next event
 
 **Invalid Display Mode**:
+
 - Scenario: Corrupted sessionStorage or invalid mode value
 - Response: Fall back to default "full_chain" mode
 - Clear corrupted storage
 - Continue normal operation
 
-
 ### System Errors
 
 **Database Connection Failure**:
+
 - Scenario: Supabase connection lost
 - Response: Display retry UI with exponential backoff
 - Use existing retry handler from `src/lib/triage/retry-handler.ts`
 - Max 3 retries before showing error state
 
 **Anchor Detection Failure**:
+
 - Scenario: Unable to identify next anchor or keystone
 - Response: Fall back to showing all blocks without filtering
 - Log warning for investigation
 - Don't block user from viewing timeline
 
 **SessionStorage Quota Exceeded**:
+
 - Scenario: Browser storage limit reached
 - Response: Clear old display mode entries
 - Keep only current day's state
@@ -1800,12 +1830,14 @@ Use existing ErrorBoundary component from `src/components/daily-plan/ErrorBounda
 This feature requires both unit tests and property-based tests:
 
 **Unit Tests**: Verify specific examples, edge cases, and error conditions
+
 - Component rendering with specific props
 - Button click handlers
 - Error boundary behavior
 - Edge cases (empty timelines, no anchors, etc.)
 
 **Property Tests**: Verify universal properties across all inputs
+
 - Display mode filtering for all possible modes
 - Serialization round-trips for all valid inputs
 - Color constraints across all time states
@@ -1818,6 +1850,7 @@ Together, these provide comprehensive coverage: unit tests catch concrete bugs, 
 **Library**: Use `fast-check` for TypeScript property-based testing
 
 **Installation**:
+
 ```bash
 npm install --save-dev fast-check
 ```
@@ -1863,59 +1896,68 @@ src/test/e2e/mirror-v2/
   └── no-anchor-scenarios.test.ts
 ```
 
-
 ### Example Property Test
 
 ```typescript
 // src/test/unit/mirror-v2/properties/display-mode.property.test.ts
-import { describe, it } from 'vitest';
-import * as fc from 'fast-check';
-import { DisplayModeService } from '@/lib/display/display-mode-service';
-import { timeBlockArbitrary } from '@/test/generators/timeline-generators';
+import { describe, it } from "vitest";
+import * as fc from "fast-check";
+import { DisplayModeService } from "@/lib/display/display-mode-service";
+import { timeBlockArbitrary } from "@/test/generators/timeline-generators";
 
 /**
  * Feature: mirror-v2-cognitive-prosthetic
  * Property 12: Display Mode Filtering
- * 
- * For any display mode selection, the timeline should show exactly 
+ *
+ * For any display mode selection, the timeline should show exactly
  * the blocks specified by that mode.
  */
-describe('Display Mode Filtering Property', () => {
-  it('should filter timeline correctly for all display modes', () => {
+describe("Display Mode Filtering Property", () => {
+  it("should filter timeline correctly for all display modes", () => {
     fc.assert(
       fc.property(
         fc.array(timeBlockArbitrary(), { minLength: 5, maxLength: 20 }),
-        fc.constantFrom('full_chain', 'keystone_focus', 'anchor_only', 'rest_of_day'),
+        fc.constantFrom(
+          "full_chain",
+          "keystone_focus",
+          "anchor_only",
+          "rest_of_day",
+        ),
         fc.string(), // keystoneId
         (timeBlocks, displayMode, keystoneId) => {
           const service = new DisplayModeService();
-          const filtered = service.applyDisplayMode(timeBlocks, displayMode, keystoneId);
-          
+          const filtered = service.applyDisplayMode(
+            timeBlocks,
+            displayMode,
+            keystoneId,
+          );
+
           switch (displayMode) {
-            case 'full_chain':
+            case "full_chain":
               return filtered.length === timeBlocks.length;
-            
-            case 'keystone_focus':
-              return filtered.every(block => 
-                block.id === keystoneId || 
-                block.metadata?.role?.type === 'anchor'
+
+            case "keystone_focus":
+              return filtered.every(
+                (block) =>
+                  block.id === keystoneId ||
+                  block.metadata?.role?.type === "anchor",
               );
-            
-            case 'anchor_only':
-              return filtered.every(block => 
-                block.metadata?.role?.type === 'anchor'
+
+            case "anchor_only":
+              return filtered.every(
+                (block) => block.metadata?.role?.type === "anchor",
               );
-            
-            case 'rest_of_day':
+
+            case "rest_of_day":
               const now = new Date();
-              return filtered.every(block => block.startTime > now);
-            
+              return filtered.every((block) => block.startTime > now);
+
             default:
               return true;
           }
-        }
+        },
       ),
-      { numRuns: 100 }
+      { numRuns: 100 },
     );
   });
 });
@@ -1939,7 +1981,7 @@ describe('AnchorInfoCard', () => {
       duration: 60,
       metadata: { role: { type: 'anchor' } }
     };
-    
+
     render(
       <AnchorInfoCard
         anchor={anchor}
@@ -1948,13 +1990,13 @@ describe('AnchorInfoCard', () => {
         isExpanded={true}
       />
     );
-    
+
     // Should show "Anchor at" (Req 2.1)
     expect(screen.getByText(/Anchor at/i)).toBeInTheDocument();
-    
+
     // Should NOT show "Complete by" (Req 2.3)
     expect(screen.queryByText(/Complete by/i)).not.toBeInTheDocument();
-    
+
     // Should show neutral time format (Req 2.2)
     expect(screen.getByText(/\(in 3 hours\)/i)).toBeInTheDocument();
   });
@@ -1968,9 +2010,9 @@ describe('AnchorInfoCard', () => {
       duration: 60,
       metadata: { role: { type: 'anchor' } }
     };
-    
+
     const onRealityCheck = vi.fn();
-    
+
     render(
       <AnchorInfoCard
         anchor={anchor}
@@ -1979,51 +2021,50 @@ describe('AnchorInfoCard', () => {
         isExpanded={true}
       />
     );
-    
+
     // Should have reality check button (Req 1.2)
     const button = screen.getByRole('button', { name: /Can I make it/i });
     expect(button).toBeInTheDocument();
-    
+
     button.click();
     expect(onRealityCheck).toHaveBeenCalledTimes(1);
   });
 });
 ```
 
-
 ### Judgment Language Detection Test
 
 ```typescript
 // src/test/unit/mirror-v2/properties/judgment-language.test.ts
-import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { describe, it, expect } from "vitest";
+import { readFileSync, readdirSync } from "fs";
+import { join } from "path";
 
 /**
  * Feature: mirror-v2-cognitive-prosthetic
  * Property 35: Judgment Language Detection Test
- * 
- * For any Mirror UI component file, the test suite should detect 
+ *
+ * For any Mirror UI component file, the test suite should detect
  * and fail if the file contains forbidden judgment terms.
  */
-describe('Judgment Language Detection', () => {
+describe("Judgment Language Detection", () => {
   const FORBIDDEN_TERMS = [
-    'running late',
-    'behind schedule',
-    'missed it',
-    'failed',
-    'should have started'
+    "running late",
+    "behind schedule",
+    "missed it",
+    "failed",
+    "should have started",
   ];
 
   const COMPONENT_PATTERNS = [
-    'src/components/daily-plan/**/*.tsx',
-    'src/components/daily-plan/**/*.astro'
+    "src/components/daily-plan/**/*.tsx",
+    "src/components/daily-plan/**/*.astro",
   ];
 
   function findFiles(dir: string, pattern: RegExp): string[] {
     const files: string[] = [];
     const entries = readdirSync(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = join(dir, entry.name);
       if (entry.isDirectory()) {
@@ -2032,21 +2073,21 @@ describe('Judgment Language Detection', () => {
         files.push(fullPath);
       }
     }
-    
+
     return files;
   }
 
-  it('should not contain forbidden judgment terms in Mirror UI components', () => {
+  it("should not contain forbidden judgment terms in Mirror UI components", () => {
     const componentFiles = findFiles(
-      'src/components/daily-plan',
-      /\.(tsx|astro)$/
+      "src/components/daily-plan",
+      /\.(tsx|astro)$/,
     );
 
     const violations: Array<{ file: string; line: number; term: string }> = [];
 
     for (const file of componentFiles) {
-      const content = readFileSync(file, 'utf-8');
-      const lines = content.split('\n');
+      const content = readFileSync(file, "utf-8");
+      const lines = content.split("\n");
 
       lines.forEach((line, index) => {
         const lowerLine = line.toLowerCase();
@@ -2055,7 +2096,7 @@ describe('Judgment Language Detection', () => {
             violations.push({
               file,
               line: index + 1,
-              term
+              term,
             });
           }
         }
@@ -2064,11 +2105,11 @@ describe('Judgment Language Detection', () => {
 
     if (violations.length > 0) {
       const message = violations
-        .map(v => `${v.file}:${v.line} - Found "${v.term}"`)
-        .join('\n');
-      
+        .map((v) => `${v.file}:${v.line} - Found "${v.term}"`)
+        .join("\n");
+
       expect.fail(
-        `Found forbidden judgment terms in Mirror UI components:\n${message}`
+        `Found forbidden judgment terms in Mirror UI components:\n${message}`,
       );
     }
 
@@ -2080,24 +2121,28 @@ describe('Judgment Language Detection', () => {
 ### Test Coverage Goals
 
 **Unit Tests**:
+
 - Component rendering: 100% of new components
 - Service methods: 100% of public methods
 - Edge cases: Empty timelines, no anchors, invalid inputs
 - Error handling: All error paths
 
 **Property Tests**:
+
 - Display mode filtering: All 5 modes
 - Serialization: All valid inputs
 - Color constraints: All time states
 - Telemetry: All event types
 
 **Integration Tests**:
+
 - Reality check flow: User clicks button → sees results
 - Display mode switching: Mode changes persist in session
 - Telemetry recording: Events stored in database
 - Multi-anchor scenarios: Progressive disclosure works
 
 **E2E Tests**:
+
 - Complete user flows from requirements
 - No-anchor day scenario
 - Multi-anchor day scenario
@@ -2110,6 +2155,7 @@ describe('Judgment Language Detection', () => {
 **Goal**: Remove harmful patterns and add neutral display
 
 **Tasks**:
+
 1. Disable automatic triage activation in MirrorUI
 2. Create AnchorInfoCard component with neutral "Anchor at" display
 3. Create DepartureWaypoint component with prominent "Leave by" display
@@ -2120,6 +2166,7 @@ describe('Judgment Language Detection', () => {
 8. Create database migration for new preferences fields
 
 **Deliverables**:
+
 - Modified MirrorUI.tsx
 - New AnchorInfoCard.tsx
 - New DepartureWaypoint.tsx
@@ -2128,12 +2175,12 @@ describe('Judgment Language Detection', () => {
 - Database migration file
 - Unit tests for new components
 
-
 ### Phase 2: User-Initiated Support (Week 2)
 
 **Goal**: Add reality check and flexible start times
 
 **Tasks**:
+
 1. Create RealityCheckService with calculation logic
 2. Create RealityCheckPrompt component
 3. Create ChainStartSelector component
@@ -2145,6 +2192,7 @@ describe('Judgment Language Detection', () => {
 9. Add integration tests for reality check flow
 
 **Deliverables**:
+
 - RealityCheckService.ts
 - RealityCheckPrompt.tsx
 - ChainStartSelector.tsx
@@ -2157,6 +2205,7 @@ describe('Judgment Language Detection', () => {
 **Goal**: Add intent-based display modes and filtering
 
 **Tasks**:
+
 1. Create DisplayModeService with filtering logic
 2. Create IntentPrompt component
 3. Create FreeActivationPrompt component
@@ -2169,6 +2218,7 @@ describe('Judgment Language Detection', () => {
 10. Add property tests for display mode filtering
 
 **Deliverables**:
+
 - DisplayModeService.ts
 - IntentPrompt.tsx
 - FreeActivationPrompt.tsx
@@ -2182,6 +2232,7 @@ describe('Judgment Language Detection', () => {
 **Goal**: Add passive telemetry and analytics
 
 **Tasks**:
+
 1. Create database migration for mirror_telemetry_events table
 2. Extend AnalyticsService with Mirror V2 methods
 3. Create TelemetrySerializer
@@ -2194,6 +2245,7 @@ describe('Judgment Language Detection', () => {
 10. Add integration tests for telemetry recording
 
 **Deliverables**:
+
 - Database migration for telemetry table
 - Extended AnalyticsService
 - TelemetrySerializer.ts
@@ -2207,6 +2259,7 @@ describe('Judgment Language Detection', () => {
 **Goal**: Complete testing, fix bugs, refine UX
 
 **Tasks**:
+
 1. Implement judgment language detection test
 2. Add E2E tests for complete user flows
 3. Test multi-anchor scenarios
@@ -2219,6 +2272,7 @@ describe('Judgment Language Detection', () => {
 10. Update documentation
 
 **Deliverables**:
+
 - Judgment language detection test
 - Complete E2E test suite
 - Performance test results
@@ -2234,51 +2288,57 @@ Use existing feature flag system from `src/lib/feature-flags.ts`:
 
 ```typescript
 // Add to feature flags
-export const MIRROR_V2_ENABLED = 'MIRROR_V2_ENABLED';
-export const MIRROR_V2_NEUTRAL_DISPLAY = 'MIRROR_V2_NEUTRAL_DISPLAY';
-export const MIRROR_V2_FLEXIBLE_START = 'MIRROR_V2_FLEXIBLE_START';
-export const MIRROR_V2_OPTIONAL_TRACKING = 'MIRROR_V2_OPTIONAL_TRACKING';
-export const MIRROR_V2_TELEMETRY = 'MIRROR_V2_TELEMETRY';
+export const MIRROR_V2_ENABLED = "MIRROR_V2_ENABLED";
+export const MIRROR_V2_NEUTRAL_DISPLAY = "MIRROR_V2_NEUTRAL_DISPLAY";
+export const MIRROR_V2_FLEXIBLE_START = "MIRROR_V2_FLEXIBLE_START";
+export const MIRROR_V2_OPTIONAL_TRACKING = "MIRROR_V2_OPTIONAL_TRACKING";
+export const MIRROR_V2_TELEMETRY = "MIRROR_V2_TELEMETRY";
 ```
 
 ### Gradual Rollout
 
 **Stage 1: Internal Testing (Week 1-2)**
+
 - Enable MIRROR_V2_ENABLED for development environment only
 - Test with internal users
 - Gather feedback on neutral display
 
 **Stage 2: Beta Users (Week 3-4)**
+
 - Enable for opt-in beta users
 - Monitor telemetry for engagement patterns
 - Iterate on display modes based on usage
 
 **Stage 3: Gradual Rollout (Week 5-6)**
+
 - Enable for 25% of users
 - Monitor error rates and user feedback
 - Increase to 50%, then 75%, then 100%
 
 **Stage 4: V1 Deprecation (Week 7)**
+
 - Remove V1 code paths
 - Remove feature flags
 - Make V2 the default and only implementation
 
-
 ### Backward Compatibility
 
 **Existing Data**:
+
 - All existing time_blocks remain compatible
 - Existing triage_service logic is reused (just made user-initiated)
 - Existing chain generation unchanged
 - No breaking changes to database schema (only additions)
 
 **Existing Components**:
+
 - MirrorUI: Modified but maintains existing props interface
 - Timeline: Modified but maintains existing props interface
 - TimeBlock: Modified but maintains existing props interface
 - MirrorHeader: Extended with new props (backward compatible)
 
 **API Compatibility**:
+
 - GET /api/daily-plan/mirror: Response structure extended (backward compatible)
 - Existing endpoints unchanged
 - New endpoints are additive only
@@ -2288,6 +2348,7 @@ export const MIRROR_V2_TELEMETRY = 'MIRROR_V2_TELEMETRY';
 ### Optimization Strategies
 
 **Display Mode Filtering**:
+
 - Memoize filtered timeline results
 - Use React.memo for Timeline component
 - Avoid re-filtering on every render
@@ -2297,22 +2358,25 @@ const memoizedFilteredBlocks = useMemo(() => {
   return displayModeService.applyDisplayMode(
     timeBlocks,
     displayMode,
-    keystoneId
+    keystoneId,
   );
 }, [timeBlocks, displayMode, keystoneId]);
 ```
 
 **SessionStorage Access**:
+
 - Batch reads/writes to sessionStorage
 - Use debouncing for frequent updates
 - Clear old entries on day boundary
 
 **Telemetry Recording**:
+
 - Batch telemetry events (send every 30 seconds)
 - Use fire-and-forget pattern (don't block UI)
 - Implement retry with exponential backoff
 
 **Component Rendering**:
+
 - Lazy load RealityCheckPrompt (only when needed)
 - Use React.lazy for heavy components
 - Implement virtual scrolling for long timelines (if needed)
@@ -2330,16 +2394,19 @@ const memoizedFilteredBlocks = useMemo(() => {
 ### Authentication & Authorization
 
 **All API Endpoints**:
+
 - Must call `serverAuth.requireAuth()` to get authenticated user
 - Must derive `user_id` from server session, never from client payload
 - Must filter all database queries by `user_id`
 
 **Telemetry Data**:
+
 - User-scoped: All telemetry events filtered by `user_id`
 - RLS enabled on `mirror_telemetry_events` table
 - No cross-user data leakage
 
 **SessionStorage**:
+
 - Client-side only, no sensitive data
 - Display mode preferences are not security-sensitive
 - No authentication tokens or user data in sessionStorage
@@ -2347,6 +2414,7 @@ const memoizedFilteredBlocks = useMemo(() => {
 ### Data Privacy
 
 **Optional Usage Analytics**:
+
 - Default: OFF (requires explicit opt-in)
 - No PII collected in analytics events
 - Anchor IDs are UUIDs (not descriptive names)
@@ -2356,11 +2424,13 @@ const memoizedFilteredBlocks = useMemo(() => {
 - Transparent explanation in settings UI
 
 **Opt-In Completion Tracking**:
+
 - Requires both enable_usage_analytics AND show_completion_controls
 - User can disable either preference at any time
 - Disabling stops all metric collection immediately
 
 **Felt Helpful Feedback**:
+
 - Always optional, separate from usage analytics
 - User can skip
 - No explanation required (just yes/somewhat/not_really)
@@ -2371,18 +2441,21 @@ const memoizedFilteredBlocks = useMemo(() => {
 ### WCAG 2.1 AA Compliance
 
 **Keyboard Navigation**:
+
 - All interactive elements keyboard accessible
 - Logical tab order through components
 - Focus indicators visible on all controls
 - Escape key dismisses prompts
 
 **Screen Reader Support**:
+
 - Semantic HTML elements (button, nav, main, etc.)
 - ARIA labels on all interactive elements
 - ARIA live regions for dynamic content updates
 - Alt text on all icons
 
 **Visual Accessibility**:
+
 - Minimum 4.5:1 contrast ratio for text
 - No color-only information (use icons + text)
 - Focus indicators meet 3:1 contrast ratio
@@ -2391,6 +2464,7 @@ const memoizedFilteredBlocks = useMemo(() => {
 **Component-Specific**:
 
 **IntentPrompt**:
+
 ```typescript
 <div role="dialog" aria-labelledby="intent-heading">
   <h2 id="intent-heading">What do you need?</h2>
@@ -2401,6 +2475,7 @@ const memoizedFilteredBlocks = useMemo(() => {
 ```
 
 **AnchorInfoCard**:
+
 ```typescript
 <div role="region" aria-label="Anchor information">
   <h3>Anchor at 12:00 PM</h3>
@@ -2412,6 +2487,7 @@ const memoizedFilteredBlocks = useMemo(() => {
 ```
 
 **RealityCheckPrompt**:
+
 ```typescript
 <div role="dialog" aria-labelledby="reality-check-heading">
   <h2 id="reality-check-heading">You have time for:</h2>
@@ -2422,12 +2498,12 @@ const memoizedFilteredBlocks = useMemo(() => {
 </div>
 ```
 
-
 ## Monitoring & Observability
 
 ### Key Metrics to Track
 
 **Opt-In Analytics Metrics** (only when enable_usage_analytics is true):
+
 - Daily app opens per user
 - Anchor views before anchor time (planning ahead)
 - Inferred anchor attendance rate
@@ -2436,12 +2512,14 @@ const memoizedFilteredBlocks = useMemo(() => {
 - Display mode switches per session
 
 **Non-Tracking Metrics** (always available):
+
 - User retention (account activity)
 - Feature flag adoption rates
 - Support ticket trends
 - Error rates and system health
 
 **User Behavior Metrics** (only when analytics enabled):
+
 - Preferred display mode (most frequently used)
 - Average time between app opens
 - Anchor view timing (how far in advance)
@@ -2449,6 +2527,7 @@ const memoizedFilteredBlocks = useMemo(() => {
 - Free activation mode usage (no-anchor days)
 
 **System Health Metrics** (always tracked):
+
 - Reality check calculation latency
 - Display mode switch latency
 - Analytics recording success rate (when enabled)
@@ -2456,6 +2535,7 @@ const memoizedFilteredBlocks = useMemo(() => {
 - API endpoint error rates
 
 **Qualitative Metrics** (always optional):
+
 - "Did this help today?" response distribution
 - Felt helpful feedback over time
 - User retention (continued daily use)
@@ -2466,47 +2546,50 @@ Use existing monitoring infrastructure from `src/lib/monitoring/`:
 
 ```typescript
 // Add Mirror V2 specific metrics (only when analytics enabled)
-import { recordMetric } from '@/lib/monitoring/analytics';
+import { recordMetric } from "@/lib/monitoring/analytics";
 
 // Check if analytics enabled first
 const analyticsEnabled = await analyticsService.isAnalyticsEnabled(userId);
 
 if (analyticsEnabled) {
   // Track display mode switches
-  recordMetric('mirror_v2.display_mode_switch', {
+  recordMetric("mirror_v2.display_mode_switch", {
     from_mode: fromMode,
     to_mode: toMode,
-    user_id: userId
+    user_id: userId,
   });
 
   // Track reality check usage
-  recordMetric('mirror_v2.reality_check_request', {
+  recordMetric("mirror_v2.reality_check_request", {
     runway: runway,
     required_duration: requiredDuration,
-    user_id: userId
+    user_id: userId,
   });
 }
 
 // Felt helpful is always available (separate from analytics)
-recordMetric('mirror_v2.felt_helpful', {
+recordMetric("mirror_v2.felt_helpful", {
   response: response,
-  user_id: userId
+  user_id: userId,
 });
 ```
 
 ### Alerting
 
 **Critical Alerts**:
+
 - Reality check endpoint error rate > 5%
 - Analytics recording failure rate > 10% (when enabled)
 - Display mode service errors > 1%
 
 **Warning Alerts**:
+
 - Average reality check latency > 500ms
 - SessionStorage quota errors > 0.1% of users
 - Felt helpful skip rate > 80% (indicates prompt is annoying)
 
 **Success Metrics Alerts** (only when analytics enabled):
+
 - Daily app opens declining > 20% week-over-week (among opted-in users)
 - Inferred anchor attendance < 50% (indicates users not making anchors)
 - Reality check usage < 5% of users (indicates feature not discovered)
@@ -2516,18 +2599,21 @@ recordMetric('mirror_v2.felt_helpful', {
 ### User-Facing Documentation
 
 **Help Article: "Understanding Mirror V2"**
+
 - What changed from V1
 - How to use display modes
 - What "Can I make it?" does
 - How to customize preferences
 
 **Help Article: "Display Modes Explained"**
+
 - Full chain: See everything
 - Keystone focus: Just the essential
 - Reality check: What's possible now
 - When to use each mode
 
 **Help Article: "Completion Tracking (Optional)"**
+
 - How to enable tracking
 - Why it's optional
 - What data is collected
@@ -2536,18 +2622,21 @@ recordMetric('mirror_v2.felt_helpful', {
 ### Developer Documentation
 
 **Architecture Doc**: `docs/MIRROR_V2_ARCHITECTURE.md`
+
 - Component hierarchy
 - Service layer design
 - Data flow diagrams
 - API contracts
 
 **Migration Guide**: `docs/MIRROR_V2_MIGRATION.md`
+
 - V1 to V2 differences
 - Feature flag usage
 - Rollout strategy
 - Rollback procedures
 
 **Testing Guide**: `docs/MIRROR_V2_TESTING.md`
+
 - Property test examples
 - Test coverage requirements
 - How to run tests
@@ -2572,26 +2661,31 @@ A: Keep as-is for now. Future enhancement: integrate into departure waypoint as 
 ### Future Enhancements (Out of Scope for V2)
 
 **Smart Keystone Detection**:
+
 - ML-based keystone identification from user behavior
 - Automatic keystone suggestion based on completion patterns
 - Personalized keystone recommendations
 
 **Adaptive Display Modes**:
+
 - Learn user's preferred mode by time of day
 - Suggest mode based on runway and context
 - Auto-switch to reality check when runway is tight (with user permission)
 
 **Enhanced Telemetry**:
+
 - Correlation analysis between display modes and anchor attendance
 - Identify patterns in successful vs unsuccessful days
 - Personalized insights: "You make 80% of anchors when you check the app 2+ hours before"
 
 **Social Features**:
+
 - Share display mode preferences with accountability partners
 - Anonymous aggregate metrics: "75% of users prefer keystone focus in the morning"
 - Community-contributed keystone activities
 
 **Integration Enhancements**:
+
 - Calendar sync for automatic anchor updates
 - Smart watch notifications for departure waypoints
 - Voice assistant integration: "Alexa, can I make my 12pm class?"
@@ -2614,26 +2708,31 @@ A: Keep as-is for now. Future enhancement: integrate into departure waypoint as 
 ### Success Metrics (3 Months Post-Launch)
 
 **Engagement** (non-tracking):
+
 - User retention maintained or improved vs V1
 - Feature flag adoption rates
 - Support ticket reduction
 
 **Opt-In Analytics** (only among users who enable):
+
 - Reality check usage > 20% of opted-in users
 - Display mode switching > 1 per session average
 - Daily app opens maintained or increased
 
 **User Satisfaction** (always optional):
+
 - "Did this help today?" positive responses > 60%
 - Support tickets about "running late" warnings reduced to zero
 - User-reported stress reduction (qualitative feedback)
 
 **System Health**:
+
 - Error rates < 1% for all new endpoints
 - Analytics recording success rate > 98% (when enabled)
 - No performance regressions vs V1
 
 **Behavioral Outcomes** (only when analytics enabled):
+
 - Inferred anchor attendance rate > 70%
 - Keystone view rate > 80% of opted-in users
 - Completion tracking opt-in rate > 30% (indicates users find it helpful)
@@ -2647,4 +2746,3 @@ The design maintains compatibility with existing chain generation and plan build
 **Critical Ethical Principle**: All usage analytics are opt-in by default (OFF). The app works perfectly without any tracking. Users who enable analytics do so voluntarily to help improve the product, with full transparency about what's collected. This respects user agency and prevents dependency on a system that surveils them.
 
 Success will be measured not by adherence to schedules or tracking metrics, but by sustained engagement, user-reported helpfulness, and qualitative feedback - metrics that reflect the true goal of daily stability for people with executive dysfunction.
-

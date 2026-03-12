@@ -30,6 +30,7 @@ import {
   deleteTimeBlock,
   createTimeBlock,
 } from "./database";
+import { attachTimingSignalsToTimeBlocks } from "./time-signals";
 
 // V2 Chain-Based Execution imports
 import { AnchorService } from "../anchors/anchor-service";
@@ -47,6 +48,7 @@ import type {
   ChainCustomStep,
   ChainStepOverrides,
 } from "../chains/step-customization";
+import { fetchActiveTravelProfiles } from "../travel/location-travel-profiles";
 
 // Internal types for plan building
 interface Activity {
@@ -707,6 +709,10 @@ export class PlanBuilderService {
       input.userId,
     );
     const chainCustomSteps = await this.getUserChainCustomSteps(input.userId);
+    const locationTravelProfiles = await fetchActiveTravelProfiles(
+      this.supabase,
+      input.userId,
+    );
 
     const chains = await this.chainGenerator.generateChainsForDate(anchors, {
       userId: input.userId,
@@ -714,9 +720,11 @@ export class PlanBuilderService {
       wakeTime: input.wakeTime,
       sleepTime: input.sleepTime,
       planStart: planStartTime,
-      allowNoAnchorFallback: false,
+      currentTime: planStartTime,
+      allowNoAnchorFallback: true,
       chainStepOverrides,
       chainCustomSteps,
+      locationTravelProfiles,
       config: {
         currentLocation,
       },
@@ -1619,10 +1627,6 @@ export class PlanBuilderService {
     locationPeriods: LocationPeriod[] = [],
     homeIntervals: HomeInterval[] = [],
   ): Promise<DailyPlan> {
-    const userExitGateTemplate = await this.getUserExitGateTemplate(
-      input.userId,
-    );
-
     const normalizeTimeRangeForInsert = (
       start: Date,
       end: Date,
@@ -1678,62 +1682,52 @@ export class PlanBuilderService {
 
     const plan = await createDailyPlan(this.supabase, planData);
 
-    // Persist chain steps as dedicated time blocks so chain interactions can map 1:1 to DB rows.
-    // Timeline now includes chain blocks first, followed by post-chain timeline blocks.
+    // Persist chain blocks using the chain generator's conversion path so
+    // envelope metadata remains consistent across API/UI consumers.
     let chainSequenceOrder = 0;
 
     const chainTimeBlocksData: CreateTimeBlock[] = [];
     for (const chain of chains) {
-      for (const step of chain.steps) {
-        const roleType = step.role;
-        const roleRequired = Boolean(step.is_required);
-        const role: any = {
-          type: roleType,
-          required: roleRequired,
-          chain_id: chain.chain_id,
-        };
+      const convertedBlocks = this.chainGenerator.convertChainToTimeBlocks(
+        chain,
+        plan.id,
+      );
 
-        if (roleType === "exit-gate") {
-          role.gate_conditions = userExitGateTemplate.map((condition) => ({
-            ...condition,
-          }));
-        }
+      // Free activation mode keeps the chain scaffold but removes synthetic
+      // anchor/departure/travel-back blocks from no-anchor fallback chains.
+      const persistedChainBlocks =
+        chain.metadata?.no_calendar_fallback === true
+          ? convertedBlocks.filter((block) => {
+              const envelopeType =
+                block.metadata?.commitment_envelope?.envelope_type;
+              return (
+                envelopeType !== "travel_there" &&
+                envelopeType !== "anchor" &&
+                envelopeType !== "travel_back"
+              );
+            })
+          : convertedBlocks;
 
+      for (const block of persistedChainBlocks) {
         chainSequenceOrder += 1;
-        const chainMetadata = {
-          role,
-          chain_id: chain.chain_id,
-          step_id: step.step_id,
-          anchor_id: chain.anchor_id,
-          anchor_title: chain.anchor.title,
-          anchor_start: chain.anchor.start.toISOString(),
-          anchor_end: chain.anchor.end.toISOString(),
-          anchor_location: chain.anchor.location || null,
-          anchor_type: chain.anchor.type,
-          ...(step.metadata || {}),
-        };
 
         const normalized = normalizeTimeRangeForInsert(
-          new Date(step.start_time),
-          new Date(step.end_time),
-          chainMetadata,
+          new Date(block.startTime),
+          new Date(block.endTime),
+          block.metadata as Record<string, any> | undefined,
         );
 
         chainTimeBlocksData.push({
           plan_id: plan.id,
           start_time: normalized.startIso,
           end_time: normalized.endIso,
-          activity_type: this.mapChainRoleToActivityType(roleType),
-          activity_name: step.name,
-          activity_id: chain.anchor_id,
-          is_fixed: true,
+          activity_type: block.activityType,
+          activity_name: block.activityName,
+          activity_id: block.activityId,
+          is_fixed: block.isFixed,
           sequence_order: chainSequenceOrder,
-          status:
-            step.status === "completed"
-              ? "completed"
-              : step.status === "skipped"
-                ? "skipped"
-                : "pending",
+          status: block.status,
+          skip_reason: block.skipReason,
           metadata: normalized.metadata,
         });
       }
@@ -1848,6 +1842,10 @@ export class PlanBuilderService {
     (completePlan as any).wakeRamp = wakeRamp;
     (completePlan as any).locationPeriods = locationPeriods;
     (completePlan as any).homeIntervals = homeIntervals;
+
+    completePlan.timeBlocks = attachTimingSignalsToTimeBlocks(
+      completePlan.timeBlocks || [],
+    );
 
     return completePlan;
   }

@@ -8,21 +8,23 @@ This guide provides detailed instructions for implementing and executing a stage
 
 ### Phase Timeline
 
-| Phase | Percentage | Duration | Go/No-Go Criteria |
-|-------|-----------|----------|-------------------|
-| Staging | Internal only | 2-3 days | Zero critical bugs, positive internal feedback |
-| Phase 1 | 10% | 48 hours minimum | Error rate <1%, performance targets met |
-| Phase 2 | 50% | 72 hours minimum | Error rate <1%, no critical bugs |
-| Phase 3 | 100% | Ongoing | Stable metrics, positive user feedback |
+| Phase   | Percentage    | Duration         | Go/No-Go Criteria                              |
+| ------- | ------------- | ---------------- | ---------------------------------------------- |
+| Staging | Internal only | 2-3 days         | Zero critical bugs, positive internal feedback |
+| Phase 1 | 10%           | 48 hours minimum | Error rate <1%, performance targets met        |
+| Phase 2 | 50%           | 72 hours minimum | Error rate <1%, no critical bugs               |
+| Phase 3 | 100%          | Ongoing          | Stable metrics, positive user feedback         |
 
 ### Rollback Triggers
 
 **Automatic Rollback:**
+
 - Error rate >5%
 - Database performance degradation >50%
 - Critical security vulnerability detected
 
 **Manual Rollback:**
+
 - Error rate 2-5% sustained for >1 hour
 - User complaints >10 per hour
 - Performance degradation 20-50%
@@ -36,7 +38,7 @@ Add deterministic user sampling to `src/lib/feature-flags.ts`:
 ```typescript
 /**
  * Feature Flags Configuration with User Sampling
- * 
+ *
  * Supports gradual rollout by enabling features for a percentage of users
  * based on deterministic hashing of user_id.
  */
@@ -61,7 +63,7 @@ function hashUserId(userId: string): number {
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
     const char = userId.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   return Math.abs(hash) % 100;
@@ -73,11 +75,11 @@ function hashUserId(userId: string): number {
 function getRolloutConfig(key: string): RolloutConfig {
   const enabled = getFeatureFlag(key, false);
   const percentageKey = `${key}_ROLLOUT_PERCENTAGE`;
-  const percentage = parseInt(process.env[percentageKey] || '100', 10);
-  
+  const percentage = parseInt(process.env[percentageKey] || "100", 10);
+
   return {
     enabled,
-    rolloutPercentage: Math.min(Math.max(percentage, 0), 100)
+    rolloutPercentage: Math.min(Math.max(percentage, 0), 100),
   };
 }
 
@@ -86,25 +88,25 @@ function getRolloutConfig(key: string): RolloutConfig {
  */
 export function isFeatureEnabledForUser(
   flag: keyof FeatureFlags,
-  userId: string
+  userId: string,
 ): boolean {
   const config = getRolloutConfig(flag);
-  
+
   // If feature is disabled globally, return false
   if (!config.enabled) {
     return false;
   }
-  
+
   // If rollout is 100%, return true
   if (config.rolloutPercentage >= 100) {
     return true;
   }
-  
+
   // If rollout is 0%, return false
   if (config.rolloutPercentage <= 0) {
     return false;
   }
-  
+
   // Deterministic sampling based on user_id hash
   const userHash = hashUserId(userId);
   return userHash < config.rolloutPercentage;
@@ -114,17 +116,17 @@ export function isFeatureEnabledForUser(
  * Check if Triage Mirror is enabled for user
  */
 export function isTriageMirrorEnabledForUser(userId: string): boolean {
-  return isFeatureEnabledForUser('TRIAGE_MIRROR_ENABLED', userId);
+  return isFeatureEnabledForUser("TRIAGE_MIRROR_ENABLED", userId);
 }
 
 /**
  * Get feature flag value from environment or default
  */
 function getFeatureFlag(key: string, defaultValue: boolean = false): boolean {
-  if (typeof process !== 'undefined' && process.env) {
+  if (typeof process !== "undefined" && process.env) {
     const envValue = process.env[key];
     if (envValue !== undefined) {
-      return envValue === 'true' || envValue === '1';
+      return envValue === "true" || envValue === "1";
     }
   }
   return defaultValue;
@@ -134,10 +136,10 @@ function getFeatureFlag(key: string, defaultValue: boolean = false): boolean {
  * Feature flags singleton (for non-user-specific checks)
  */
 export const featureFlags: FeatureFlags = {
-  TRIAGE_MIRROR_ENABLED: getFeatureFlag('TRIAGE_MIRROR_ENABLED', false),
-  STATE_DECLARATION_ENABLED: getFeatureFlag('STATE_DECLARATION_ENABLED', false),
-  INLINE_EDITING_ENABLED: getFeatureFlag('INLINE_EDITING_ENABLED', false),
-  STATELESS_RECALC_ENABLED: getFeatureFlag('STATELESS_RECALC_ENABLED', false),
+  TRIAGE_MIRROR_ENABLED: getFeatureFlag("TRIAGE_MIRROR_ENABLED", false),
+  STATE_DECLARATION_ENABLED: getFeatureFlag("STATE_DECLARATION_ENABLED", false),
+  INLINE_EDITING_ENABLED: getFeatureFlag("INLINE_EDITING_ENABLED", false),
+  STATELESS_RECALC_ENABLED: getFeatureFlag("STATELESS_RECALC_ENABLED", false),
 };
 
 /**
@@ -159,10 +161,10 @@ export function getAllFeatureFlags(): FeatureFlags {
  */
 export function getRolloutStatus(): Record<string, RolloutConfig> {
   return {
-    TRIAGE_MIRROR_ENABLED: getRolloutConfig('TRIAGE_MIRROR_ENABLED'),
-    STATE_DECLARATION_ENABLED: getRolloutConfig('STATE_DECLARATION_ENABLED'),
-    INLINE_EDITING_ENABLED: getRolloutConfig('INLINE_EDITING_ENABLED'),
-    STATELESS_RECALC_ENABLED: getRolloutConfig('STATELESS_RECALC_ENABLED'),
+    TRIAGE_MIRROR_ENABLED: getRolloutConfig("TRIAGE_MIRROR_ENABLED"),
+    STATE_DECLARATION_ENABLED: getRolloutConfig("STATE_DECLARATION_ENABLED"),
+    INLINE_EDITING_ENABLED: getRolloutConfig("INLINE_EDITING_ENABLED"),
+    STATELESS_RECALC_ENABLED: getRolloutConfig("STATELESS_RECALC_ENABLED"),
   };
 }
 ```
@@ -218,24 +220,24 @@ Add user-specific feature checks to all Mirror API endpoints:
 
 ```typescript
 // src/pages/api/daily-plan/mirror.ts
-import type { APIRoute } from 'astro';
-import { createServerAuth } from '@/lib/auth/simple-multi-user';
-import { isTriageMirrorEnabledForUser } from '@/lib/feature-flags';
+import type { APIRoute } from "astro";
+import { createServerAuth } from "@/lib/auth/simple-multi-user";
+import { isTriageMirrorEnabledForUser } from "@/lib/feature-flags";
 
 export const GET: APIRoute = async ({ cookies }) => {
   const serverAuth = createServerAuth(cookies);
-  
+
   try {
     const user = await serverAuth.requireAuth();
-    
+
     // Check if feature is enabled for this user
     if (!isTriageMirrorEnabledForUser(user.id)) {
-      return new Response(
-        JSON.stringify({ error: 'Feature not available' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: "Feature not available" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-    
+
     // ... rest of endpoint logic
   } catch (error) {
     // ... error handling
@@ -244,6 +246,7 @@ export const GET: APIRoute = async ({ cookies }) => {
 ```
 
 Apply the same pattern to:
+
 - `src/pages/api/daily-plan/recalculate.ts`
 - `src/pages/api/daily-plan/state.ts`
 - `src/pages/api/daily-plan/triage.ts`
@@ -278,6 +281,7 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
 **Timeline: Day 1-2**
 
 1. **Deploy to Staging:**
+
    ```bash
    git checkout staging
    git merge feature/triage-mirror-stateless
@@ -285,6 +289,7 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
    ```
 
 2. **Enable for Staging:**
+
    ```bash
    # In Vercel staging environment
    TRIAGE_MIRROR_ENABLED=true
@@ -312,6 +317,7 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
 **Timeline: Day 3-5 (48 hours minimum)**
 
 1. **Deploy to Production:**
+
    ```bash
    git checkout main
    git merge staging
@@ -319,6 +325,7 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
    ```
 
 2. **Enable 10% Rollout:**
+
    ```bash
    # In Vercel production environment
    TRIAGE_MIRROR_ENABLED=true
@@ -330,19 +337,19 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
    ```
 
 3. **Monitor for 48 Hours:**
-   
+
    **Hour 1-4 (Critical Window):**
    - [ ] Check error rate every 15 minutes
    - [ ] Monitor performance metrics
    - [ ] Watch for database issues
    - [ ] Review first user feedback
-   
+
    **Hour 4-24:**
    - [ ] Check error rate every hour
    - [ ] Monitor performance trends
    - [ ] Review support tickets
    - [ ] Check user engagement metrics
-   
+
    **Hour 24-48:**
    - [ ] Daily error rate review
    - [ ] Daily performance review
@@ -350,14 +357,14 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
    - [ ] Prepare Phase 2 decision
 
 4. **Metrics to Track:**
-   
-   | Metric | Target | Current | Status |
-   |--------|--------|---------|--------|
-   | Error Rate | <1% | ___ | ⚠️/✅ |
-   | Runway Calc p95 | <100ms | ___ | ⚠️/✅ |
-   | Recalc p95 | <4s | ___ | ⚠️/✅ |
-   | Triage Activation | 10-30% | ___ | ⚠️/✅ |
-   | User Complaints | <5/day | ___ | ⚠️/✅ |
+
+   | Metric            | Target | Current | Status |
+   | ----------------- | ------ | ------- | ------ |
+   | Error Rate        | <1%    | \_\_\_  | ⚠️/✅  |
+   | Runway Calc p95   | <100ms | \_\_\_  | ⚠️/✅  |
+   | Recalc p95        | <4s    | \_\_\_  | ⚠️/✅  |
+   | Triage Activation | 10-30% | \_\_\_  | ⚠️/✅  |
+   | User Complaints   | <5/day | \_\_\_  | ⚠️/✅  |
 
 5. **Go/No-Go Decision for Phase 2:**
    - ✅ Error rate <1%
@@ -371,6 +378,7 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
 **Timeline: Day 7-10 (72 hours minimum)**
 
 1. **Increase to 50%:**
+
    ```bash
    # In Vercel production environment
    TRIAGE_MIRROR_ENABLED=true
@@ -384,19 +392,19 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
    ```
 
 2. **Monitor for 72 Hours:**
-   
+
    **Hour 1-4 (Critical Window):**
    - [ ] Check error rate every 15 minutes
    - [ ] Monitor database load (5x increase expected)
    - [ ] Watch for performance degradation
    - [ ] Review immediate user feedback
-   
+
    **Hour 4-24:**
    - [ ] Check error rate every hour
    - [ ] Monitor inline editing usage
    - [ ] Monitor recalculation frequency
    - [ ] Review support tickets
-   
+
    **Hour 24-72:**
    - [ ] Daily error rate review
    - [ ] Daily performance review
@@ -404,13 +412,13 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
    - [ ] Prepare Phase 3 decision
 
 3. **Additional Metrics for Phase 2:**
-   
-   | Metric | Target | Current | Status |
-   |--------|--------|---------|--------|
-   | Inline Edit Usage | >20% | ___ | ⚠️/✅ |
-   | Recalc Frequency | 1-3/user/day | ___ | ⚠️/✅ |
-   | Edit Conflicts | <5% | ___ | ⚠️/✅ |
-   | Database CPU | <70% | ___ | ⚠️/✅ |
+
+   | Metric            | Target       | Current | Status |
+   | ----------------- | ------------ | ------- | ------ |
+   | Inline Edit Usage | >20%         | \_\_\_  | ⚠️/✅  |
+   | Recalc Frequency  | 1-3/user/day | \_\_\_  | ⚠️/✅  |
+   | Edit Conflicts    | <5%          | \_\_\_  | ⚠️/✅  |
+   | Database CPU      | <70%         | \_\_\_  | ⚠️/✅  |
 
 4. **Go/No-Go Decision for Phase 3:**
    - ✅ Error rate <1%
@@ -425,6 +433,7 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
 **Timeline: Day 12-14**
 
 1. **Increase to 100%:**
+
    ```bash
    # In Vercel production environment
    TRIAGE_MIRROR_ENABLED=true
@@ -438,13 +447,13 @@ STATELESS_RECALC_ENABLED_ROLLOUT_PERCENTAGE=0
    ```
 
 2. **Monitor for 24 Hours:**
-   
+
    **Hour 1-4 (Critical Window):**
    - [ ] Check error rate every 15 minutes
    - [ ] Monitor database load (2x increase expected)
    - [ ] Watch for performance degradation
    - [ ] Review immediate user feedback
-   
+
    **Hour 4-24:**
    - [ ] Check error rate every 2 hours
    - [ ] Monitor all metrics
@@ -504,7 +513,7 @@ Create a real-time dashboard showing:
 ```sql
 -- Get rollout metrics for last 24 hours
 WITH user_activity AS (
-  SELECT 
+  SELECT
     user_id,
     COUNT(*) as mirror_loads,
     COUNT(CASE WHEN metadata->>'visibility' IS NOT NULL THEN 1 END) as state_declarations,
@@ -513,7 +522,7 @@ WITH user_activity AS (
   WHERE updated_at > NOW() - INTERVAL '24 hours'
   GROUP BY user_id
 )
-SELECT 
+SELECT
   COUNT(DISTINCT user_id) as active_users,
   AVG(mirror_loads) as avg_loads_per_user,
   AVG(state_declarations) as avg_declarations_per_user,
@@ -526,6 +535,7 @@ FROM user_activity;
 ### Immediate Rollback (Critical)
 
 **When to Use:**
+
 - Error rate >5%
 - Database down or severely degraded
 - Critical security vulnerability
@@ -534,6 +544,7 @@ FROM user_activity;
 **Steps:**
 
 1. **Disable Feature Flags (30 seconds):**
+
    ```bash
    # In Vercel production environment
    TRIAGE_MIRROR_ENABLED=false
@@ -552,6 +563,7 @@ FROM user_activity;
 ### Gradual Rollback (Non-Critical)
 
 **When to Use:**
+
 - Error rate 2-5%
 - Performance degradation
 - Negative user feedback
@@ -559,6 +571,7 @@ FROM user_activity;
 **Steps:**
 
 1. **Reduce Rollout Percentage:**
+
    ```bash
    # Reduce from current to previous phase
    # 100% → 50%
@@ -582,12 +595,12 @@ FROM user_activity;
 
 ```typescript
 // src/test/unit/feature-flags.test.ts
-import { describe, it, expect } from 'vitest';
-import { hashUserId, isFeatureEnabledForUser } from '@/lib/feature-flags';
+import { describe, it, expect } from "vitest";
+import { hashUserId, isFeatureEnabledForUser } from "@/lib/feature-flags";
 
-describe('Feature Flag Rollout', () => {
-  it('should hash user IDs deterministically', () => {
-    const userId = 'user_123';
+describe("Feature Flag Rollout", () => {
+  it("should hash user IDs deterministically", () => {
+    const userId = "user_123";
     const hash1 = hashUserId(userId);
     const hash2 = hashUserId(userId);
     expect(hash1).toBe(hash2);
@@ -595,35 +608,39 @@ describe('Feature Flag Rollout', () => {
     expect(hash1).toBeLessThan(100);
   });
 
-  it('should enable feature for users below rollout percentage', () => {
+  it("should enable feature for users below rollout percentage", () => {
     // Mock environment
-    process.env.TRIAGE_MIRROR_ENABLED = 'true';
-    process.env.TRIAGE_MIRROR_ENABLED_ROLLOUT_PERCENTAGE = '50';
-    
+    process.env.TRIAGE_MIRROR_ENABLED = "true";
+    process.env.TRIAGE_MIRROR_ENABLED_ROLLOUT_PERCENTAGE = "50";
+
     // Test with multiple users
-    const results = Array.from({ length: 100 }, (_, i) => 
-      isFeatureEnabledForUser('TRIAGE_MIRROR_ENABLED', `user_${i}`)
+    const results = Array.from({ length: 100 }, (_, i) =>
+      isFeatureEnabledForUser("TRIAGE_MIRROR_ENABLED", `user_${i}`),
     );
-    
+
     const enabledCount = results.filter(Boolean).length;
-    
+
     // Should be approximately 50% (allow 10% variance)
     expect(enabledCount).toBeGreaterThan(40);
     expect(enabledCount).toBeLessThan(60);
   });
 
-  it('should disable feature when rollout is 0%', () => {
-    process.env.TRIAGE_MIRROR_ENABLED = 'true';
-    process.env.TRIAGE_MIRROR_ENABLED_ROLLOUT_PERCENTAGE = '0';
-    
-    expect(isFeatureEnabledForUser('TRIAGE_MIRROR_ENABLED', 'user_123')).toBe(false);
+  it("should disable feature when rollout is 0%", () => {
+    process.env.TRIAGE_MIRROR_ENABLED = "true";
+    process.env.TRIAGE_MIRROR_ENABLED_ROLLOUT_PERCENTAGE = "0";
+
+    expect(isFeatureEnabledForUser("TRIAGE_MIRROR_ENABLED", "user_123")).toBe(
+      false,
+    );
   });
 
-  it('should enable feature for all when rollout is 100%', () => {
-    process.env.TRIAGE_MIRROR_ENABLED = 'true';
-    process.env.TRIAGE_MIRROR_ENABLED_ROLLOUT_PERCENTAGE = '100';
-    
-    expect(isFeatureEnabledForUser('TRIAGE_MIRROR_ENABLED', 'user_123')).toBe(true);
+  it("should enable feature for all when rollout is 100%", () => {
+    process.env.TRIAGE_MIRROR_ENABLED = "true";
+    process.env.TRIAGE_MIRROR_ENABLED_ROLLOUT_PERCENTAGE = "100";
+
+    expect(isFeatureEnabledForUser("TRIAGE_MIRROR_ENABLED", "user_123")).toBe(
+      true,
+    );
   });
 });
 ```
@@ -631,6 +648,7 @@ describe('Feature Flag Rollout', () => {
 ### Manual Testing
 
 1. **Test with Specific User IDs:**
+
    ```bash
    # Find users in each rollout bucket
    node -e "
@@ -642,7 +660,7 @@ describe('Feature Flag Rollout', () => {
      }
      return Math.abs(h) % 100;
    };
-   
+
    // Find users in 10% bucket
    for (let i = 0; i < 100; i++) {
      const userId = \`user_\${i}\`;
@@ -701,12 +719,14 @@ We'd love to hear your thoughts! Reply to this email or contact support.
 ## Success Criteria Summary
 
 ### Phase 1 (10%) Success
+
 - ✅ Error rate <1%
 - ✅ Performance targets met
 - ✅ Zero critical bugs
 - ✅ Database stable
 
 ### Phase 2 (50%) Success
+
 - ✅ Error rate <1%
 - ✅ Performance targets met
 - ✅ Zero critical bugs
@@ -714,6 +734,7 @@ We'd love to hear your thoughts! Reply to this email or contact support.
 - ✅ Database stable
 
 ### Phase 3 (100%) Success
+
 - ✅ Error rate <1%
 - ✅ Performance targets met
 - ✅ Zero critical bugs

@@ -1,6 +1,6 @@
-import React from 'react';
-import { ErrorBoundary } from './ErrorBoundary';
-import MirrorUI, { type MirrorUIProps } from './MirrorUI';
+import React from "react";
+import { ErrorBoundary } from "./ErrorBoundary";
+import MirrorUI, { type MirrorUIProps } from "./MirrorUI";
 
 /**
  * MirrorUI wrapped with ErrorBoundary for production error handling
@@ -9,7 +9,7 @@ import MirrorUI, { type MirrorUIProps } from './MirrorUI';
 export default function MirrorUIWithErrorBoundary(props: MirrorUIProps) {
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
     // Log to console in development
-    console.error('MirrorUI Error:', error, errorInfo);
+    console.error("MirrorUI Error:", error, errorInfo);
 
     // In production, you would send this to a monitoring service
     // Example: logErrorToMonitoring({ error, errorInfo, userId: props.userId });

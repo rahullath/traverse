@@ -13,6 +13,7 @@ The Triage Mirror Stateless feature extends MeshOS's existing database schema wi
 ### 1. time_blocks Table
 
 **Existing Schema:**
+
 ```sql
 CREATE TABLE time_blocks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -54,9 +55,19 @@ interface TimeBlockMetadata {
   location_state?: "at_home" | "not_home";
   commitment_envelope?: {
     envelope_id: string;
-    envelope_type: "prep" | "travel_there" | "anchor" | "travel_back" | "recovery";
+    envelope_type:
+      | "prep"
+      | "travel_there"
+      | "anchor"
+      | "travel_back"
+      | "recovery";
   };
-  original_anchor_type?: "class" | "seminar" | "workshop" | "appointment" | "other";
+  original_anchor_type?:
+    | "class"
+    | "seminar"
+    | "workshop"
+    | "appointment"
+    | "other";
 
   // New fields for triage-mirror-stateless
   visibility?: "visible" | "hidden";
@@ -100,6 +111,7 @@ interface TimeBlockMetadata {
 ### 2. user_preferences Table
 
 **Existing Schema:**
+
 ```sql
 CREATE TABLE user_preferences (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -125,7 +137,13 @@ interface UserPreferences {
   // New fields for triage-mirror-stateless
   recalc_on_open?: boolean;
   last_state_declaration?: {
-    state: "starting_day" | "ready_for_anchor" | "mid_chain" | "at_anchor" | "missed_it" | "just_checking";
+    state:
+      | "starting_day"
+      | "ready_for_anchor"
+      | "mid_chain"
+      | "at_anchor"
+      | "missed_it"
+      | "just_checking";
     selected_step_id?: string;
     timestamp: string; // ISO 8601 timestamp
   };
@@ -165,19 +183,21 @@ interface UserPreferences {
 ```typescript
 // Fetch daily plan with time blocks
 const { data: plan } = await supabase
-  .from('daily_plans')
-  .select(`
+  .from("daily_plans")
+  .select(
+    `
     *,
     time_blocks (*)
-  `)
-  .eq('user_id', userId)
-  .eq('date', today)
+  `,
+  )
+  .eq("user_id", userId)
+  .eq("date", today)
   .single();
 
 // Access metadata
-const timeBlocks = plan.time_blocks.map(block => ({
+const timeBlocks = plan.time_blocks.map((block) => ({
   ...block,
-  metadata: block.metadata as TimeBlockMetadata
+  metadata: block.metadata as TimeBlockMetadata,
 }));
 ```
 
@@ -186,17 +206,17 @@ const timeBlocks = plan.time_blocks.map(block => ({
 ```typescript
 // Mark block as completed
 await supabase
-  .from('time_blocks')
+  .from("time_blocks")
   .update({
-    status: 'completed',
+    status: "completed",
     metadata: {
       ...existingMetadata,
       completed_at: new Date().toISOString(),
-      completed_by: userId
-    }
+      completed_by: userId,
+    },
   })
-  .eq('id', blockId)
-  .eq('user_id', userId);
+  .eq("id", blockId)
+  .eq("user_id", userId);
 ```
 
 ### Storing State Declaration
@@ -204,25 +224,25 @@ await supabase
 ```typescript
 // Save state declaration to preferences
 await supabase
-  .from('user_preferences')
+  .from("user_preferences")
   .update({
     preferences: {
       ...existingPreferences,
       last_state_declaration: {
-        state: 'ready_for_anchor',
-        timestamp: new Date().toISOString()
-      }
-    }
+        state: "ready_for_anchor",
+        timestamp: new Date().toISOString(),
+      },
+    },
   })
-  .eq('user_id', userId);
+  .eq("user_id", userId);
 ```
 
 ### Filtering Timeline by Visibility
 
 ```typescript
 // Filter visible blocks (application-level)
-const visibleBlocks = timeBlocks.filter(block => 
-  block.metadata?.visibility !== 'hidden'
+const visibleBlocks = timeBlocks.filter(
+  (block) => block.metadata?.visibility !== "hidden",
 );
 ```
 
@@ -269,6 +289,7 @@ CREATE POLICY "Users can only access their own preferences"
 **Rollback Plan:**
 
 Since no migrations are required, rollback is straightforward:
+
 - Remove feature flag to disable UI
 - Existing data remains intact
 - No database changes to revert
@@ -282,12 +303,12 @@ All metadata validation happens in the application layer:
 ```typescript
 // Validate state declaration
 const VALID_STATES = [
-  'starting_day',
-  'ready_for_anchor', 
-  'mid_chain',
-  'at_anchor',
-  'missed_it',
-  'just_checking'
+  "starting_day",
+  "ready_for_anchor",
+  "mid_chain",
+  "at_anchor",
+  "missed_it",
+  "just_checking",
 ] as const;
 
 function isValidState(state: string): boolean {
@@ -296,7 +317,7 @@ function isValidState(state: string): boolean {
 
 // Validate visibility
 function isValidVisibility(visibility: string): boolean {
-  return visibility === 'visible' || visibility === 'hidden';
+  return visibility === "visible" || visibility === "hidden";
 }
 ```
 
@@ -320,17 +341,17 @@ function isValidVisibility(visibility: string): boolean {
 
 ```sql
 -- Count blocks with triage metadata
-SELECT COUNT(*) 
-FROM time_blocks 
+SELECT COUNT(*)
+FROM time_blocks
 WHERE metadata ? 'visibility';
 
 -- Check recalc_on_open adoption
-SELECT COUNT(*) 
-FROM user_preferences 
+SELECT COUNT(*)
+FROM user_preferences
 WHERE preferences->>'recalc_on_open' = 'true';
 
 -- Check state declaration usage
-SELECT 
+SELECT
   preferences->'last_state_declaration'->>'state' as state,
   COUNT(*) as count
 FROM user_preferences
@@ -355,6 +376,6 @@ GROUP BY state;
 
 ## Change Log
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-03-01 | 1.0.0 | Initial documentation for triage-mirror-stateless feature |
+| Date       | Version | Changes                                                   |
+| ---------- | ------- | --------------------------------------------------------- |
+| 2026-03-01 | 1.0.0   | Initial documentation for triage-mirror-stateless feature |

@@ -31,7 +31,7 @@ interface ChainViewProps {
  *
  * Primary interface for executing chains. Displays:
  * - Next anchor (prominent, large)
- * - Chain Completion Deadline ("Complete by [time]")
+ * - Explicit timing cues (Start by / Leave by / Anchor at)
  * - Chain steps (checkbox style) with duration ranges
  * - Exit Gate status (blocked/ready with reasons)
  * - Current step highlight
@@ -285,7 +285,7 @@ export default function ChainView({
           </div>
         </div>
 
-        {/* Chain Completion Deadline - Requirements 7.7, 14.1, 4.2 */}
+        {/* Explicit timing cues */}
         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center">
@@ -302,17 +302,29 @@ export default function ChainView({
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span className="text-sm font-medium text-text-primary">
-                Complete by
-              </span>
+              <span className="text-sm font-medium text-text-primary">Leave by</span>
             </div>
             <span className="text-lg font-bold text-accent-warning">
               {formatTime(chain.chain_completion_deadline)}
             </span>
           </div>
 
-          {/* Total chain duration range - Requirements 7.6 */}
+          <div className="flex items-center justify-between text-sm text-text-muted mb-2">
+            <span>Start by:</span>
+            <span className="font-medium">
+              {formatTime(chain.commitment_envelope.prep.start_time)}
+            </span>
+          </div>
+
           <div className="flex items-center justify-between text-sm text-text-muted">
+            <span>Anchor at:</span>
+            <span className="font-medium">
+              {formatTime(chain.commitment_envelope.anchor.start_time)}
+            </span>
+          </div>
+
+          {/* Total chain duration range - Requirements 7.6 */}
+          <div className="flex items-center justify-between text-sm text-text-muted mt-2">
             <span>Estimated duration:</span>
             <span className="font-medium">
               ~{formatDuration(totalDuration.min)}-
@@ -496,7 +508,7 @@ export default function ChainView({
                             </span>
                             {step.status === "pending" && (
                               <span className="flex items-center text-xs text-text-muted/70">
-                                Complete by {formatTime(step.end_time)}
+                                Finish around {formatTime(step.end_time)}
                               </span>
                             )}
                           </div>

@@ -1,0 +1,58 @@
+Listen, I have executive dysfunction yes ; but I am currently trying to analyze it as an outsider to avoid making my own lived experiences the eternal truth.
+ 
+
+1. Backwards-planning based on anchors (commitments - work, university, etc) with buffer etc
+
+2. Shower - it is the hardest thing to commit to for some reason -> but it instantly makes me feel better. It is unreal - I cannot explain it. And it should be rather obvious - everyone takes a shower everyday - but goddamn I just end up waiting and wasting time and the time-blindness makes it worse - end up either entirely skipping the shower or taking it at like 5pm or something to salvage the day - the day truly begins only after this. Even if I ate or whatever.
+
+3. I am on anti-depressants (Burpropion XL)
+
+ 
+Now, I am trying to build a tool that helps people manage this issue that may arrive in different forms but the current version is hardcoded (it's editable ofcourse but based on my lived experiences)
+ 
+Example - Chain View
+shows Complete by 10:15am if I have to reach somewhere by 12pm. Includes steps (Editable) like feed my cat, brush, shower, skincare routine, pack bag or something etc, and an exit-gate list to help me confirm I have everything I need - cause in a rush or without a rush I forget things often - like keys, eyeglasses, water bottle, phone charged > 50%, train tickets maybe, umbrella, etc. (again this exit gate template is editable)
+ 
+so in my peak depression / executive dysfunction phase -> I would miss all my anchors etc cause of fucking something or the other up as it's not visually available.
+ 
+This led to the creation of this chain view. Now before sleeping I generate a plan -> it is integrated with my university calendar (classes as main anchor). If the class is at 9am I know that I need to wake up by 6:41am (based on my own estimates of each chain step back tracked with enough buffer and a 45 minute travel time). It's perfect. I started going to classes everyday - I could see when I have to wake up and put alarms exactly based on that or backtrack my sleep 8hrs prior minimum since sleep research shows 7h sleep helps with executive dysfunction.
+ 
+Now the issues:
+1) if the class is at 2pm, I need to get out of bed by 11:48am, if it's at 4pm -> get out by 1:48pm etc. This was again still extremely helpful in the first couple weeks where my sleep schedule was an absolute mess and I was infact getting up at 1pm, 2pm 3pm etc as per the requirement for the class BUT now that I have become regular it is becoming rather inconvenient - yes I need to get out of bed by 4pm but if I am up at 9am what tf do I do - now I personally am just executing the chain without any time constraints basically whenever I am early - that is the true goal of the app to automate your mornings but not through a machine but your own pre-frontal cortex getting used to this way of functioning.
+ 
+but the app becomes rather useless in this situation - or for a new user who never got to get used to all this and woke up early for example but plan starts at xyz time.
+ 
+Again the plan start time is not what's highlighted but it's an important signal nonetheless as it is the barrier. The main highlight is Complete by time, but that doesn't help a user if they wake up after the start time assumed by the app, or before the start time assumed or after the complete by time even. Infact the app will not even know if the user opening the app is doing the chain, or deciding how to start, or already at the anchor successfully, or failed to do anything, or the anchor itself got cancelled, etc. And it doesn't account for a day with no anchors.
+ 
+----
+The Chain View btw - I don't even mark the steps as done or even the exit gate as done (even though that's a feature) - because it is not important to me as such - compared to the start/end time expected - after a week or so of performing the chain that is. The chain decision needs to come from the user identifying the keystone (ex-shower) that they think leads to activation energy for the whole day in general regardless of whatever day it is, and by adding the general steps (that they do in order usually - cause I tend to follow this order right now -> wake up>rot a little> out of bed> feed my cat > make some coffee > take a dump > brush > shower > skincare + dry hair (if head shower) > get ready > cook food and eat > check if I have everything with me necessary for the anchor (if any) > go to train station > and then the day just works out mostly.
+ 
+So , in my app I just put rough durations for each - didn't include cooking food etc, or coffee. The app goes from 10:48am-11:45am for the main activation -> then 11:45-12:15 is unscheduled slot to do whatever's left I cook and eat during this time or if I am running late since I started the chain late I just eat something small and head out of by 12:20 for a 12:27 train or 12:40 for 12:47 train to reach my class by 1pm.
+ 
+This entire plan is however relying on a few things -
+1) weed/nicotine abuse - if I did it -> groggy af morning impossible to follow plan (again completely irrelevant for most potential users of tool maybe)
+2) meds (anti-depressant) - if I took it the day before - easier wake up to alarm (similar less-groggy thing)
+3) basic assumptions - I have clothes to wear (laundry not overdue), I have food to eat (fruits, avocado, cereal whatever), I have coffee or an energy drink or some juice or anything cause I am a thirsty mf and I won't get out of bed if I don't have something to look forward to drink.
+4) a rough purpose - since all anchors are designed to be something you don't really decide - the result of being in the capitalistic system - it's not something you want to do but have to (might not be the case for some who knows) - so something like working on this very tool (for me) or attending my communist party meetings, reading some book, watching a film or movie later, or even shopping groceries - any non-anchory thing to do during the day
+ 
+-----
+now how do I create logic so that other users can use my tool to reach a stage where they are no longer dependent on it and are able to participate in life in general
+ 
+I do not want to force them to give any data to me for the tool to work; I am making an exception with 1) onboarding preset - some info that they give that will help in zero-context planning for whenever they open the app 2) calendar integration as a feature - optional but useful in my case so makes sense to allow others as well
+ 
+I don't want them to need to do any sort of logging on my app in advance for it to work later - as long as a person can log they're able to function - basically when they really need my tool is when they have had a couple bad days already and are trying to get back OR just trying to have better mornings in general.
+ 
+But modern technology relies on converting people into data, it doesn't allow abstraction or nuance or any subjective experience to exist - it forces binaries, it forces assumptions, it forces logging.
+ 
+How to infer user state without
+1) expecting failure - the user shouldn't think that the app wants it to fail with some big button. the app shouldn't assume that because the user opened the app at xyz time - they're running late (if it's after the start time of the plan), or they're in the chain, or they're on time. like it shouldn't assume BUT how tf do I code this logic - I want the user to be able to visualize their plan from whenever they want it to be shown - mid chain, pre chain, post chain, pre-anchor, post anchor, failure day , great day. allow the user to know if (mid chain) - if they need to deprioritize something to reach on time (if it might go even beyond the buffer) - this could be dry shampoo instead of head shower etc, if pre-chain - they should see the plan start point as the very minute they want it to - in 10 minutes from now , or right now, etc not backwards generated from anchor in this case although it is still backwards generated if the time difference between pre-chain and necessary start time to meet anchor is not a lot (in minutes) , if post-chain - why are they in the app? did they miss the anchor anyway, did they execute the chain too late? did they simply open the app to feel accomplished? ; then if pre-anchor - similar to pre-chain but how will we know? pre-anchor could mean the user is done with chain but if not - can they finish it in time to make it? and if they can't finish is there any point in showing the anchor and taunting them for the failure of not making it - the app should just check if chain is executed and if not enough time to reach anchor even by rushing, just give user the reality check and let them execute chain and focus on next anchor if any OR if being late to anchor is permissible - then tell them to execute the main keystone and try to do the rest of the chain faster and then go for the anchor (like work is 9-5 or something so you can go late you can't skip, but classes are 9-10,10-11 - so you can focus on the next one unless the classes are 9-12 in which case you can go late instead of skipping etc),
+ 
+and finally if post-anchor - did the user make it? did the user only do the chain? did the user just wake up and so needs to execute chain to activate themselves? ask the user if they have anything to commit to if they did not make it and/or didn't execute chain -> and then plan accordingly - allow options to choose whether this anchor is something fixed and external or not a traditionally defined (based on our logic) one like chores or social or passion-related.
+ 
+----------------------
+I know this is a lot - and trust me my brain is fucking fried trying to make this work for multiple users since it worked for me. The main goal right now is to figure out stateless execution without hardcoding assumptions or penalising failures etc. Offloading your mental plan in a simple manner.
+ 
+Since the activation is the main thing right now and not the rest of the day i.e post successful anchor, cause I can't even imagine thinking of all possible scenarios of executive dysfunction occuring in the middle of the day after successful all this and a thousand other individual conditions that shape life. But I do want to implement the sleep logic in this version itself - i.e 7h of sleep minimum - if we know the anchor for tomorrow - suggest the user to sleep by xyz; and if the user wants to maintain sleep log to fix circadian rhythm allow it - but it can be a secondary focus compared to the whole thing.
+ 
+---
+Thoughts?

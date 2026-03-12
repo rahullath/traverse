@@ -5,6 +5,7 @@ This directory contains the monitoring and analytics infrastructure for the tria
 ## Overview
 
 The monitoring system tracks:
+
 - **Performance metrics**: Latency percentiles (p50, p95, p99) for critical operations
 - **Engagement metrics**: User behavior and feature usage patterns
 - **Error rates**: API endpoint reliability and failure tracking
@@ -32,10 +33,10 @@ The monitoring system tracks:
 ### Tracking Performance
 
 ```typescript
-import { PerformanceTimer } from '@/lib/monitoring/analytics';
+import { PerformanceTimer } from "@/lib/monitoring/analytics";
 
 // Start timer
-const timer = new PerformanceTimer('operation_name', userId, { metadata });
+const timer = new PerformanceTimer("operation_name", userId, { metadata });
 
 // Do work...
 
@@ -46,9 +47,9 @@ const durationMs = timer.end();
 ### Tracking Events
 
 ```typescript
-import { trackStateDeclaration } from '@/lib/monitoring/triage-metrics';
+import { trackStateDeclaration } from "@/lib/monitoring/triage-metrics";
 
-trackStateDeclaration(userId, 'ready_for_anchor', {
+trackStateDeclaration(userId, "ready_for_anchor", {
   hasAnchors: true,
   triggeredTriage: false,
 });
@@ -57,41 +58,38 @@ trackStateDeclaration(userId, 'ready_for_anchor', {
 ### Tracking Errors
 
 ```typescript
-import { trackApiError } from '@/lib/monitoring/analytics';
+import { trackApiError } from "@/lib/monitoring/analytics";
 
-trackApiError(
-  '/api/daily-plan/mirror',
-  error.message,
-  500,
-  userId,
-  { stack: error.stack }
-);
+trackApiError("/api/daily-plan/mirror", error.message, 500, userId, {
+  stack: error.stack,
+});
 ```
 
 ## Metrics Tracked
 
 ### Performance Metrics
 
-| Metric | Description | Target |
-|--------|-------------|--------|
-| `runway_calculation_latency` | Time to calculate runway | < 100ms (p95) |
-| `recalculation_latency` | Time to regenerate plan | < 4000ms (p95) |
+| Metric                       | Description              | Target         |
+| ---------------------------- | ------------------------ | -------------- |
+| `runway_calculation_latency` | Time to calculate runway | < 100ms (p95)  |
+| `recalculation_latency`      | Time to regenerate plan  | < 4000ms (p95) |
 
 ### Engagement Events
 
-| Event | Description | Properties |
-|-------|-------------|------------|
-| `triage_mode_activated` | Triage prompt shown | runway, requiredDuration, keystoneActivity |
-| `triage_decision` | User made triage choice | decision, anchorId |
-| `state_declaration` | User declared state | state, selectedStepId |
-| `block_completion` | Block marked done/skipped | action, blockId, blockType |
-| `inline_edit` | User edited block | editType, blockId, changes |
-| `mirror_session_start` | User opened Mirror UI | - |
-| `mirror_session_end` | User closed Mirror UI | durationMs, interactionCount |
+| Event                   | Description               | Properties                                 |
+| ----------------------- | ------------------------- | ------------------------------------------ |
+| `triage_mode_activated` | Triage prompt shown       | runway, requiredDuration, keystoneActivity |
+| `triage_decision`       | User made triage choice   | decision, anchorId                         |
+| `state_declaration`     | User declared state       | state, selectedStepId                      |
+| `block_completion`      | Block marked done/skipped | action, blockId, blockType                 |
+| `inline_edit`           | User edited block         | editType, blockId, changes                 |
+| `mirror_session_start`  | User opened Mirror UI     | -                                          |
+| `mirror_session_end`    | User closed Mirror UI     | durationMs, interactionCount               |
 
 ### Error Tracking
 
 Errors are tracked per endpoint with:
+
 - Error message
 - Status code
 - User ID
@@ -105,9 +103,11 @@ Errors are tracked per endpoint with:
 Returns aggregated metrics for a time window.
 
 **Query Parameters:**
+
 - `timeWindow` (optional): Time window in milliseconds (default: 86400000 = 24h)
 
 **Response:**
+
 ```json
 {
   "performance": {
@@ -133,6 +133,7 @@ Returns aggregated metrics for a time window.
 Track Mirror UI session start/end.
 
 **Body:**
+
 ```json
 {
   "event": "mirror_session_start" | "mirror_session_end",
@@ -147,6 +148,7 @@ Track Mirror UI session start/end.
 Track user interaction.
 
 **Body:**
+
 ```json
 {
   "event": "mirror_interaction",
@@ -160,6 +162,7 @@ Track user interaction.
 Access the monitoring dashboard at `/monitoring` (requires authentication).
 
 The dashboard displays:
+
 - Performance metrics with percentiles
 - Engagement rates and usage patterns
 - Error rates per endpoint
@@ -170,22 +173,22 @@ The dashboard displays:
 ### In API Routes
 
 ```typescript
-import { trackApiRequest, trackApiError } from '@/lib/monitoring/analytics';
-import { trackRunwayCalculation } from '@/lib/monitoring/triage-metrics';
+import { trackApiRequest, trackApiError } from "@/lib/monitoring/analytics";
+import { trackRunwayCalculation } from "@/lib/monitoring/triage-metrics";
 
 export const GET: APIRoute = async ({ cookies }) => {
   const user = await serverAuth.requireAuth();
-  
-  trackApiRequest('/api/daily-plan/mirror', 'GET', user.id);
-  
+
+  trackApiRequest("/api/daily-plan/mirror", "GET", user.id);
+
   try {
-    const timer = new PerformanceTimer('runway_calculation', user.id);
+    const timer = new PerformanceTimer("runway_calculation", user.id);
     const runway = calculateRunway(timeBlocks);
     timer.end();
-    
+
     return new Response(JSON.stringify({ runway }), { status: 200 });
   } catch (error) {
-    trackApiError('/api/daily-plan/mirror', error.message, 500, user.id);
+    trackApiError("/api/daily-plan/mirror", error.message, 500, user.id);
     throw error;
   }
 };
@@ -198,12 +201,12 @@ import { useMirrorSessionTracking } from '@/hooks/useMirrorSessionTracking';
 
 export function MirrorUI() {
   const { trackInteraction } = useMirrorSessionTracking();
-  
+
   const handleTriageDecision = (decision) => {
     trackInteraction('triage_decision');
     // ... handle decision
   };
-  
+
   return <div>...</div>;
 }
 ```

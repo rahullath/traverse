@@ -10,9 +10,11 @@ export interface Anchor {
   end: Date;
   title: string;
   location?: string;
+  location_label?: string;
   type: AnchorType;
   must_attend: boolean;
   calendar_event_id: string;
+  max_late_minutes?: number;
 }
 
 /**

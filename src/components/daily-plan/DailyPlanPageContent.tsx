@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import PlanGeneratorForm from "./PlanGeneratorForm";
 import ActivityList from "./ActivityList";
 import ExitTimeDisplay from "./ExitTimeDisplay";
-import DegradePlanButton from "./DegradePlanButton";
 import DeletePlanButton from "./DeletePlanButton";
 import PlanContextDisplay from "./PlanContextDisplay";
 import ChainView from "./ChainView";
@@ -23,6 +22,10 @@ export default function DailyPlanPageContent() {
       startTime: string;
       durationMinutes: number;
       location?: string;
+      locationLabel?: string;
+      maxLateMinutes?: number;
+      locationTravelMinutes?: number;
+      departureSlots?: string[];
       anchorType: "class" | "seminar" | "workshop" | "appointment" | "other";
       mustAttend: boolean;
       notes?: string;
@@ -34,7 +37,6 @@ export default function DailyPlanPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isDegrading, setIsDegrading] = useState(false);
   const [activeTab, setActiveTab] = useState<"chain" | "timeline">("chain");
   const [exitGateService, setExitGateService] =
     useState<ExitGateService | null>(null);
@@ -276,6 +278,18 @@ export default function DailyPlanPageContent() {
           start_time: anchorStart.toISOString(),
           end_time: anchorEnd.toISOString(),
           location: input.manualAnchor.location,
+          location_label: input.manualAnchor.locationLabel,
+          max_late_minutes: Math.max(
+            0,
+            Math.round(input.manualAnchor.maxLateMinutes || 0),
+          ),
+          location_travel_minutes: Math.max(
+            0,
+            Math.round(input.manualAnchor.locationTravelMinutes || 0),
+          ),
+          departure_slots: Array.isArray(input.manualAnchor.departureSlots)
+            ? input.manualAnchor.departureSlots
+            : [],
           anchor_type: input.manualAnchor.anchorType,
           must_attend: input.manualAnchor.mustAttend,
           notes: input.manualAnchor.notes,
@@ -411,34 +425,6 @@ export default function DailyPlanPageContent() {
       setError(err instanceof Error ? err.message : "Failed to skip activity");
     } finally {
       setIsUpdating(false);
-    }
-  };
-
-  const handleDegrade = async () => {
-    if (!plan) return;
-
-    try {
-      setIsDegrading(true);
-      setError(null);
-
-      const response = await fetch(`/api/daily-plan/${plan.id}/degrade`, {
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || `Failed to degrade plan: ${response.statusText}`,
-        );
-      }
-
-      const data = await response.json();
-      setPlan(data.plan);
-    } catch (err) {
-      console.error("Error degrading plan:", err);
-      setError(err instanceof Error ? err.message : "Failed to degrade plan");
-    } finally {
-      setIsDegrading(false);
     }
   };
 
@@ -1252,7 +1238,7 @@ export default function DailyPlanPageContent() {
               />
             </div>
 
-            {/* Sidebar - Exit Times and Degrade Button */}
+            {/* Sidebar - Exit Times */}
             <div className="space-y-6">
               {plan.exitTimes && plan.exitTimes.length > 0 && (
                 <ExitTimeDisplay
@@ -1260,12 +1246,6 @@ export default function DailyPlanPageContent() {
                   timeBlocks={plan.timeBlocks}
                 />
               )}
-
-              <DegradePlanButton
-                plan={plan}
-                onDegrade={handleDegrade}
-                isDegrading={isDegrading}
-              />
             </div>
           </div>
         )}
@@ -1285,7 +1265,7 @@ export default function DailyPlanPageContent() {
             />
           </div>
 
-          {/* Sidebar - Exit Times and Degrade Button */}
+          {/* Sidebar - Exit Times */}
           <div className="space-y-6">
             {plan.exitTimes && plan.exitTimes.length > 0 && (
               <ExitTimeDisplay
@@ -1293,12 +1273,6 @@ export default function DailyPlanPageContent() {
                 timeBlocks={plan.timeBlocks}
               />
             )}
-
-            <DegradePlanButton
-              plan={plan}
-              onDegrade={handleDegrade}
-              isDegrading={isDegrading}
-            />
           </div>
         </div>
       )}

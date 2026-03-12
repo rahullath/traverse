@@ -21,6 +21,7 @@ The Mirror is not a plan tracker. It's a cognitive prosthetic for people with ex
 ## What Changed From V1
 
 ### V1 (Current Implementation)
+
 - Automatic triage when `runway < required_duration`
 - "Complete by" deadlines with color changes when late
 - State declaration filters timeline based on assumed position
@@ -28,6 +29,7 @@ The Mirror is not a plan tracker. It's a cognitive prosthetic for people with ex
 - Fixed backward-calculated start times
 
 ### V2 (Philosophy-Aligned)
+
 - User-initiated focus modes (full chain vs keystone-only)
 - "Anchor at" information displays (no judgment)
 - Intent declaration: "What do you need to see?"
@@ -220,11 +222,13 @@ That's it. Clean, simple, no guilt.
 ### 1. Remove Triage System
 
 **Delete:**
+
 - `src/lib/triage/triage-service.ts`
 - Automatic runway calculation triggering warnings
 - "Protect keystone" / "Skip anchor" / "Recalculate" prompts
 
 **Replace with:**
+
 - Intent-based prompts: "What do you need to see?"
 - Reality-check mode: "You have time for X, Y, Z"
 - User-initiated simplification: "Just show keystone"
@@ -232,8 +236,9 @@ That's it. Clean, simple, no guilt.
 ### 2. Redesign State Declaration
 
 **Current:** 6 states that filter timeline based on assumed position
+
 ```typescript
-type UserState = 
+type UserState =
   | "starting_day"
   | "ready_for_anchor"
   | "mid_chain"
@@ -243,13 +248,14 @@ type UserState =
 ```
 
 **New:** Intent-based display modes
+
 ```typescript
 type DisplayIntent =
-  | "full_chain"           // Show everything
-  | "keystone_focus"       // Show only keystone + anchor
-  | "reality_check"        // Show what's possible now
-  | "anchor_only"          // Just show the anchor
-  | "rest_of_day";         // Skip current anchor, show what's next
+  | "full_chain" // Show everything
+  | "keystone_focus" // Show only keystone + anchor
+  | "reality_check" // Show what's possible now
+  | "anchor_only" // Just show the anchor
+  | "rest_of_day"; // Skip current anchor, show what's next
 
 type ChainStartTime =
   | { type: "now" }
@@ -261,12 +267,14 @@ type ChainStartTime =
 ### 3. Neutral Information Display
 
 **Remove:**
+
 - "Complete by" deadline banners with countdowns
 - Color changes when "late"
 - "Running behind" warnings
 - Runway calculations that trigger alerts
 
 **Replace with:**
+
 - "Anchor at [time]" info cards
 - "Leave by [time]" as neutral waypoint
 - Time remaining shown as information, not judgment
@@ -275,6 +283,7 @@ type ChainStartTime =
 ### 4. Flexible Start Times
 
 **Add:**
+
 - "Start chain: [Now | In 10 min | In 30 min | Custom]" selector
 - "When ready" mode that shows sequence without times
 - Ability to regenerate chain from any chosen start point
@@ -283,6 +292,7 @@ type ChainStartTime =
 ### 5. Optional Completion Tracking
 
 **Change:**
+
 - Make completion checkboxes hidden by default
 - Add "Track progress" toggle in settings
 - Timeline is visual scaffold first, tracker second
@@ -291,6 +301,7 @@ type ChainStartTime =
 ### 6. No-Anchor Mode
 
 **Add:**
+
 - Free activation mode for days without commitments
 - Keystone-only quick view
 - "Just show me [shower/meds/coffee]" shortcuts
@@ -299,24 +310,28 @@ type ChainStartTime =
 ## Implementation Priority
 
 ### Phase 1: Remove Harmful Patterns (Week 1)
+
 1. Disable automatic triage activation
 2. Remove "Complete by" deadline banners
 3. Change "running late" colors to neutral
 4. Hide completion tracking by default
 
 ### Phase 2: Add Neutral Information (Week 2)
+
 1. Replace deadline banners with "Anchor at" cards
 2. Show durations instead of clock times for chain steps
 3. Add "Leave by" as waypoint, not deadline
 4. Implement reality-check mode
 
 ### Phase 3: Add Flexibility (Week 3)
+
 1. Add "Start chain in X minutes" selector
 2. Implement "when ready" untimed mode
 3. Add keystone-focus display mode
 4. Implement no-anchor free activation
 
 ### Phase 4: Refine Intent System (Week 4)
+
 1. Replace state declaration with intent prompts
 2. Add "What do you need to see?" entry point
 3. Implement display mode switching
@@ -325,11 +340,13 @@ type ChainStartTime =
 ## Success Metrics
 
 **Not:**
+
 - Completion rates
 - On-time percentages
 - Adherence to schedule
 
 **Instead:**
+
 - Daily app opens (engagement without guilt)
 - Keystone completion (the actual win)
 - Anchor attendance (did they make it?)
@@ -343,28 +360,28 @@ type ChainStartTime =
 ```typescript
 class DisplayModeService {
   // Replaces TriageService and StateFilterService
-  
+
   getDisplayOptions(
     timeBlocks: TimeBlock[],
-    currentTime: Date
+    currentTime: Date,
   ): DisplayOption[] {
     // Returns neutral options based on context
     // No automatic triggering, no assumptions
   }
-  
+
   applyDisplayMode(
     timeBlocks: TimeBlock[],
     mode: DisplayIntent,
-    startTime?: ChainStartTime
+    startTime?: ChainStartTime,
   ): DisplayedTimeline {
     // Filters and formats timeline based on user choice
     // No status changes, no database writes
   }
-  
+
   getRealityCheck(
     timeBlocks: TimeBlock[],
     currentTime: Date,
-    nextAnchor: TimeBlock
+    nextAnchor: TimeBlock,
   ): RealityCheckInfo {
     // "You have time for X, Y, Z"
     // Neutral information, not warnings
@@ -434,7 +451,6 @@ The V1 Mirror was built as a plan execution tracker with failure detection. V2 n
 
 The key shift: From "Are you following the plan?" to "What helps you activate today?"
 
-
 ## Addressing Key Concerns
 
 ### 1. Telemetry Without Opt-In Tracking
@@ -452,7 +468,7 @@ interface PassiveTelemetry {
     had_anchor_today: boolean;
     time_until_next_anchor: number | null;
   };
-  
+
   // When user views an anchor block
   anchor_views: {
     anchor_id: string;
@@ -460,19 +476,19 @@ interface PassiveTelemetry {
     anchor_time: Date;
     viewed_before_anchor: boolean; // Did they check before it started?
   };
-  
+
   // Infer attendance from subsequent app opens
   anchor_attendance: {
     anchor_id: string;
     likely_attended: boolean; // True if app opened after anchor time
-    confidence: 'high' | 'medium' | 'low';
+    confidence: "high" | "medium" | "low";
   };
-  
+
   // Track keystone views (not completion)
   keystone_views: {
     keystone_type: string; // "shower", "meds", etc.
     viewed_at: Date;
-    display_mode: 'full_chain' | 'keystone_focus';
+    display_mode: "full_chain" | "keystone_focus";
   };
 }
 ```
@@ -504,6 +520,7 @@ interface PassiveTelemetry {
 ```
 
 **Rules:**
+
 - Anchor time: Always show clock time
 - Departure time: Always show clock time + countdown
 - Chain steps: Show durations only
@@ -522,19 +539,20 @@ interface MultiAnchorDisplay {
     anchor: TimeBlock;
     show_full_chain: boolean;
   };
-  
+
   // Show subsequent anchors as info cards
   upcoming_anchors: {
     anchor: TimeBlock;
     collapsed: boolean; // Expand on tap
   }[];
-  
+
   // User can switch focus
   focused_anchor_id: string | null;
 }
 ```
 
 **UI Flow:**
+
 ```
 ┌─────────────────────────────────────┐
 │ Next: Class at 12:00 PM             │ ← Full chain shown
@@ -549,6 +567,7 @@ interface MultiAnchorDisplay {
 ```
 
 **Interaction:**
+
 - Default: Show full chain for next anchor only
 - Tap "Expand" on later anchor: Collapse current, expand selected
 - "Show all" option: Expand all chains (can be overwhelming, not default)
@@ -575,6 +594,7 @@ interface MultiAnchorDisplay {
 ```
 
 **Options explained:**
+
 - **Show rest of day**: Display all remaining anchors and free time
 - **Just show next anchor**: Skip to next anchor's chain (if any)
 - **Done for today**: Hide all anchors, show free activation mode
@@ -582,6 +602,7 @@ interface MultiAnchorDisplay {
 **No "missed" language, no red colors, no guilt.** Just "that was then, what's next?"
 
 **If they select "Show rest of day":**
+
 ```
 ┌─────────────────────────────────────┐
 │ Rest of your day:                   │
@@ -622,13 +643,14 @@ interface OptInTracked {
 // Inferred metrics (no user action required)
 interface InferredMetrics {
   likely_anchor_attendance: boolean;
-  app_engagement_pattern: 'morning_only' | 'throughout_day' | 'sporadic';
+  app_engagement_pattern: "morning_only" | "throughout_day" | "sporadic";
   preferred_display_mode: DisplayIntent;
   keystone_focus_frequency: number;
 }
 ```
 
 **Success metrics become:**
+
 1. Daily app opens (engagement without guilt)
 2. Anchor views before anchor time (planning ahead)
 3. Inferred anchor attendance (opened app after anchor)
@@ -636,6 +658,7 @@ interface InferredMetrics {
 5. User-reported "felt helpful" (optional survey)
 
 **NOT:**
+
 - Completion rates (requires opt-in)
 - On-time percentages (judgment-based)
 - Adherence scores (productivity trap)
@@ -643,6 +666,7 @@ interface InferredMetrics {
 ### 6. "Leave by" Implementation Details
 
 **Component structure:**
+
 ```typescript
 // New component: DepartureWaypoint
 interface DepartureWaypointProps {
@@ -664,6 +688,7 @@ interface DepartureWaypointProps {
 ```
 
 **Visual hierarchy:**
+
 1. Anchor time (largest, top)
 2. Departure time (prominent, before chain)
 3. Chain steps (smaller, durations only)
@@ -672,6 +697,7 @@ interface DepartureWaypointProps {
 ## Updated Success Metrics
 
 ### Primary Metrics (No Opt-In Required)
+
 1. **Daily Engagement**: App opens per day
 2. **Anchor Awareness**: Views of anchor before anchor time
 3. **Inferred Attendance**: App opens after anchor time
@@ -679,15 +705,18 @@ interface DepartureWaypointProps {
 5. **Adaptation Usage**: Reality checks requested, display mode switches
 
 ### Secondary Metrics (Opt-In Only)
+
 1. **Completion Tracking**: If user enables, track completion rates
 2. **Time Estimates**: If user tracks, measure actual vs estimated durations
 
 ### Qualitative Metrics
+
 1. **User Feedback**: "Did this help today?" (optional prompt)
 2. **Support Requests**: Reduction in "I'm confused" messages
 3. **Retention**: Continued daily use without burnout
 
 ### Anti-Metrics (What We Don't Measure)
+
 1. ~~On-time percentage~~ (judgment-based)
 2. ~~Adherence to schedule~~ (productivity trap)
 3. ~~Completion rates~~ (unless opt-in)
@@ -696,6 +725,7 @@ interface DepartureWaypointProps {
 ## Implementation Priority (Revised)
 
 ### Phase 1: Remove Harmful Patterns (Week 1) ✓
+
 1. Disable automatic triage ✓
 2. Add "Can I make it?" button ✓
 3. Create neutral AnchorInfoCard ✓
@@ -703,6 +733,7 @@ interface DepartureWaypointProps {
 5. Remove "late" colors
 
 ### Phase 2: Add Neutral Information (Week 2)
+
 1. Implement DepartureWaypoint component
 2. Show durations for chain steps
 3. Add prominent "Leave by" display
@@ -710,18 +741,21 @@ interface DepartureWaypointProps {
 5. Add "missed anchor" neutral pivot flow
 
 ### Phase 3: Add Flexibility (Week 3)
+
 1. Flexible chain start time selector
 2. "When ready" untimed mode
 3. Keystone-focus display mode
 4. No-anchor free activation mode
 
 ### Phase 4: Refine Intent System (Week 4)
+
 1. Replace state declaration with intent prompts
 2. Add display mode switching
 3. Add keystone shortcuts
 4. Implement passive telemetry
 
 ### Phase 5: Telemetry & Iteration (Week 5)
+
 1. Implement passive telemetry system
 2. Add optional "felt helpful" prompt
 3. Monitor engagement metrics

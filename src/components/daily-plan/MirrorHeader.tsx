@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import type { DisplayIntent } from "@/lib/display/display-mode-service";
 
 export interface MirrorHeaderProps {
   editMode: boolean;
@@ -8,6 +9,11 @@ export interface MirrorHeaderProps {
   isRecalculating?: boolean;
   tokenBalance?: number | null;
   onRealityCheck?: () => void; // V2: User-initiated reality check
+  // V2: Display mode props (Req 11.5, 17.2, 17.5)
+  displayMode?: DisplayIntent;
+  onDisplayModeChange?: (mode: DisplayIntent) => void;
+  keystoneActivity?: string | null;
+  onKeystoneShortcut?: () => void;
 }
 
 export function MirrorHeader({
@@ -17,12 +23,17 @@ export function MirrorHeader({
   isRecalculating = false,
   tokenBalance = null,
   onRealityCheck,
+  displayMode,
+  onDisplayModeChange,
+  keystoneActivity,
+  onKeystoneShortcut,
 }: MirrorHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isV2Enabled = isFeatureEnabled('MIRROR_V2_ENABLED');
+  const [showDisplayModeMenu, setShowDisplayModeMenu] = useState(false);
+  const isV2Enabled = isFeatureEnabled("MIRROR_V2_ENABLED");
 
   return (
-    <header className="sticky top-0 z-50 bg-surface border-b border-border shadow-sm">
+    <header className="md:sticky md:top-0 z-50 bg-surface border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left: Title and Navigation */}
@@ -65,7 +76,10 @@ export function MirrorHeader({
             </h1>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-2" aria-label="Main navigation">
+            <nav
+              className="hidden md:flex items-center gap-2"
+              aria-label="Main navigation"
+            >
               <a
                 href="/daily-plan"
                 className="px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-background rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-surface"
@@ -104,8 +118,127 @@ export function MirrorHeader({
               </div>
             )}
 
+            {/* V2: Keystone Shortcut (Req 17.2, 17.5) */}
+            {isV2Enabled && keystoneActivity && onKeystoneShortcut && (
+              <button
+                onClick={onKeystoneShortcut}
+                className="hidden md:flex items-center gap-2 px-3 py-2 text-sm font-medium bg-accent-primary/10 hover:bg-accent-primary/20 text-accent-primary border border-accent-primary/40 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-surface"
+                aria-label={`Just show ${keystoneActivity}`}
+              >
+                <span className="text-lg" aria-hidden="true">
+                  🌟
+                </span>
+                <span>Just {keystoneActivity}</span>
+              </button>
+            )}
+
+            {/* V2: Display Mode Switcher (Req 11.5) */}
+            {isV2Enabled && displayMode && onDisplayModeChange && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowDisplayModeMenu(!showDisplayModeMenu)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-background hover:bg-surface border border-border rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-surface"
+                  aria-label="Change display mode"
+                  aria-expanded={showDisplayModeMenu}
+                  aria-haspopup="true"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">View</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {/* Display Mode Dropdown */}
+                {showDisplayModeMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-surface-primary border border-border rounded-lg shadow-lg z-50">
+                    <div className="py-1" role="menu">
+                      <button
+                        onClick={() => {
+                          onDisplayModeChange("full_chain");
+                          setShowDisplayModeMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-hover transition-colors ${
+                          displayMode === "full_chain"
+                            ? "text-accent-primary font-medium"
+                            : "text-text-primary"
+                        }`}
+                        role="menuitem"
+                      >
+                        Full chain
+                      </button>
+                      <button
+                        onClick={() => {
+                          onDisplayModeChange("keystone_focus");
+                          setShowDisplayModeMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-hover transition-colors ${
+                          displayMode === "keystone_focus"
+                            ? "text-accent-primary font-medium"
+                            : "text-text-primary"
+                        }`}
+                        role="menuitem"
+                      >
+                        Keystone focus
+                      </button>
+                      <button
+                        onClick={() => {
+                          onDisplayModeChange("anchor_only");
+                          setShowDisplayModeMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-hover transition-colors ${
+                          displayMode === "anchor_only"
+                            ? "text-accent-primary font-medium"
+                            : "text-text-primary"
+                        }`}
+                        role="menuitem"
+                      >
+                        Anchors only
+                      </button>
+                      <button
+                        onClick={() => {
+                          onDisplayModeChange("rest_of_day");
+                          setShowDisplayModeMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-hover transition-colors ${
+                          displayMode === "rest_of_day"
+                            ? "text-accent-primary font-medium"
+                            : "text-text-primary"
+                        }`}
+                        role="menuitem"
+                      >
+                        Rest of day
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Edit Mode Toggle */}
-            {isFeatureEnabled('INLINE_EDITING_ENABLED') && (
+            {isFeatureEnabled("INLINE_EDITING_ENABLED") && (
               <button
                 onClick={onToggleEditMode}
                 className={`
@@ -151,7 +284,7 @@ export function MirrorHeader({
             )}
 
             {/* Recalculate Button */}
-            {isFeatureEnabled('STATELESS_RECALC_ENABLED') && (
+            {isFeatureEnabled("STATELESS_RECALC_ENABLED") && (
               <button
                 onClick={onRecalculate}
                 disabled={isRecalculating}
@@ -216,8 +349,8 @@ export function MirrorHeader({
 
         {/* Mobile Menu Dropdown */}
         {mobileMenuOpen && (
-          <nav 
-            id="mobile-menu" 
+          <nav
+            id="mobile-menu"
             className="md:hidden py-4 border-t border-border"
             aria-label="Mobile navigation"
           >

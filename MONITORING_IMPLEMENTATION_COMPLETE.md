@@ -71,10 +71,10 @@ Comprehensive monitoring and analytics infrastructure has been implemented for t
 
 ### Performance Metrics
 
-| Metric | Description | Target |
-|--------|-------------|--------|
-| `runway_calculation_latency` | Time to calculate runway | < 100ms (p95) |
-| `recalculation_latency` | Time to regenerate plan | < 4000ms (p95) |
+| Metric                       | Description              | Target         |
+| ---------------------------- | ------------------------ | -------------- |
+| `runway_calculation_latency` | Time to calculate runway | < 100ms (p95)  |
+| `recalculation_latency`      | Time to regenerate plan  | < 4000ms (p95) |
 
 ### Engagement Events
 
@@ -105,6 +105,7 @@ Comprehensive monitoring and analytics infrastructure has been implemented for t
 ## Testing
 
 Comprehensive unit tests in `src/test/unit/monitoring/analytics.test.ts`:
+
 - AnalyticsService functionality
 - Percentile calculations
 - Error rate calculations
@@ -117,10 +118,10 @@ Comprehensive unit tests in `src/test/unit/monitoring/analytics.test.ts`:
 ### In API Routes
 
 ```typescript
-import { PerformanceTimer } from '@/lib/monitoring/analytics';
-import { trackRunwayCalculation } from '@/lib/monitoring/triage-metrics';
+import { PerformanceTimer } from "@/lib/monitoring/analytics";
+import { trackRunwayCalculation } from "@/lib/monitoring/triage-metrics";
 
-const timer = new PerformanceTimer('runway_calculation', user.id);
+const timer = new PerformanceTimer("runway_calculation", user.id);
 const runway = calculateRunway(timeBlocks);
 const duration = timer.end();
 
@@ -133,13 +134,13 @@ trackRunwayCalculation(duration, user.id, {
 ### In React Components
 
 ```typescript
-import { useMirrorSessionTracking } from '@/hooks/useMirrorSessionTracking';
+import { useMirrorSessionTracking } from "@/hooks/useMirrorSessionTracking";
 
 export function MirrorUI() {
   const { trackInteraction } = useMirrorSessionTracking();
-  
+
   const handleTriageDecision = (decision) => {
-    trackInteraction('triage_decision');
+    trackInteraction("triage_decision");
     // ... handle decision
   };
 }
@@ -189,6 +190,7 @@ The system is designed for easy integration with external services:
 ## Documentation
 
 Comprehensive README at `src/lib/monitoring/README.md` includes:
+
 - Architecture overview
 - Usage examples
 - API documentation

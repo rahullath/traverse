@@ -1,8 +1,8 @@
 // src/pages/api/monitoring/interaction.ts
 // API endpoint for tracking user interactions
 
-import type { APIRoute } from 'astro';
-import { AnalyticsService } from '@/lib/monitoring/analytics';
+import type { APIRoute } from "astro";
+import { AnalyticsService } from "@/lib/monitoring/analytics";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -11,8 +11,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (!event || !userId || !interactionType) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -23,15 +23,15 @@ export const POST: APIRoute = async ({ request }) => {
       properties: { interactionType },
     });
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error('Error tracking interaction:', error);
+    console.error("Error tracking interaction:", error);
     return new Response(
-      JSON.stringify({ error: 'Failed to track interaction' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: "Failed to track interaction" }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
 };

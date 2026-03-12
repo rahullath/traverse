@@ -1,14 +1,14 @@
 // src/pages/api/monitoring/metrics.ts
 // API endpoint for retrieving monitoring metrics
 
-import type { APIRoute } from 'astro';
-import { createServerAuth } from '@/lib/auth/simple-multi-user';
-import { AnalyticsService } from '@/lib/monitoring/analytics';
+import type { APIRoute } from "astro";
+import { createServerAuth } from "@/lib/auth/simple-multi-user";
+import { AnalyticsService } from "@/lib/monitoring/analytics";
 import {
   getTriageActivationRate,
   getStateDeclarationUsage,
   getCompletionRate,
-} from '@/lib/monitoring/triage-metrics';
+} from "@/lib/monitoring/triage-metrics";
 
 export const GET: APIRoute = async ({ request, cookies }) => {
   try {
@@ -21,11 +21,15 @@ export const GET: APIRoute = async ({ request, cookies }) => {
 
     const analytics = AnalyticsService.getInstance();
     const url = new URL(request.url);
-    const timeWindow = parseInt(url.searchParams.get('timeWindow') || '86400000'); // Default 24h
+    const timeWindow = parseInt(
+      url.searchParams.get("timeWindow") || "86400000",
+    ); // Default 24h
 
     // Get performance metrics summaries
-    const runwayMetrics = analytics.getMetricsSummary('runway_calculation_latency');
-    const recalcMetrics = analytics.getMetricsSummary('recalculation_latency');
+    const runwayMetrics = analytics.getMetricsSummary(
+      "runway_calculation_latency",
+    );
+    const recalcMetrics = analytics.getMetricsSummary("recalculation_latency");
 
     // Get engagement metrics
     const triageActivationRate = getTriageActivationRate(timeWindow);
@@ -33,10 +37,22 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const completionRate = getCompletionRate(timeWindow);
 
     // Get error rates
-    const mirrorErrorRate = analytics.getErrorRate('/api/daily-plan/mirror', timeWindow);
-    const recalcErrorRate = analytics.getErrorRate('/api/daily-plan/recalculate', timeWindow);
-    const stateErrorRate = analytics.getErrorRate('/api/daily-plan/state', timeWindow);
-    const triageErrorRate = analytics.getErrorRate('/api/daily-plan/triage', timeWindow);
+    const mirrorErrorRate = analytics.getErrorRate(
+      "/api/daily-plan/mirror",
+      timeWindow,
+    );
+    const recalcErrorRate = analytics.getErrorRate(
+      "/api/daily-plan/recalculate",
+      timeWindow,
+    );
+    const stateErrorRate = analytics.getErrorRate(
+      "/api/daily-plan/state",
+      timeWindow,
+    );
+    const triageErrorRate = analytics.getErrorRate(
+      "/api/daily-plan/triage",
+      timeWindow,
+    );
 
     return new Response(
       JSON.stringify({
@@ -70,23 +86,23 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      }
+      },
     );
   } catch (error) {
-    console.error('Error fetching metrics:', error);
+    console.error("Error fetching metrics:", error);
     return new Response(
       JSON.stringify({
-        error: 'Failed to fetch metrics',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: "Failed to fetch metrics",
+        message: error instanceof Error ? error.message : "Unknown error",
       }),
       {
         status: 500,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 };

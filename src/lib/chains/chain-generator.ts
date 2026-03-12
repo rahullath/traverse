@@ -31,6 +31,12 @@ import {
   type ChainCustomStep,
   type ChainStepOverrides,
 } from "./step-customization";
+import type { LocationTravelProfile } from "../travel/location-travel-profiles";
+import {
+  normalizeLocationLabel,
+  selectDepartureSlotForAnchor,
+  shouldSuppressTravel,
+} from "../travel/location-travel-profiles";
 
 /**
  * Chain Generator Configuration
@@ -58,9 +64,11 @@ export interface ChainGeneratorOptions {
   wakeTime?: Date;
   sleepTime?: Date;
   planStart?: Date;
+  currentTime?: Date;
   allowNoAnchorFallback?: boolean;
   chainStepOverrides?: ChainStepOverrides;
   chainCustomSteps?: ChainCustomStep[];
+  locationTravelProfiles?: Map<string, LocationTravelProfile>;
   config: ChainGeneratorConfig;
 }
 
@@ -73,6 +81,17 @@ const PREP_DURATION_MINUTES = 15; // Default prep time
 const PREP_DURATION_SEMINAR_MINUTES = 25; // Extended prep for seminars/workshops
 const RECOVERY_SHORT_MINUTES = 10; // Recovery after short anchors (< 2 hours)
 const RECOVERY_LONG_MINUTES = 20; // Recovery after long anchors (>= 2 hours)
+
+interface TravelPlan {
+  duration: number;
+  fallbackUsed: boolean;
+  suppressTravel: boolean;
+  selectedDepartureTime?: Date;
+  selectedDepartureSlot?: string;
+  nextFeasibleSlot?: string;
+  profileLabel?: string;
+  source: "profile" | "service" | "fallback" | "suppressed";
+}
 
 /**
  * Chain Generator
@@ -204,20 +223,22 @@ export class ChainGenerator {
       location: anchor.location || "none",
     });
 
-    // Get travel duration (with fallback handling)
-    const { duration: travelDuration, fallbackUsed: travelFallbackUsed } =
-      await this.getTravelDuration(anchor, options.config);
+    const travelPlan = await this.getTravelPlan(anchor, options);
+    const travelDuration = travelPlan.duration;
 
     console.log("[Chain Generator] Travel duration calculated:", {
       anchorId: anchor.id,
       duration: travelDuration,
-      fallbackUsed: travelFallbackUsed,
+      fallbackUsed: travelPlan.fallbackUsed,
+      suppressTravel: travelPlan.suppressTravel,
+      source: travelPlan.source,
     });
 
     // Calculate Chain Completion Deadline
     const chainCompletionDeadline = this.calculateChainCompletionDeadline(
       anchor,
       travelDuration,
+      travelPlan.selectedDepartureTime,
     );
 
     console.log("[Chain Generator] Chain Completion Deadline:", {
@@ -272,7 +293,7 @@ export class ChainGenerator {
       anchor,
       chainSteps,
       travelDuration,
-      travelFallbackUsed,
+      travelPlan,
     );
 
     console.log("[Chain Generator] Commitment envelope generated:", {
@@ -477,7 +498,12 @@ export class ChainGenerator {
   calculateChainCompletionDeadline(
     anchor: Anchor,
     travelDuration: number,
+    selectedDepartureTime?: Date,
   ): Date {
+    if (selectedDepartureTime) {
+      return new Date(selectedDepartureTime);
+    }
+
     const totalMinutes = travelDuration + CHAIN_COMPLETION_BUFFER_MINUTES;
     return new Date(anchor.start.getTime() - totalMinutes * 60 * 1000);
   }
@@ -556,16 +582,10 @@ export class ChainGenerator {
     anchor: Anchor,
     chainSteps: ChainStepInstance[],
     travelDuration: number,
-    travelFallbackUsed: boolean = false,
+    travelPlan: TravelPlan,
   ): CommitmentEnvelope {
     const envelopeId = uuidv4();
     const chainId = chainSteps[0]?.chain_id || uuidv4();
-
-    // Determine prep duration based on anchor type
-    const prepDuration =
-      anchor.type === "seminar" || anchor.type === "workshop"
-        ? PREP_DURATION_SEMINAR_MINUTES
-        : PREP_DURATION_MINUTES;
 
     // Calculate prep block (all chain steps before travel)
     const firstStep = chainSteps[0];
@@ -588,34 +608,49 @@ export class ChainGenerator {
       role: "chain-step",
     };
 
-    // Calculate travel_there block
-    const travelThereStart = prepEnd;
-    const travelThereEnd = new Date(
-      travelThereStart.getTime() + travelDuration * 60 * 1000,
-    );
+    const travelMetadata: Record<string, any> = {
+      travel_profile: {
+        label: travelPlan.profileLabel || anchor.location_label || anchor.location,
+        source: travelPlan.source,
+        selected_slot: travelPlan.selectedDepartureSlot,
+        next_feasible_slot: travelPlan.nextFeasibleSlot,
+        suppress_travel: travelPlan.suppressTravel,
+        used_slots: Boolean(travelPlan.selectedDepartureSlot),
+      },
+    };
+
+    if (travelPlan.fallbackUsed) {
+      travelMetadata.fallback_used = true;
+      travelMetadata.fallback_reason = "Travel service unavailable";
+    }
+
+    const travelThereStart = travelPlan.suppressTravel
+      ? new Date(anchor.start)
+      : travelPlan.selectedDepartureTime
+        ? new Date(travelPlan.selectedDepartureTime)
+        : prepEnd;
+    const travelThereEnd = travelPlan.suppressTravel
+      ? new Date(anchor.start)
+      : new Date(travelThereStart.getTime() + travelDuration * 60 * 1000);
 
     const travelThere: ChainStepInstance = {
       step_id: uuidv4(),
       chain_id: chainId,
-      name: "Travel to " + anchor.title,
+      name: travelPlan.suppressTravel
+        ? `No travel needed for ${anchor.title}`
+        : "Travel to " + anchor.title,
       start_time: travelThereStart,
       end_time: travelThereEnd,
-      duration: travelDuration,
+      duration: travelPlan.suppressTravel ? 0 : travelDuration,
       is_required: true,
       can_skip_when_late: false,
       status: "pending",
       role: "chain-step",
-      // Add metadata for travel fallback
-      // Requirements: Design - Error Handling - Travel Service Failures
-      metadata: travelFallbackUsed
-        ? {
-            fallback_used: true,
-            fallback_reason: "Travel service unavailable",
-          }
-        : undefined,
+      metadata: travelMetadata,
     };
 
     // Calculate anchor block
+    const maxLateMinutes = Math.max(0, Number(anchor.max_late_minutes || 0));
     const anchorBlock: ChainStepInstance = {
       step_id: uuidv4(),
       chain_id: chainId,
@@ -629,33 +664,37 @@ export class ChainGenerator {
       can_skip_when_late: false,
       status: "pending",
       role: "anchor",
+      metadata: {
+        anchor_constraints: {
+          max_late_minutes: maxLateMinutes,
+          strict_by_default: maxLateMinutes === 0,
+        },
+        travel_profile: {
+          label: travelPlan.profileLabel || anchor.location_label || anchor.location,
+          source: travelPlan.source,
+        },
+      },
     };
 
-    // Calculate travel_back block (same duration as travel_there)
-    const travelBackStart = anchor.end;
-    const travelBackEnd = new Date(
-      travelBackStart.getTime() + travelDuration * 60 * 1000,
-    );
+    const travelBackStart = new Date(anchor.end);
+    const travelBackEnd = travelPlan.suppressTravel
+      ? new Date(anchor.end)
+      : new Date(travelBackStart.getTime() + travelDuration * 60 * 1000);
 
     const travelBack: ChainStepInstance = {
       step_id: uuidv4(),
       chain_id: chainId,
-      name: "Travel from " + anchor.title,
+      name: travelPlan.suppressTravel
+        ? `No return travel for ${anchor.title}`
+        : "Travel from " + anchor.title,
       start_time: travelBackStart,
       end_time: travelBackEnd,
-      duration: travelDuration,
+      duration: travelPlan.suppressTravel ? 0 : travelDuration,
       is_required: true,
       can_skip_when_late: false,
       status: "pending",
       role: "chain-step",
-      // Add metadata for travel fallback
-      // Requirements: Design - Error Handling - Travel Service Failures
-      metadata: travelFallbackUsed
-        ? {
-            fallback_used: true,
-            fallback_reason: "Travel service unavailable",
-          }
-        : undefined,
+      metadata: travelMetadata,
     };
 
     // Calculate recovery buffer (duration based on anchor length)
@@ -696,26 +735,69 @@ export class ChainGenerator {
   }
 
   /**
-   * Get travel duration for anchor
+   * Resolve travel plan for an anchor.
    *
-   * Uses travel service if anchor has location, otherwise returns default.
-   *
-   * @param anchor - Anchor to get travel duration for
-   * @param config - Chain generator config
-   * @returns Travel duration in minutes and fallback flag
-   *
-   * Requirements: Design - Error Handling - Travel Service Failures
+   * Priority:
+   * 1. Suppress travel for home/same-location anchors
+   * 2. User profile by location label
+   * 3. Travel service
+   * 4. Conservative fallback
    */
-  private async getTravelDuration(
+  private async getTravelPlan(
     anchor: Anchor,
-    config: ChainGeneratorConfig,
-  ): Promise<{ duration: number; fallbackUsed: boolean }> {
-    // If no location, use default
-    if (!anchor.location) {
-      console.log(
-        `[Chain Generator] No location for anchor ${anchor.id}, using default travel duration`,
+    options: ChainGeneratorOptions,
+  ): Promise<TravelPlan> {
+    const destinationLabel = anchor.location_label || anchor.location || "";
+    const currentLocationLabel = options.config.currentLocation?.name;
+    const normalizedDestination = normalizeLocationLabel(destinationLabel);
+    const effectiveDeadline = new Date(
+      anchor.start.getTime() + Math.max(0, Number(anchor.max_late_minutes || 0)) * 60_000,
+    );
+
+    if (shouldSuppressTravel(destinationLabel, currentLocationLabel)) {
+      return {
+        duration: 0,
+        fallbackUsed: false,
+        suppressTravel: true,
+        profileLabel: destinationLabel || "Home",
+        source: "suppressed",
+      };
+    }
+
+    const profile = normalizedDestination
+      ? options.locationTravelProfiles?.get(normalizedDestination)
+      : undefined;
+
+    if (profile) {
+      const travelMinutes = Math.max(0, Number(profile.travel_minutes || 0));
+      const slotSelection = selectDepartureSlotForAnchor(
+        anchor.start,
+        effectiveDeadline,
+        travelMinutes,
+        profile.departure_slots,
+        options.currentTime || options.planStart,
       );
-      return { duration: DEFAULT_TRAVEL_DURATION_MINUTES, fallbackUsed: false };
+
+      return {
+        duration: travelMinutes,
+        fallbackUsed: false,
+        suppressTravel: travelMinutes === 0,
+        selectedDepartureTime: slotSelection.selectedSlotTime || undefined,
+        selectedDepartureSlot: slotSelection.selectedSlotLabel || undefined,
+        nextFeasibleSlot: slotSelection.nextFeasibleSlotLabel || undefined,
+        profileLabel: profile.label,
+        source: "profile",
+      };
+    }
+
+    if (!anchor.location) {
+      return {
+        duration: DEFAULT_TRAVEL_DURATION_MINUTES,
+        fallbackUsed: false,
+        suppressTravel: false,
+        profileLabel: destinationLabel || undefined,
+        source: "fallback",
+      };
     }
 
     try {
@@ -731,8 +813,8 @@ export class ChainGenerator {
 
       // Build travel conditions
       const conditions: TravelConditions = {
-        weather: config.weather || this.getDefaultWeather(),
-        userEnergy: config.userEnergy || 3,
+        weather: options.config.weather || this.getDefaultWeather(),
+        userEnergy: options.config.userEnergy || 3,
         timeConstraints: {
           departure: new Date(anchor.start.getTime() - 60 * 60 * 1000), // 1 hour before
           arrival: anchor.start,
@@ -762,7 +844,7 @@ export class ChainGenerator {
 
       // Get optimal route from travel service
       const route = await this.travelService.getOptimalRoute(
-        config.currentLocation,
+        options.config.currentLocation,
         destinationLocation,
         conditions,
         preferences,
@@ -776,10 +858,19 @@ export class ChainGenerator {
         return {
           duration: DEFAULT_TRAVEL_DURATION_MINUTES,
           fallbackUsed: true,
+          suppressTravel: false,
+          profileLabel: destinationLabel || undefined,
+          source: "fallback",
         };
       }
 
-      return { duration: route.duration, fallbackUsed: false };
+      return {
+        duration: route.duration,
+        fallbackUsed: false,
+        suppressTravel: false,
+        profileLabel: destinationLabel || undefined,
+        source: "service",
+      };
     } catch (error) {
       // Travel Service Error Handling
       // Requirements: Design - Error Handling - Travel Service Failures
@@ -797,7 +888,13 @@ export class ChainGenerator {
       // Use fallback duration: 30 minutes (conservative estimate)
       // Mark travel block with metadata: fallback_used = true
       // UI will display: "Travel time estimated (service unavailable)"
-      return { duration: DEFAULT_TRAVEL_DURATION_MINUTES, fallbackUsed: true };
+      return {
+        duration: DEFAULT_TRAVEL_DURATION_MINUTES,
+        fallbackUsed: true,
+        suppressTravel: false,
+        profileLabel: destinationLabel || undefined,
+        source: "fallback",
+      };
     }
   }
 
@@ -888,6 +985,33 @@ export class ChainGenerator {
   ): Omit<TimeBlock, "id" | "createdAt" | "updatedAt">[] {
     const timeBlocks: Omit<TimeBlock, "id" | "createdAt" | "updatedAt">[] = [];
     let sequenceOrder = 1;
+    const maxLateMinutes = Math.max(0, Number(chain.anchor.max_late_minutes || 0));
+    const effectiveArrivalDeadline = new Date(
+      chain.anchor.start.getTime() + maxLateMinutes * 60_000,
+    );
+    const selectedSlot =
+      typeof chain.commitment_envelope.travel_there.metadata?.travel_profile
+        ?.selected_slot === "string"
+        ? chain.commitment_envelope.travel_there.metadata?.travel_profile
+            ?.selected_slot
+        : undefined;
+    const nextFeasibleSlot =
+      typeof chain.commitment_envelope.travel_there.metadata?.travel_profile
+        ?.next_feasible_slot === "string"
+        ? chain.commitment_envelope.travel_there.metadata?.travel_profile
+            ?.next_feasible_slot
+        : undefined;
+    const timingSignals = {
+      suggested_start_by: chain.commitment_envelope.prep.start_time.toISOString(),
+      ready_to_leave_by:
+        chain.commitment_envelope.travel_there.start_time.toISOString(),
+      anchor_at: chain.commitment_envelope.anchor.start_time.toISOString(),
+      effective_arrival_deadline: effectiveArrivalDeadline.toISOString(),
+      max_late_minutes: maxLateMinutes,
+      travel_duration_minutes: chain.commitment_envelope.travel_there.duration,
+      selected_departure_slot: selectedSlot,
+      next_feasible_departure_slot: nextFeasibleSlot,
+    };
 
     // Convert chain steps to TimeBlocks
     for (const step of chain.steps) {
@@ -905,6 +1029,20 @@ export class ChainGenerator {
         chain_id: chain.chain_id,
         step_id: step.step_id,
         anchor_id: chain.anchor_id,
+        anchor_title: chain.anchor.title,
+        anchor_start: chain.anchor.start.toISOString(),
+        anchor_end: chain.anchor.end.toISOString(),
+        anchor_location: chain.anchor.location,
+        anchor_type: chain.anchor.type,
+        commitment_envelope: {
+          envelope_id: chain.commitment_envelope.envelope_id,
+          envelope_type: "prep",
+        },
+        timing_signals: timingSignals,
+        anchor_constraints: {
+          max_late_minutes: maxLateMinutes,
+          strict_by_default: maxLateMinutes === 0,
+        },
 
         // Location state
         // Requirements: 18.3
@@ -924,6 +1062,9 @@ export class ChainGenerator {
       if (step.metadata) {
         Object.assign(metadata, step.metadata);
       }
+      if (chain.metadata?.no_calendar_fallback === true) {
+        metadata.no_calendar_fallback = true;
+      }
 
       timeBlocks.push({
         planId,
@@ -942,12 +1083,14 @@ export class ChainGenerator {
     // Convert commitment envelope to TimeBlocks
     const envelope = chain.commitment_envelope;
     const envelopeSteps = [
-      { step: envelope.prep, type: "prep" as const },
       { step: envelope.travel_there, type: "travel_there" as const },
       { step: envelope.anchor, type: "anchor" as const },
       { step: envelope.travel_back, type: "travel_back" as const },
       { step: envelope.recovery, type: "recovery" as const },
-    ];
+    ].filter(({ step, type }) => {
+      if (type !== "travel_there" && type !== "travel_back") return true;
+      return !step.metadata?.travel_profile?.suppress_travel;
+    });
 
     for (const { step, type } of envelopeSteps) {
       const metadata: TimeBlockMetadata = {
@@ -962,6 +1105,11 @@ export class ChainGenerator {
         chain_id: chain.chain_id,
         step_id: step.step_id,
         anchor_id: chain.anchor_id,
+        anchor_title: chain.anchor.title,
+        anchor_start: chain.anchor.start.toISOString(),
+        anchor_end: chain.anchor.end.toISOString(),
+        anchor_location: chain.anchor.location,
+        anchor_type: chain.anchor.type,
 
         // Location state (travel and anchor are not_home, others depend on context)
         location_state:
@@ -975,11 +1123,19 @@ export class ChainGenerator {
           envelope_id: envelope.envelope_id,
           envelope_type: type,
         },
+        timing_signals: timingSignals,
+        anchor_constraints: {
+          max_late_minutes: maxLateMinutes,
+          strict_by_default: maxLateMinutes === 0,
+        },
       };
 
       // Add step metadata (fallback info if present)
       if (step.metadata) {
         Object.assign(metadata, step.metadata);
+      }
+      if (chain.metadata?.no_calendar_fallback === true) {
+        metadata.no_calendar_fallback = true;
       }
 
       timeBlocks.push({

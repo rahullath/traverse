@@ -2,7 +2,7 @@
 // src/pages/daily-plan/mirror.astro
 import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import { createServerAuth } from '../../lib/auth/simple-multi-user';
-import MirrorUI from '../../components/daily-plan/MirrorUI';
+import MirrorUIWithErrorBoundary from '../../components/daily-plan/MirrorUIWithErrorBoundary';
 import { isFeatureEnabled } from '../../lib/feature-flags';
 
 // Check if triage mirror feature is enabled
@@ -28,6 +28,6 @@ if (!user) {
     </div>
 
     <!-- Mirror UI Content -->
-    <MirrorUI client:load userId={user.id} />
+    <MirrorUIWithErrorBoundary client:load userId={user.id} />
   </div>
 </DashboardLayout>

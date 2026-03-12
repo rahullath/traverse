@@ -208,8 +208,7 @@ describe("Mirror UI API Endpoints", () => {
 
       // Match by start time
       const matchedBlock = newBlocks.find(
-        (nb) =>
-          nb.startTime?.getTime() === oldBlocks[0].startTime?.getTime(),
+        (nb) => nb.startTime?.getTime() === oldBlocks[0].startTime?.getTime(),
       );
 
       if (matchedBlock) {
@@ -385,8 +384,7 @@ describe("Mirror UI API Endpoints", () => {
 
       // Keep only keystone and anchor
       const filtered = blocks.filter(
-        (b) =>
-          b.id === keystoneId || b.metadata?.role?.type === "anchor",
+        (b) => b.id === keystoneId || b.metadata?.role?.type === "anchor",
       );
 
       expect(filtered).toHaveLength(2);
@@ -584,9 +582,7 @@ describe("Mirror UI API Endpoints", () => {
 
       // Cascade: block-2 should start at block-1's new end time
       blocks[1].startTime = newEndTime;
-      blocks[1].endTime = new Date(
-        newEndTime.getTime() + 30 * 60 * 1000,
-      );
+      blocks[1].endTime = new Date(newEndTime.getTime() + 30 * 60 * 1000);
 
       expect(blocks[1].startTime).toEqual(newEndTime);
     });

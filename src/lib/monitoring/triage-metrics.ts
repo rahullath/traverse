@@ -1,8 +1,8 @@
 // src/lib/monitoring/triage-metrics.ts
 // Specific metrics tracking for triage-mirror-stateless feature
 
-import { AnalyticsService, PerformanceTimer } from './analytics';
-import type { UserState } from '@/types/triage';
+import { AnalyticsService, PerformanceTimer } from "./analytics";
+import type { UserState } from "@/types/triage";
 
 /**
  * Track runway calculation performance
@@ -14,10 +14,10 @@ export function trackRunwayCalculation(
     hasAnchors?: boolean;
     blockCount?: number;
     hasSufficientTime?: boolean;
-  }
+  },
 ): void {
   AnalyticsService.getInstance().trackMetric({
-    name: 'runway_calculation_latency',
+    name: "runway_calculation_latency",
     value: durationMs,
     timestamp: new Date(),
     userId,
@@ -36,10 +36,10 @@ export function trackRecalculation(
     anchorCount?: number;
     blockCount?: number;
     errorMessage?: string;
-  }
+  },
 ): void {
   AnalyticsService.getInstance().trackMetric({
-    name: 'recalculation_latency',
+    name: "recalculation_latency",
     value: durationMs,
     timestamp: new Date(),
     userId,
@@ -50,7 +50,7 @@ export function trackRecalculation(
   });
 
   AnalyticsService.getInstance().trackEvent({
-    event: success ? 'recalculation_success' : 'recalculation_failure',
+    event: success ? "recalculation_success" : "recalculation_failure",
     userId,
     timestamp: new Date(),
     properties: metadata,
@@ -67,10 +67,10 @@ export function trackTriageActivation(
     requiredDuration: number;
     keystoneActivity?: string;
     anchorType?: string;
-  }
+  },
 ): void {
   AnalyticsService.getInstance().trackEvent({
-    event: 'triage_mode_activated',
+    event: "triage_mode_activated",
     userId,
     timestamp: new Date(),
     properties: metadata,
@@ -82,14 +82,14 @@ export function trackTriageActivation(
  */
 export function trackTriageDecision(
   userId: string,
-  decision: 'protect_keystone' | 'skip_anchor' | 'recalculate',
+  decision: "protect_keystone" | "skip_anchor" | "recalculate",
   metadata?: {
     anchorId?: string;
     keystoneActivity?: string;
-  }
+  },
 ): void {
   AnalyticsService.getInstance().trackEvent({
-    event: 'triage_decision',
+    event: "triage_decision",
     userId,
     timestamp: new Date(),
     properties: {
@@ -109,10 +109,10 @@ export function trackStateDeclaration(
     selectedStepId?: string;
     hasAnchors?: boolean;
     triggeredTriage?: boolean;
-  }
+  },
 ): void {
   AnalyticsService.getInstance().trackEvent({
-    event: 'state_declaration',
+    event: "state_declaration",
     userId,
     timestamp: new Date(),
     properties: {
@@ -127,15 +127,15 @@ export function trackStateDeclaration(
  */
 export function trackCompletion(
   userId: string,
-  action: 'completed' | 'skipped',
+  action: "completed" | "skipped",
   metadata?: {
     blockId?: string;
     blockType?: string;
     skipReason?: string;
-  }
+  },
 ): void {
   AnalyticsService.getInstance().trackEvent({
-    event: 'block_completion',
+    event: "block_completion",
     userId,
     timestamp: new Date(),
     properties: {
@@ -150,15 +150,15 @@ export function trackCompletion(
  */
 export function trackInlineEdit(
   userId: string,
-  editType: 'anchor' | 'step' | 'insert' | 'delete',
+  editType: "anchor" | "step" | "insert" | "delete",
   metadata?: {
     blockId?: string;
     changes?: string[];
     hadConflict?: boolean;
-  }
+  },
 ): void {
   AnalyticsService.getInstance().trackEvent({
-    event: 'inline_edit',
+    event: "inline_edit",
     userId,
     timestamp: new Date(),
     properties: {
@@ -173,11 +173,11 @@ export function trackInlineEdit(
  */
 export function trackMirrorSession(
   userId: string,
-  action: 'start' | 'end',
+  action: "start" | "end",
   metadata?: {
     durationMs?: number;
     interactionCount?: number;
-  }
+  },
 ): void {
   AnalyticsService.getInstance().trackEvent({
     event: `mirror_session_${action}`,
@@ -190,22 +190,24 @@ export function trackMirrorSession(
 /**
  * Get triage activation rate
  */
-export function getTriageActivationRate(timeWindowMs: number = 86400000): number {
+export function getTriageActivationRate(
+  timeWindowMs: number = 86400000,
+): number {
   const analytics = AnalyticsService.getInstance();
   const now = Date.now();
 
   // Count mirror loads
   const mirrorLoads = (analytics as any).events.filter(
     (e: any) =>
-      e.event === 'mirror_session_start' &&
-      now - e.timestamp.getTime() < timeWindowMs
+      e.event === "mirror_session_start" &&
+      now - e.timestamp.getTime() < timeWindowMs,
   ).length;
 
   // Count triage activations
   const triageActivations = (analytics as any).events.filter(
     (e: any) =>
-      e.event === 'triage_mode_activated' &&
-      now - e.timestamp.getTime() < timeWindowMs
+      e.event === "triage_mode_activated" &&
+      now - e.timestamp.getTime() < timeWindowMs,
   ).length;
 
   if (mirrorLoads === 0) return 0;
@@ -216,15 +218,15 @@ export function getTriageActivationRate(timeWindowMs: number = 86400000): number
  * Get state declaration usage by type
  */
 export function getStateDeclarationUsage(
-  timeWindowMs: number = 86400000
+  timeWindowMs: number = 86400000,
 ): Record<UserState, number> {
   const analytics = AnalyticsService.getInstance();
   const now = Date.now();
 
   const declarations = (analytics as any).events.filter(
     (e: any) =>
-      e.event === 'state_declaration' &&
-      now - e.timestamp.getTime() < timeWindowMs
+      e.event === "state_declaration" &&
+      now - e.timestamp.getTime() < timeWindowMs,
   );
 
   const usage: Record<string, number> = {
@@ -255,12 +257,12 @@ export function getCompletionRate(timeWindowMs: number = 86400000): number {
 
   const completions = (analytics as any).events.filter(
     (e: any) =>
-      e.event === 'block_completion' &&
-      now - e.timestamp.getTime() < timeWindowMs
+      e.event === "block_completion" &&
+      now - e.timestamp.getTime() < timeWindowMs,
   );
 
   const completed = completions.filter(
-    (c: any) => c.properties?.action === 'completed'
+    (c: any) => c.properties?.action === "completed",
   ).length;
 
   if (completions.length === 0) return 0;
@@ -271,12 +273,15 @@ export function getCompletionRate(timeWindowMs: number = 86400000): number {
  * Create performance timer for runway calculation
  */
 export function createRunwayTimer(userId: string): PerformanceTimer {
-  return new PerformanceTimer('runway_calculation_latency', userId);
+  return new PerformanceTimer("runway_calculation_latency", userId);
 }
 
 /**
  * Create performance timer for recalculation
  */
-export function createRecalcTimer(userId: string, anchorCount: number): PerformanceTimer {
-  return new PerformanceTimer('recalculation_latency', userId, { anchorCount });
+export function createRecalcTimer(
+  userId: string,
+  anchorCount: number,
+): PerformanceTimer {
+  return new PerformanceTimer("recalculation_latency", userId, { anchorCount });
 }

@@ -91,9 +91,7 @@ describe("Mirror UI User Flows", () => {
 
       // Step 4: Verify timeline filtered correctly
       const filteredBlocks = mockMirrorData.timeBlocks.filter(
-        (b) =>
-          b.id === "prep" ||
-          b.metadata?.role?.type === "anchor",
+        (b) => b.id === "prep" || b.metadata?.role?.type === "anchor",
       );
 
       expect(filteredBlocks).toHaveLength(2);

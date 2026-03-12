@@ -40,12 +40,12 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 **Feature Flag Status:**
 
-| Flag | Initial State | Rollout Phase | Final State |
-|------|---------------|---------------|-------------|
-| `TRIAGE_MIRROR_ENABLED` | `false` | Enable at 10% → 50% → 100% | `true` |
-| `STATE_DECLARATION_ENABLED` | `false` | Enable with TRIAGE_MIRROR | `true` |
-| `INLINE_EDITING_ENABLED` | `false` | Enable after 50% rollout | `true` |
-| `STATELESS_RECALC_ENABLED` | `false` | Enable after 50% rollout | `true` |
+| Flag                        | Initial State | Rollout Phase              | Final State |
+| --------------------------- | ------------- | -------------------------- | ----------- |
+| `TRIAGE_MIRROR_ENABLED`     | `false`       | Enable at 10% → 50% → 100% | `true`      |
+| `STATE_DECLARATION_ENABLED` | `false`       | Enable with TRIAGE_MIRROR  | `true`      |
+| `INLINE_EDITING_ENABLED`    | `false`       | Enable after 50% rollout   | `true`      |
+| `STATELESS_RECALC_ENABLED`  | `false`       | Enable after 50% rollout   | `true`      |
 
 **Verification Steps:**
 
@@ -151,6 +151,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 **Timeline: Day 1**
 
 1. **Deploy to Staging:**
+
    ```bash
    # Merge feature branch to staging
    git checkout staging
@@ -172,6 +173,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    - [ ] Fix any critical issues before production
 
 **Success Criteria:**
+
 - Zero critical bugs
 - Performance targets met (runway <100ms, recalc <4s)
 - Positive feedback from internal testers
@@ -181,6 +183,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 **Timeline: Day 3-5**
 
 1. **Deploy to Production:**
+
    ```bash
    # Merge staging to main
    git checkout main
@@ -193,9 +196,9 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    - [ ] Implement user sampling in `src/lib/feature-flags.ts`:
      ```typescript
      export function isTriageMirrorEnabled(userId: string): boolean {
-       const envEnabled = process.env.TRIAGE_MIRROR_ENABLED === 'true';
+       const envEnabled = process.env.TRIAGE_MIRROR_ENABLED === "true";
        if (!envEnabled) return false;
-       
+
        // Enable for 10% of users (deterministic hash)
        const hash = hashUserId(userId);
        return hash % 100 < 10;
@@ -211,6 +214,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    - [ ] Review user feedback/support tickets
 
 **Success Criteria:**
+
 - Error rate <1%
 - Performance targets met
 - No critical bugs reported
@@ -242,6 +246,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    - [ ] Review user engagement metrics
 
 **Success Criteria:**
+
 - Error rate <1%
 - Performance targets met
 - No critical bugs reported
@@ -274,6 +279,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    - [ ] Document lessons learned
 
 **Success Criteria:**
+
 - Error rate <1%
 - Performance targets met
 - No critical bugs reported
@@ -284,6 +290,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### Immediate Rollback (Critical Issues)
 
 **Trigger Conditions:**
+
 - Error rate >5%
 - Database performance degradation
 - Critical security vulnerability
@@ -292,6 +299,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 **Rollback Steps:**
 
 1. **Disable Feature Flags (Fastest - 30 seconds):**
+
    ```bash
    # In Vercel dashboard, set:
    TRIAGE_MIRROR_ENABLED=false
@@ -299,11 +307,13 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
    INLINE_EDITING_ENABLED=false
    STATELESS_RECALC_ENABLED=false
    ```
+
    - This immediately disables the feature for all users
    - No code deployment required
    - Users see existing daily plan view
 
 2. **Revert Deployment (If needed - 5 minutes):**
+
    ```bash
    # In Vercel dashboard:
    # 1. Go to Deployments
@@ -320,6 +330,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### Partial Rollback (Non-Critical Issues)
 
 **Trigger Conditions:**
+
 - Error rate 2-5%
 - Performance degradation (not critical)
 - User feedback indicates UX issues
@@ -339,6 +350,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### Data Recovery
 
 **No data loss expected** because:
+
 - No schema changes
 - All writes are to existing tables
 - Metadata fields are additive only
@@ -346,10 +358,11 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 **If data issues occur:**
 
 1. **Identify Affected Users:**
+
    ```sql
-   SELECT user_id, COUNT(*) 
-   FROM time_blocks 
-   WHERE metadata ? 'visibility' 
+   SELECT user_id, COUNT(*)
+   FROM time_blocks
+   WHERE metadata ? 'visibility'
    AND updated_at > '2026-03-01'
    GROUP BY user_id;
    ```
@@ -362,7 +375,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 3. **Clean Up Metadata:**
    ```sql
    -- Remove triage metadata fields (if needed)
-   UPDATE time_blocks 
+   UPDATE time_blocks
    SET metadata = metadata - 'visibility' - 'filter_reason' - 'completed_at' - 'completed_by'
    WHERE metadata ? 'visibility';
    ```
@@ -372,6 +385,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### Week 1 Monitoring
 
 **Daily Checks:**
+
 - [ ] Error rate <1%
 - [ ] Performance metrics within targets
 - [ ] User engagement metrics trending up
@@ -380,18 +394,19 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 **Metrics to Track:**
 
-| Metric | Target | Alert Threshold |
-|--------|--------|-----------------|
-| Error Rate | <1% | >2% |
-| Runway Calc Latency (p95) | <100ms | >150ms |
-| Recalc Latency (p95) | <4s | >6s |
-| Triage Activation Rate | 10-30% | <5% or >50% |
-| Completion Tracking Usage | >50% of users | <20% |
-| API Response Time (p95) | <500ms | >1s |
+| Metric                    | Target        | Alert Threshold |
+| ------------------------- | ------------- | --------------- |
+| Error Rate                | <1%           | >2%             |
+| Runway Calc Latency (p95) | <100ms        | >150ms          |
+| Recalc Latency (p95)      | <4s           | >6s             |
+| Triage Activation Rate    | 10-30%        | <5% or >50%     |
+| Completion Tracking Usage | >50% of users | <20%            |
+| API Response Time (p95)   | <500ms        | >1s             |
 
 ### Week 2-4 Monitoring
 
 **Weekly Checks:**
+
 - [ ] Review error trends
 - [ ] Review performance trends
 - [ ] Review user engagement trends
@@ -401,6 +416,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### Long-Term Monitoring
 
 **Monthly Reviews:**
+
 - [ ] Feature adoption rate
 - [ ] User retention impact
 - [ ] Performance optimization opportunities
@@ -412,16 +428,19 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### Internal Communication
 
 **Before Deployment:**
+
 - [ ] Notify engineering team of deployment schedule
 - [ ] Notify support team of new feature and common issues
 - [ ] Notify product team of rollout plan
 
 **During Deployment:**
+
 - [ ] Post updates in #engineering Slack channel
 - [ ] Update status page if issues occur
 - [ ] Notify support team of any known issues
 
 **After Deployment:**
+
 - [ ] Send deployment summary to stakeholders
 - [ ] Share metrics dashboard with product team
 - [ ] Document lessons learned
@@ -429,11 +448,13 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ### User Communication
 
 **Announcement:**
+
 - [ ] In-app announcement banner (optional)
 - [ ] Email to active users (optional)
 - [ ] Blog post or changelog entry
 
 **Support Resources:**
+
 - [ ] Update help documentation
 - [ ] Create FAQ for common questions
 - [ ] Train support team on new feature
@@ -471,6 +492,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 **Support Lead:** [Name]
 
 **Escalation Path:**
+
 1. Engineering Lead (technical issues)
 2. Product Lead (user impact decisions)
 3. CTO (critical rollback decisions)
@@ -483,9 +505,9 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 - [ ] QA sign-off
 - [ ] Documentation complete
 
-**Deployment Approved By:** _____________________ Date: _____
+**Deployment Approved By:** **********\_********** Date: **\_**
 
-**Deployment Executed By:** _____________________ Date: _____
+**Deployment Executed By:** **********\_********** Date: **\_**
 
 ## Appendix
 

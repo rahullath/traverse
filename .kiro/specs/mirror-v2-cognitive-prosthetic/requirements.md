@@ -242,7 +242,7 @@ Mirror V2 transforms the daily plan interface from a judgment-based plan tracker
 
 #### Acceptance Criteria
 
-1. THE Mirror_UI SHALL store the current Display_Mode in browser sessionStorage with key "mirror_display_mode_{date}"
+1. THE Mirror*UI SHALL store the current Display_Mode in browser sessionStorage with key "mirror_display_mode*{date}"
 2. WHEN the user switches Display_Mode, THE Mirror_UI SHALL update sessionStorage
 3. WHEN the user refreshes the page within the same Session, THE Mirror_UI SHALL restore the previous Display_Mode from sessionStorage
 4. WHEN the calendar day changes (midnight in user's timezone), THE Mirror_UI SHALL clear the previous day's sessionStorage entry
@@ -320,13 +320,14 @@ Mirror V2 transforms the daily plan interface from a judgment-based plan tracker
 
 1. THE test suite SHALL include a string matching test that scans all Mirror_UI component files
 2. THE test SHALL fail if any component contains the forbidden terms: "running late", "behind schedule", "missed it", "failed", "should have started"
-3. THE test SHALL scan files matching pattern: src/components/daily-plan/**/*.tsx and src/components/daily-plan/**/*.astro
+3. THE test SHALL scan files matching pattern: src/components/daily-plan/**/\*.tsx and src/components/daily-plan/**/\*.astro
 4. THE test SHALL provide the filename and line number for any detected forbidden terms
 5. THE test SHALL run as part of the standard test suite (npm test)
 
 ## Success Metrics
 
 ### Opt-In Analytics Metrics (Only When User Enables)
+
 - Daily app opens (engagement) - requires enable_usage_analytics
 - Anchor views before anchor time (planning ahead) - requires enable_usage_analytics
 - Inferred anchor attendance (app opens after anchor) - requires enable_usage_analytics
@@ -337,16 +338,19 @@ Mirror V2 transforms the daily plan interface from a judgment-based plan tracker
 - Time estimates vs actuals - requires enable_usage_analytics AND show_completion_controls
 
 ### Non-Tracking Success Indicators
+
 - User retention (continued account activity)
 - Feature flag adoption rates (A/B testing participation)
 - Support ticket trends (reduced confusion/stress reports)
 
 ### Qualitative Metrics
+
 - "Did this help today?" responses
 - Support request reduction
 - Continued daily use without burnout
 
 ### Anti-Metrics (What We Do NOT Measure)
+
 - On-time percentage (judgment-based)
 - Adherence to schedule (productivity trap)
 - Failure counts (harmful)
@@ -359,6 +363,7 @@ Mirror V2 transforms the daily plan interface from a judgment-based plan tracker
 The following Supabase tables and columns are required for telemetry support:
 
 **New table: `mirror_telemetry_events`**
+
 ```sql
 CREATE TABLE mirror_telemetry_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -374,8 +379,9 @@ CREATE INDEX idx_mirror_telemetry_event_type ON mirror_telemetry_events(event_ty
 ```
 
 **Update to `user_preferences` table:**
+
 ```sql
-ALTER TABLE user_preferences 
+ALTER TABLE user_preferences
 ADD COLUMN IF NOT EXISTS show_completion_controls BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS show_recovery_blocks BOOLEAN DEFAULT TRUE,
 ADD COLUMN IF NOT EXISTS keystone_activity TEXT,

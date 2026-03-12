@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { createServerClient } from "../../../lib/supabase/server";
 import { createPlanBuilderService } from "../../../lib/daily-plan/plan-builder";
-import { AnchorService } from "../../../lib/anchors/anchor-service";
 import {
   deleteDailyPlan,
   deleteExitTimesByPlan,
@@ -151,6 +150,37 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const anchorType = allowedAnchorTypes.includes(anchorTypeRaw)
         ? anchorTypeRaw
         : "other";
+      const maxLateMinutesRaw =
+        typeof manualAnchor.max_late_minutes === "number"
+          ? manualAnchor.max_late_minutes
+          : typeof manualAnchor.max_late_minutes === "string"
+            ? Number(manualAnchor.max_late_minutes)
+            : 0;
+      const maxLateMinutes = Number.isFinite(maxLateMinutesRaw)
+        ? Math.min(240, Math.max(0, Math.round(maxLateMinutesRaw)))
+        : 0;
+      const locationLabel =
+        typeof manualAnchor.location_label === "string"
+          ? manualAnchor.location_label.trim()
+          : typeof manualAnchor.location === "string"
+            ? manualAnchor.location.trim()
+            : "";
+      const locationTravelMinutesRaw =
+        typeof manualAnchor.location_travel_minutes === "number"
+          ? manualAnchor.location_travel_minutes
+          : typeof manualAnchor.location_travel_minutes === "string"
+            ? Number(manualAnchor.location_travel_minutes)
+            : null;
+      const locationTravelMinutes =
+        locationTravelMinutesRaw === null || !Number.isFinite(locationTravelMinutesRaw)
+          ? null
+          : Math.min(480, Math.max(0, Math.round(locationTravelMinutesRaw)));
+      const departureSlots = Array.isArray(manualAnchor.departure_slots)
+        ? manualAnchor.departure_slots
+            .filter((slot) => typeof slot === "string")
+            .map((slot) => (slot as string).trim())
+            .filter((slot) => /^([01]\d|2[0-3]):[0-5]\d$/.test(slot))
+        : [];
 
       return {
         title,
@@ -164,32 +194,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         must_attend: manualAnchor.must_attend !== false,
         notes:
           typeof manualAnchor.notes === "string" ? manualAnchor.notes : null,
+        location_label: locationLabel || null,
+        max_late_minutes: maxLateMinutes,
+        location_travel_minutes: locationTravelMinutes,
+        departure_slots: departureSlots,
       };
     };
 
     const parsedManualAnchor = parseManualAnchor(body.manualAnchor);
-
-    // Force manual anchor when no calendar/manual anchors are available.
-    const anchorService = new AnchorService();
-    const existingAnchors = await anchorService.getAnchorsForDate(
-      date,
-      user.id,
-      supabase,
-    );
-    if (existingAnchors.length === 0 && !parsedManualAnchor) {
-      return new Response(
-        JSON.stringify({
-          error: "Manual anchor required",
-          error_code: "MANUAL_ANCHOR_REQUIRED",
-          details:
-            "No anchors found for this day. Add a manual anchor to generate your plan.",
-        }),
-        {
-          status: 422,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
 
     // Replace existing plan for the same user/day (idempotent regenerate behavior).
     const existingPlan = await getDailyPlanByDateWithBlocks(
@@ -222,16 +234,66 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
 
       if (!existingManualAnchor) {
-        const { error: manualAnchorError } = await supabase
+        const manualAnchorInsertPayload = {
+          user_id: user.id,
+          anchor_date: anchorDate,
+          ...parsedManualAnchor,
+        } as any;
+
+        let { error: manualAnchorError } = await supabase
           .from("manual_anchors")
-          .insert({
-            user_id: user.id,
-            anchor_date: anchorDate,
-            ...parsedManualAnchor,
-          } as any);
+          .insert(manualAnchorInsertPayload);
+
+        if (
+          manualAnchorError &&
+          (manualAnchorError.message.includes("location_label") ||
+            manualAnchorError.message.includes("max_late_minutes"))
+        ) {
+          const { location_label, max_late_minutes, ...legacyPayload } =
+            manualAnchorInsertPayload;
+          const retry = await supabase.from("manual_anchors").insert(legacyPayload);
+          manualAnchorError = retry.error;
+        }
 
         if (manualAnchorError) {
           throw manualAnchorError;
+        }
+      }
+
+      if (
+        parsedManualAnchor.location_label &&
+        parsedManualAnchor.location_travel_minutes !== null
+      ) {
+        const normalizedLabel = parsedManualAnchor.location_label
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, " ");
+
+        if (normalizedLabel) {
+          const { error: profileError } = await supabase
+            .from("location_travel_profiles")
+            .upsert(
+              {
+                user_id: user.id,
+                label: parsedManualAnchor.location_label,
+                normalized_label: normalizedLabel,
+                travel_minutes: parsedManualAnchor.location_travel_minutes,
+                departure_slots: parsedManualAnchor.departure_slots || [],
+                strict_by_default:
+                  Math.max(0, Number(parsedManualAnchor.max_late_minutes || 0)) ===
+                  0,
+                active: true,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "user_id,normalized_label" },
+            );
+
+          if (profileError && profileError.code !== "42P01") {
+            console.warn(
+              "Failed to upsert location travel profile from manual anchor:",
+              profileError.message,
+            );
+          }
         }
       }
     }

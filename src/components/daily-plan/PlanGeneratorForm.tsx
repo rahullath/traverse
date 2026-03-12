@@ -11,6 +11,10 @@ interface PlanGeneratorFormProps {
       startTime: string;
       durationMinutes: number;
       location?: string;
+      locationLabel?: string;
+      maxLateMinutes?: number;
+      locationTravelMinutes?: number;
+      departureSlots?: string[];
       anchorType: "class" | "seminar" | "workshop" | "appointment" | "other";
       mustAttend: boolean;
       notes?: string;
@@ -60,6 +64,13 @@ export default function PlanGeneratorForm({
   const [manualAnchorStartTime, setManualAnchorStartTime] = useState("10:00");
   const [manualAnchorDuration, setManualAnchorDuration] = useState(60);
   const [manualAnchorLocation, setManualAnchorLocation] = useState("");
+  const [manualAnchorLocationLabel, setManualAnchorLocationLabel] =
+    useState("");
+  const [manualAnchorMaxLateMinutes, setManualAnchorMaxLateMinutes] =
+    useState(0);
+  const [manualAnchorTravelMinutes, setManualAnchorTravelMinutes] = useState(20);
+  const [manualAnchorDepartureSlots, setManualAnchorDepartureSlots] =
+    useState("");
   const [manualAnchorType, setManualAnchorType] = useState<
     "class" | "seminar" | "workshop" | "appointment" | "other"
   >("other");
@@ -98,6 +109,10 @@ export default function PlanGeneratorForm({
         startTime: string;
         durationMinutes: number;
         location?: string;
+        locationLabel?: string;
+        maxLateMinutes?: number;
+        locationTravelMinutes?: number;
+        departureSlots?: string[];
         anchorType: "class" | "seminar" | "workshop" | "appointment" | "other";
         mustAttend: boolean;
         notes?: string;
@@ -110,6 +125,16 @@ export default function PlanGeneratorForm({
         startTime: manualAnchorStartTime,
         durationMinutes: Math.max(15, manualAnchorDuration),
         location: manualAnchorLocation.trim() || undefined,
+        locationLabel:
+          manualAnchorLocationLabel.trim() ||
+          manualAnchorLocation.trim() ||
+          undefined,
+        maxLateMinutes: Math.max(0, Math.round(manualAnchorMaxLateMinutes)),
+        locationTravelMinutes: Math.max(0, Math.round(manualAnchorTravelMinutes)),
+        departureSlots: manualAnchorDepartureSlots
+          .split(",")
+          .map((slot) => slot.trim())
+          .filter((slot) => /^([01]\d|2[0-3]):[0-5]\d$/.test(slot)),
         anchorType: manualAnchorType,
         mustAttend: manualAnchorMustAttend,
         notes: manualAnchorNotes.trim() || undefined,
@@ -245,8 +270,8 @@ export default function PlanGeneratorForm({
 
           {manualAnchorRequired && (
             <p className="text-xs text-accent-warning">
-              A manual anchor is required because no calendar anchors were found
-              for this day.
+              No calendar anchors found. You can still generate a free
+              activation day, or add one anchor for leave-by guidance.
             </p>
           )}
 
@@ -349,10 +374,30 @@ export default function PlanGeneratorForm({
 
               <div className="sm:col-span-2">
                 <label
+                  htmlFor="manual-anchor-location-label"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Location label (used for reusable travel profile)
+                </label>
+                <input
+                  id="manual-anchor-location-label"
+                  type="text"
+                  value={manualAnchorLocationLabel}
+                  onChange={(e) =>
+                    setManualAnchorLocationLabel(e.target.value)
+                  }
+                  placeholder="University, Workplace, Home, etc."
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary"
+                  disabled={isGenerating}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label
                   htmlFor="manual-anchor-location"
                   className="block text-xs text-text-muted mb-1"
                 >
-                  Location (optional)
+                  Location details (optional)
                 </label>
                 <input
                   id="manual-anchor-location"
@@ -360,6 +405,68 @@ export default function PlanGeneratorForm({
                   value={manualAnchorLocation}
                   onChange={(e) => setManualAnchorLocation(e.target.value)}
                   placeholder="Home, Library, Campus Room, etc."
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary"
+                  disabled={isGenerating}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="manual-anchor-max-late"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Max acceptable late minutes
+                </label>
+                <input
+                  id="manual-anchor-max-late"
+                  type="number"
+                  min={0}
+                  max={240}
+                  step={5}
+                  value={manualAnchorMaxLateMinutes}
+                  onChange={(e) =>
+                    setManualAnchorMaxLateMinutes(Number(e.target.value) || 0)
+                  }
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary"
+                  disabled={isGenerating}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="manual-anchor-travel-minutes"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Travel minutes to this label
+                </label>
+                <input
+                  id="manual-anchor-travel-minutes"
+                  type="number"
+                  min={0}
+                  max={480}
+                  step={1}
+                  value={manualAnchorTravelMinutes}
+                  onChange={(e) =>
+                    setManualAnchorTravelMinutes(Number(e.target.value) || 0)
+                  }
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary"
+                  disabled={isGenerating}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor="manual-anchor-departure-slots"
+                  className="block text-xs text-text-muted mb-1"
+                >
+                  Departure slots (optional, comma-separated HH:MM)
+                </label>
+                <input
+                  id="manual-anchor-departure-slots"
+                  type="text"
+                  value={manualAnchorDepartureSlots}
+                  onChange={(e) => setManualAnchorDepartureSlots(e.target.value)}
+                  placeholder="12:27, 12:47"
                   className="w-full px-3 py-2 border border-border rounded-lg bg-surface text-text-primary"
                   disabled={isGenerating}
                 />

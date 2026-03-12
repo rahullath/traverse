@@ -74,9 +74,11 @@ export class AnchorService {
               end: new Date(row.end_time),
               title: row.title,
               location: row.location || undefined,
+              location_label: row.location_label || row.location || undefined,
               type: (row.anchor_type || "other") as AnchorType,
               must_attend: Boolean(row.must_attend),
               calendar_event_id: `manual-${row.id}`,
+              max_late_minutes: Math.max(0, Number(row.max_late_minutes || 0)),
             }),
           );
         } else if (manualError && manualError.code !== "42P01") {
@@ -133,9 +135,11 @@ export class AnchorService {
       end: new Date(event.end_time),
       title: event.title,
       location: event.location,
+      location_label: event.location || undefined,
       type,
       must_attend,
       calendar_event_id: event.id,
+      max_late_minutes: 0,
     };
   }
 

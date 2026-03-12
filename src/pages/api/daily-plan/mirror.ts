@@ -6,6 +6,10 @@ import { TriageService } from "../../../lib/triage/triage-service";
 import { StateFilterService } from "../../../lib/triage/state-filter";
 import type { MirrorData, StateDeclaration } from "../../../types/triage";
 import { handleApiError, logError } from "../../../lib/triage/error-handler";
+import {
+  attachTimingSignalsToTimeBlocks,
+  buildTimingSignalArray,
+} from "../../../lib/daily-plan/time-signals";
 
 /**
  * GET /api/daily-plan/mirror
@@ -16,7 +20,7 @@ import { handleApiError, logError } from "../../../lib/triage/error-handler";
  */
 export const GET: APIRoute = async ({ cookies }) => {
   let userId: string | undefined;
-  
+
   try {
     // Authenticate user
     const serverAuth = new ServerAuth(cookies);
@@ -48,6 +52,9 @@ export const GET: APIRoute = async ({ cookies }) => {
       );
     }
 
+    const enrichedBlocks = attachTimingSignalsToTimeBlocks(plan.timeBlocks);
+    const timingSignals = buildTimingSignalArray(enrichedBlocks);
+
     // Initialize services
     const timePhysicsService = new TimePhysicsService();
     const triageService = new TriageService();
@@ -56,12 +63,12 @@ export const GET: APIRoute = async ({ cookies }) => {
     // Calculate runway
     const currentTime = new Date();
     const runway = timePhysicsService.calculateRunway(
-      plan.timeBlocks,
+      enrichedBlocks,
       currentTime,
     );
 
     // Get triage state
-    const triageState = triageService.getTriageState(plan.timeBlocks, runway);
+    const triageState = triageService.getTriageState(enrichedBlocks, runway);
 
     // Get last state declaration from user preferences
     const { data: prefsData } = await serverAuth.supabase
@@ -84,13 +91,14 @@ export const GET: APIRoute = async ({ cookies }) => {
     // Check if state prompt should show
     const showStatePrompt = stateFilterService.shouldShowStatePrompt(
       lastStateDeclaration,
-      plan.timeBlocks,
+      enrichedBlocks,
       currentTime,
     );
 
     // Build mirror data payload
     const mirrorData: MirrorData = {
-      time_blocks: plan.timeBlocks,
+      time_blocks: enrichedBlocks,
+      timing_signals: timingSignals,
       runway,
       triage_state: triageState,
       show_state_prompt: showStatePrompt,

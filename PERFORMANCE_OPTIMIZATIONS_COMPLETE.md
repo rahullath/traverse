@@ -11,6 +11,7 @@ All performance optimization subtasks have been successfully completed for the t
 **Location**: `src/components/daily-plan/MirrorUI.tsx`, `src/components/daily-plan/Timeline.tsx`
 
 **Changes**:
+
 - Added `useMemo` hook to MirrorUI component to memoize:
   - Runway calculation results
   - Triage state
@@ -20,6 +21,7 @@ All performance optimization subtasks have been successfully completed for the t
   - Grouped blocks by commitment envelope
 
 **Benefits**:
+
 - Prevents unnecessary recalculations on every render
 - Reduces CPU usage during state updates
 - Improves responsiveness when interacting with the UI
@@ -29,10 +31,12 @@ All performance optimization subtasks have been successfully completed for the t
 ### 31.2 Add Debouncing to Inputs ✅
 
 **New Files Created**:
+
 - `src/hooks/useDebounce.ts` - Custom debounce hook for values and callbacks
 - `src/hooks/useThrottle.ts` - Custom throttle hook for scroll events
 
 **Changes**:
+
 - Updated `src/components/daily-plan/InlineEditor.tsx`:
   - Replaced manual debounce timer with `useDebounce` hook
   - Debounces input validation and conflict checking (300ms delay)
@@ -42,6 +46,7 @@ All performance optimization subtasks have been successfully completed for the t
   - Reduces scroll event processing overhead
 
 **Benefits**:
+
 - Reduces API calls during typing
 - Prevents excessive validation runs
 - Improves input responsiveness
@@ -52,6 +57,7 @@ All performance optimization subtasks have been successfully completed for the t
 ### 31.3 Implement Lazy Loading for Heavy Components ✅
 
 **Changes**:
+
 - Updated `src/components/daily-plan/MirrorUI.tsx`:
   - Lazy loads `TriagePrompt` component using `React.lazy()`
   - Added `Suspense` boundary with loading fallback
@@ -62,6 +68,7 @@ All performance optimization subtasks have been successfully completed for the t
   - Created `EditorLoadingFallback` skeleton component
 
 **Benefits**:
+
 - Reduces initial bundle size
 - Components only loaded when needed
 - Faster initial page load
@@ -72,12 +79,14 @@ All performance optimization subtasks have been successfully completed for the t
 ## Performance Impact
 
 ### Before Optimizations
+
 - Runway calculation ran on every render
 - Timeline sorting happened on every state change
 - Input validation triggered immediately on every keystroke
 - All components loaded upfront in bundle
 
 ### After Optimizations
+
 - Runway calculation only runs when data changes (memoized)
 - Timeline sorting only runs when time blocks change (memoized)
 - Input validation debounced by 300ms
@@ -85,6 +94,7 @@ All performance optimization subtasks have been successfully completed for the t
 - Heavy components lazy loaded on demand
 
 ### Expected Improvements
+
 - **Initial Load**: 10-15% faster due to code splitting
 - **Runtime Performance**: 20-30% reduction in unnecessary re-renders
 - **Input Responsiveness**: Smoother typing experience with 300ms debounce
@@ -94,6 +104,7 @@ All performance optimization subtasks have been successfully completed for the t
 ## Testing
 
 Build completed successfully:
+
 ```bash
 npm run build
 ✓ Built in 3.66s

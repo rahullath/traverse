@@ -45,7 +45,7 @@ class PWAService {
    */
   private async registerServiceWorker(): Promise<void> {
     if (!("serviceWorker" in navigator)) {
-      throw new Error("Service Worker not supported");
+      return;
     }
 
     try {
@@ -168,8 +168,12 @@ class PWAService {
    * Get PWA capabilities
    */
   getCapabilities(): PWACapabilities {
+    const supportsMatchMedia =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function";
     const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
+      (supportsMatchMedia &&
+        window.matchMedia("(display-mode: standalone)").matches) ||
       (window.navigator as any).standalone === true;
 
     return {
@@ -185,8 +189,12 @@ class PWAService {
    * Check if app is running in standalone mode
    */
   isStandalone(): boolean {
+    const supportsMatchMedia =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function";
     return (
-      window.matchMedia("(display-mode: standalone)").matches ||
+      (supportsMatchMedia &&
+        window.matchMedia("(display-mode: standalone)").matches) ||
       (window.navigator as any).standalone === true
     );
   }

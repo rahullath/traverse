@@ -1,0 +1,82 @@
+## Mirror/Daily Plan Recovery v2: Timing + Travel + Mobile/PWA + Onboarding Presets
+
+### Summary
+Fix the core drift by keeping one contract (`time_blocks` metadata), restoring explicit timing guidance (`Start by`, `Leave by`, `Anchor at`), and introducing reusable location travel profiles with strict-by-default lateness.  
+Also add a concrete mobile/PWA reliability layer and a **progressive onboarding preset system** that asks high-signal, expectation-defining questions instead of vague setup.
+
+### Key Implementation Changes
+- **Contract + timing clarity**
+- Keep both Daily Plan and Mirror synced from persisted `time_blocks` envelope metadata.
+- Remove synthetic chain reconstruction and ambiguous “Complete by” display.
+- Compute and render three explicit signals per active anchor envelope: `suggested_start_by`, `ready_to_leave_by`, `anchor_at`.
+- Ensure deadline math never uses travel-back/anchor-end for prep completion logic.
+
+- **Travel + lateness model (minimal context, no maps)**
+- Add user-scoped `location_travel_profiles` table with label-based rules.
+- Profile supports fixed total travel and optional manual departure slots.
+- Strict default for all anchors; per-anchor `max_late_minutes` override.
+- Suppress travel blocks for Home/same-location anchors.
+- Reality-check/runway uses effective deadline (`anchor_start + max_late_minutes`).
+
+- **Start-time control that actually reprojects**
+- Keep quick adjust (`now`, `in 10`, `custom`, `when ready`) with suggested default.
+- Apply selection to projected chain feasibility, not just local UI state.
+- Show explicit outcomes: on track, likely late by X, next feasible departure slot.
+
+- **Mobile optimization (explicit)**
+- Mobile-first layout for timeline/chain cards: content first, controls second, no horizontal squeeze.
+- Single compact sticky context bar on mobile (remove stacked sticky layers).
+- Touch target minimums, compressed typography scale, spacing tokens for small screens.
+- Reduce render churn on mobile by removing unnecessary periodic full refetch loops.
+
+- **PWA resilience scope**
+- Implement installable app shell (manifest + SW + install prompt UX).
+- Add resilient online behavior: request retry, idempotent actions, transient-failure queue for completion/skip/edit/delete while online is flaky.
+- Add explicit offline/poor-network state UI; no full offline editing in this phase.
+
+- **Remove unstable legacy surface**
+- Remove Degrade Plan controls from active UI now.
+- Keep mirror wrapped in error boundary by default.
+- Keep delete plan/anchor flows but harden empty/error state recovery.
+
+### Onboarding Presets Plan (Progressive 2-Phase)
+- **Phase 1 (mandatory before first plan)**
+- Ask: “What do you need this app to solve first?” (activation, leaving on time, panic reduction, sleep regularity).
+- Ask: keystone activity and rough activation chain duration target.
+- Ask: wake window, sleep window, and minimum sleep target.
+- Ask: first location travel profile (label + travel total + optional departure slots).
+- Ask: default response when infeasible (show alternatives vs strict skip guidance).
+- Generate first plan immediately after Phase 1.
+
+- **Phase 2 (after first successful day / first 1–2 sessions)**
+- Ask: common anchor categories and acceptable lateness defaults (still strict baseline).
+- Ask: routine step order confidence (fixed order vs flexible cluster).
+- Ask: exit-gate essentials.
+- Ask: what “success today” means (binary attendance, partial attendance, or activation-only day).
+- Ask: preferred prompt intensity (minimal, balanced, explicit).
+
+- **Preset question design rule**
+- Every onboarding question must map to one concrete behavior knob in planner/mirror.
+- No descriptive-only questions without downstream logic use.
+
+### Public Interfaces / Data Additions
+- Add `location_travel_profiles` persistence and CRUD APIs.
+- Extend anchor payloads with per-anchor late override (`max_late_minutes`).
+- Extend plan/mirror response shape with explicit timing fields (`suggested_start_by`, `ready_to_leave_by`, `anchor_at`, `effective_arrival_deadline`).
+- Add onboarding preset API surface to persist phase answers and derived defaults.
+
+### Test Plan
+- Verify timing labels are correct and never regress to travel-back/anchor-end semantics.
+- Verify Home/same-location anchors produce no travel blocks.
+- Verify slot-based departure selection and strict/late-override outcomes.
+- Verify both surfaces render identical chain grouping from same `time_blocks`.
+- Verify mobile breakpoints: stacking, sticky behavior, touch targets, readability.
+- Verify PWA install flow, cache shell, retry behavior, and network-failure UX.
+- Verify onboarding question-to-behavior mapping with integration tests for phase 1 and phase 2.
+
+### Assumptions and Defaults
+- Strict-by-default (`max_late_minutes = 0`) unless per-anchor override.
+- No maps/geocoding required; location labels are user-defined and reusable.
+- PWA phase is resilient-online, not full offline editing.
+- Keep both surfaces, but one data contract only.
+

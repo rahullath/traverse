@@ -49,10 +49,13 @@ export class AnalyticsService {
    */
   trackMetric(metric: PerformanceMetric): void {
     this.metrics.push(metric);
-    
+
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Metric] ${metric.name}: ${metric.value}ms`, metric.metadata);
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `[Metric] ${metric.name}: ${metric.value}ms`,
+        metric.metadata,
+      );
     }
 
     // In production, send to analytics service (e.g., PostHog, Mixpanel)
@@ -64,8 +67,8 @@ export class AnalyticsService {
    */
   trackEvent(event: EngagementEvent): void {
     this.events.push(event);
-    
-    if (process.env.NODE_ENV === 'development') {
+
+    if (process.env.NODE_ENV === "development") {
       console.log(`[Event] ${event.event}`, event.properties);
     }
 
@@ -78,7 +81,7 @@ export class AnalyticsService {
    */
   trackError(error: ErrorEvent): void {
     this.errors.push(error);
-    
+
     console.error(`[Error] ${error.endpoint}: ${error.error}`, error.metadata);
 
     // In production, send to error tracking service (e.g., Sentry)
@@ -122,15 +125,14 @@ export class AnalyticsService {
     const now = Date.now();
     const recentErrors = this.errors.filter(
       (e) =>
-        e.endpoint === endpoint &&
-        now - e.timestamp.getTime() < timeWindowMs
+        e.endpoint === endpoint && now - e.timestamp.getTime() < timeWindowMs,
     );
 
     const totalRequests = this.events.filter(
       (e) =>
-        e.event === 'api_request' &&
+        e.event === "api_request" &&
         e.properties?.endpoint === endpoint &&
-        now - e.timestamp.getTime() < timeWindowMs
+        now - e.timestamp.getTime() < timeWindowMs,
     ).length;
 
     if (totalRequests === 0) return 0;
@@ -169,7 +171,7 @@ export class PerformanceTimer {
    */
   end(): number {
     const duration = performance.now() - this.startTime;
-    
+
     AnalyticsService.getInstance().trackMetric({
       name: this.name,
       value: duration,
@@ -189,11 +191,11 @@ export function trackApiRequest(
   endpoint: string,
   method: string,
   userId?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
 ): void {
   AnalyticsService.getInstance().trackEvent({
-    event: 'api_request',
-    userId: userId || 'anonymous',
+    event: "api_request",
+    userId: userId || "anonymous",
     timestamp: new Date(),
     properties: {
       endpoint,
@@ -211,7 +213,7 @@ export function trackApiError(
   error: string,
   statusCode: number,
   userId?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, any>,
 ): void {
   AnalyticsService.getInstance().trackError({
     endpoint,

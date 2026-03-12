@@ -15,6 +15,12 @@ const preferences = await serverAuth.getUserPreferences(user.id);
 const enabledModules = Array.isArray(preferences?.enabled_modules) ? preferences.enabled_modules : ['daily-plan', 'habits', 'calendar'];
 const theme = typeof preferences?.theme === 'string' ? preferences.theme : 'dark';
 const recalcOnOpen = typeof preferences?.recalc_on_open === 'boolean' ? preferences.recalc_on_open : false;
+
+// Mirror V2 preferences (Req 4.5, 14.4, 14.5, 21.4)
+const showCompletionControls = typeof preferences?.show_completion_controls === 'boolean' ? preferences.show_completion_controls : false;
+const showRecoveryBlocks = typeof preferences?.show_recovery_blocks === 'boolean' ? preferences.show_recovery_blocks : true;
+const keystoneActivity = typeof preferences?.keystone_activity === 'string' ? preferences.keystone_activity : '';
+const enableUsageAnalytics = typeof preferences?.enable_usage_analytics === 'boolean' ? preferences.enable_usage_analytics : false;
 ---
 
 <DashboardLayout title="Settings - MeshOS" user={user}>
@@ -61,6 +67,90 @@ const recalcOnOpen = typeof preferences?.recalc_on_open === 'boolean' ? preferen
           </div>
         </label>
         <button type="submit" class="px-4 py-2 rounded-lg border border-border text-text-secondary text-sm font-medium hover:text-text-primary hover:bg-surface-hover transition-colors">Save daily plan settings</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 class="text-lg font-semibold text-text-primary mb-2">Mirror V2 - Display Preferences</h2>
+      <p class="text-sm text-text-secondary mb-4">
+        Control how your Mirror view displays information. These settings help you customize the interface to your needs.
+      </p>
+      <form id="mirror-v2-form" class="space-y-4">
+        <label class="inline-flex items-center gap-3 rounded-lg border border-border bg-surface-hover/50 px-4 py-3 cursor-pointer">
+          <input 
+            type="checkbox" 
+            id="show-completion-controls" 
+            name="show_completion_controls" 
+            checked={showCompletionControls}
+            class="rounded"
+          />
+          <div class="flex-1">
+            <span class="text-text-primary font-medium block">Track step completion</span>
+            <span class="text-sm text-text-secondary">Show checkboxes to mark activities as complete. When disabled, the timeline serves as visual scaffolding only.</span>
+          </div>
+        </label>
+
+        <label class="inline-flex items-center gap-3 rounded-lg border border-border bg-surface-hover/50 px-4 py-3 cursor-pointer">
+          <input 
+            type="checkbox" 
+            id="show-recovery-blocks" 
+            name="show_recovery_blocks" 
+            checked={showRecoveryBlocks}
+            class="rounded"
+          />
+          <div class="flex-1">
+            <span class="text-text-primary font-medium block">Show recovery time</span>
+            <span class="text-sm text-text-secondary">Display rest periods after anchors in your timeline</span>
+          </div>
+        </label>
+
+        <div class="rounded-lg border border-border bg-surface-hover/50 px-4 py-3">
+          <label for="keystone-activity" class="block text-text-primary font-medium mb-2">
+            Keystone activity
+          </label>
+          <input 
+            type="text" 
+            id="keystone-activity" 
+            name="keystone_activity" 
+            value={keystoneActivity}
+            placeholder="e.g., Shower, Take meds"
+            maxlength="100"
+            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-text-primary"
+          />
+          <p class="text-sm text-text-secondary mt-2">
+            The one activity that unlocks your day. Used for quick access shortcuts.
+          </p>
+        </div>
+
+        <button type="submit" class="px-4 py-2 rounded-lg border border-border text-text-secondary text-sm font-medium hover:text-text-primary hover:bg-surface-hover transition-colors">Save Mirror preferences</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 class="text-lg font-semibold text-text-primary mb-2">Privacy - Usage Analytics</h2>
+      <div class="rounded-lg border border-accent-primary/30 bg-accent-primary/5 px-4 py-3 mb-4">
+        <p class="text-sm text-text-primary font-medium mb-2">Analytics are OFF by default</p>
+        <p class="text-sm text-text-secondary">
+          We don't track your usage by default. If you'd like to help us improve the app, you can optionally enable anonymous usage analytics. This is completely optional and the app works perfectly without it.
+        </p>
+      </div>
+      <form id="analytics-form" class="space-y-4">
+        <label class="inline-flex items-center gap-3 rounded-lg border border-border bg-surface-hover/50 px-4 py-3 cursor-pointer">
+          <input 
+            type="checkbox" 
+            id="enable-usage-analytics" 
+            name="enable_usage_analytics" 
+            checked={enableUsageAnalytics}
+            class="rounded"
+          />
+          <div class="flex-1">
+            <span class="text-text-primary font-medium block">Enable usage analytics</span>
+            <span class="text-sm text-text-secondary">
+              Help improve the app by sharing anonymous usage data (app opens, feature usage, display mode switches). No personal information is collected.
+            </span>
+          </div>
+        </label>
+        <button type="submit" class="px-4 py-2 rounded-lg border border-border text-text-secondary text-sm font-medium hover:text-text-primary hover:bg-surface-hover transition-colors">Save privacy settings</button>
       </form>
     </section>
 
@@ -167,6 +257,44 @@ const recalcOnOpen = typeof preferences?.recalc_on_open === 'boolean' ? preferen
 
     const result = await response.json();
     showMessage(response.ok ? 'Daily plan settings saved' : (result?.error || 'Save failed'), !response.ok);
+  });
+
+  // Mirror V2 preferences form handler (Req 4.5, 14.4, 14.5, 21.4)
+  document.getElementById('mirror-v2-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const showCompletionControls = document.getElementById('show-completion-controls')?.checked || false;
+    const showRecoveryBlocks = document.getElementById('show-recovery-blocks')?.checked || false;
+    const keystoneActivity = document.getElementById('keystone-activity')?.value?.trim() || null;
+
+    const response = await fetch('/api/auth/preferences', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        show_completion_controls: showCompletionControls,
+        show_recovery_blocks: showRecoveryBlocks,
+        keystone_activity: keystoneActivity
+      }),
+    });
+
+    const result = await response.json();
+    showMessage(response.ok ? 'Mirror preferences saved' : (result?.error || 'Save failed'), !response.ok);
+  });
+
+  // Analytics preferences form handler (Req 14.4, 14.5)
+  document.getElementById('analytics-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const enableUsageAnalytics = document.getElementById('enable-usage-analytics')?.checked || false;
+
+    const response = await fetch('/api/auth/preferences', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enable_usage_analytics: enableUsageAnalytics }),
+    });
+
+    const result = await response.json();
+    showMessage(response.ok ? 'Privacy settings saved' : (result?.error || 'Save failed'), !response.ok);
   });
 
   const DEFAULT_EXIT_GATE_CONDITIONS = [

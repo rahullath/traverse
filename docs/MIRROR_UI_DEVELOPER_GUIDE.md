@@ -52,7 +52,6 @@ Existing V2 Components (reused)
 4. **Triage**: Client → Triage API → TriageService → Session State → Client
 5. **Completion**: Client → Complete API → Database → Client
 
-
 ## API Endpoints
 
 ### GET /api/daily-plan/mirror
@@ -62,6 +61,7 @@ Loads mirror data including plan, runway calculation, triage state, and state pr
 **Authentication**: Required (serverAuth.requireAuth())
 
 **Response**:
+
 ```typescript
 {
   plan: DailyPlan;
@@ -74,20 +74,21 @@ Loads mirror data including plan, runway calculation, triage state, and state pr
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/daily-plan/mirror');
+const response = await fetch("/api/daily-plan/mirror");
 const data = await response.json();
-console.log('Runway:', data.runway.runway, 'minutes');
-console.log('Triage active:', data.triageState.active);
+console.log("Runway:", data.runway.runway, "minutes");
+console.log("Triage active:", data.triageState.active);
 ```
 
 **Error Codes**:
+
 - `401`: Not authenticated
 - `404`: No plan exists for today
 - `500`: Server error
 
 **Implementation**: `src/pages/api/daily-plan/mirror.ts`
-
 
 ### POST /api/daily-plan/recalculate
 
@@ -98,6 +99,7 @@ Regenerates the daily plan from current time using existing plan generation logi
 **Request Body**: None (uses current time as wake time)
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -108,29 +110,31 @@ Regenerates the daily plan from current time using existing plan generation logi
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/daily-plan/recalculate', {
-  method: 'POST',
+const response = await fetch("/api/daily-plan/recalculate", {
+  method: "POST",
 });
 const data = await response.json();
-console.log('New plan generated:', data.plan.id);
+console.log("New plan generated:", data.plan.id);
 ```
 
 **Timeout**: 4 seconds (returns 408 if exceeded)
 
 **Error Codes**:
+
 - `401`: Not authenticated
 - `408`: Timeout (plan generation took too long)
 - `500`: Server error
 
 **Behavior**:
+
 - Replaces existing daily_plan record for today
 - Preserves completed blocks (matched by start_time)
 - Uses user's stored sleep_time and energy_state
 - Calls PlanBuilder.generateDailyPlan() with current time as wakeTime
 
 **Implementation**: `src/pages/api/daily-plan/recalculate.ts`
-
 
 ### POST /api/daily-plan/state
 
@@ -139,6 +143,7 @@ Applies state filter to timeline based on user's declared state.
 **Authentication**: Required
 
 **Request Body**:
+
 ```typescript
 {
   state: "starting_day" | "ready_for_anchor" | "mid_chain" | "at_anchor" | "missed_it" | "just_checking";
@@ -147,6 +152,7 @@ Applies state filter to timeline based on user's declared state.
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -158,24 +164,27 @@ Applies state filter to timeline based on user's declared state.
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/daily-plan/state', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ state: 'ready_for_anchor' }),
+const response = await fetch("/api/daily-plan/state", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ state: "ready_for_anchor" }),
 });
 const data = await response.json();
-console.log('Visible blocks:', data.visible_blocks.length);
-console.log('Triage triggered:', data.triage_triggered);
+console.log("Visible blocks:", data.visible_blocks.length);
+console.log("Triage triggered:", data.triage_triggered);
 ```
 
 **Error Codes**:
+
 - `400`: Invalid state or missing selected_step_id for mid_chain
 - `401`: Not authenticated
 - `404`: No plan exists for today
 - `500`: Server error
 
 **State Behaviors**:
+
 - `starting_day`: Shows full chain from current time, marks all as pending
 - `ready_for_anchor`: Hides activation chain, shows departure + anchor + recovery
 - `mid_chain`: Marks prior steps complete, shows from selected step
@@ -185,7 +194,6 @@ console.log('Triage triggered:', data.triage_triggered);
 
 **Implementation**: `src/pages/api/daily-plan/state.ts`
 
-
 ### POST /api/daily-plan/triage
 
 Applies triage decision to timeline (session-only, not persisted).
@@ -193,6 +201,7 @@ Applies triage decision to timeline (session-only, not persisted).
 **Authentication**: Required
 
 **Request Body**:
+
 ```typescript
 {
   mode: "protect_keystone" | "skip_anchor" | "recalculate";
@@ -201,6 +210,7 @@ Applies triage decision to timeline (session-only, not persisted).
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -211,31 +221,33 @@ Applies triage decision to timeline (session-only, not persisted).
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/daily-plan/triage', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ 
-    mode: 'protect_keystone',
-    anchor_id: 'anchor-123'
+const response = await fetch("/api/daily-plan/triage", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    mode: "protect_keystone",
+    anchor_id: "anchor-123",
   }),
 });
 const data = await response.json();
 ```
 
 **Error Codes**:
+
 - `400`: Invalid mode or missing anchor_id
 - `401`: Not authenticated
 - `404`: Anchor not found
 - `500`: Server error
 
 **Mode Behaviors**:
+
 - `protect_keystone`: Keeps only keystone activity + anchor blocks
 - `skip_anchor`: Marks all anchor blocks as skipped, removes from timeline
 - `recalculate`: Triggers full recalculation from current time
 
 **Implementation**: `src/pages/api/daily-plan/triage.ts`
-
 
 ### PATCH /api/time-blocks/[id]/complete
 
@@ -244,6 +256,7 @@ Marks a time block as completed or skipped.
 **Authentication**: Required
 
 **Request Body**:
+
 ```typescript
 {
   status: "completed" | "skipped";
@@ -252,6 +265,7 @@ Marks a time block as completed or skipped.
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -261,22 +275,23 @@ Marks a time block as completed or skipped.
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/time-blocks/block-123/complete', {
-  method: 'PATCH',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ status: 'completed' }),
+const response = await fetch("/api/time-blocks/block-123/complete", {
+  method: "PATCH",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "completed" }),
 });
 ```
 
 **Error Codes**:
+
 - `400`: Invalid status or missing skip_reason
 - `401`: Not authenticated or unauthorized
 - `404`: Block not found
 - `500`: Server error
 
 **Implementation**: `src/pages/api/time-blocks/[id]/complete.ts`
-
 
 ### PATCH /api/time-blocks/[id]/edit
 
@@ -285,6 +300,7 @@ Edits a time block (anchor or step) with cascade support.
 **Authentication**: Required
 
 **Request Body**:
+
 ```typescript
 {
   start_time?: string; // ISO 8601
@@ -296,6 +312,7 @@ Edits a time block (anchor or step) with cascade support.
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -306,18 +323,20 @@ Edits a time block (anchor or step) with cascade support.
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/time-blocks/block-123/edit', {
-  method: 'PATCH',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ 
+const response = await fetch("/api/time-blocks/block-123/edit", {
+  method: "PATCH",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
     duration: 30,
-    activity_name: 'Updated activity'
+    activity_name: "Updated activity",
   }),
 });
 ```
 
 **Error Codes**:
+
 - `400`: Invalid data or time conflict
 - `401`: Not authenticated or unauthorized
 - `404`: Block not found
@@ -327,7 +346,6 @@ const response = await fetch('/api/time-blocks/block-123/edit', {
 
 **Implementation**: `src/pages/api/time-blocks/[id]/edit.ts`
 
-
 ### DELETE /api/time-blocks/[id]/delete
 
 Deletes an anchor and its entire commitment envelope.
@@ -335,6 +353,7 @@ Deletes an anchor and its entire commitment envelope.
 **Authentication**: Required
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -344,13 +363,15 @@ Deletes an anchor and its entire commitment envelope.
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/time-blocks/anchor-123/delete', {
-  method: 'DELETE',
+const response = await fetch("/api/time-blocks/anchor-123/delete", {
+  method: "DELETE",
 });
 ```
 
 **Error Codes**:
+
 - `400`: Block is not an anchor
 - `401`: Not authenticated or unauthorized
 - `404`: Block not found
@@ -365,6 +386,7 @@ Inserts a custom step into the timeline with cascade.
 **Authentication**: Required
 
 **Request Body**:
+
 ```typescript
 {
   activity_name: string;
@@ -374,6 +396,7 @@ Inserts a custom step into the timeline with cascade.
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -383,26 +406,27 @@ Inserts a custom step into the timeline with cascade.
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/time-blocks/insert', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("/api/time-blocks/insert", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    activity_name: 'Custom step',
+    activity_name: "Custom step",
     duration: 15,
-    insert_after_id: 'block-123'
+    insert_after_id: "block-123",
   }),
 });
 ```
 
 **Error Codes**:
+
 - `400`: Invalid data
 - `401`: Not authenticated
 - `404`: insert_after_id not found
 - `500`: Server error
 
 **Implementation**: `src/pages/api/time-blocks/insert.ts`
-
 
 ### GET /api/daily-plan/check-absence
 
@@ -411,6 +435,7 @@ Checks if user has been absent for 7+ days (for Intent Signal).
 **Authentication**: Required
 
 **Response**:
+
 ```typescript
 {
   absent: boolean;
@@ -420,11 +445,12 @@ Checks if user has been absent for 7+ days (for Intent Signal).
 ```
 
 **Example**:
+
 ```typescript
-const response = await fetch('/api/daily-plan/check-absence');
+const response = await fetch("/api/daily-plan/check-absence");
 const data = await response.json();
 if (data.absent) {
-  console.log('User absent for', data.days_absent, 'days');
+  console.log("User absent for", data.days_absent, "days");
 }
 ```
 
@@ -450,6 +476,7 @@ calculateRunway(
 Calculates time remaining until next anchor and total time needed for commitment envelope.
 
 **Returns**:
+
 ```typescript
 {
   runway: number | null; // Minutes until next anchor
@@ -462,20 +489,20 @@ Calculates time remaining until next anchor and total time needed for commitment
 ```
 
 **Example**:
+
 ```typescript
-import { TimePhysicsService } from '@/lib/triage/time-physics';
+import { TimePhysicsService } from "@/lib/triage/time-physics";
 
 const service = new TimePhysicsService();
 const runway = service.calculateRunway(timeBlocks);
 
 if (!runway.has_sufficient_time) {
-  console.log('Insufficient time! Runway:', runway.runway);
-  console.log('Required:', runway.required_duration);
+  console.log("Insufficient time! Runway:", runway.runway);
+  console.log("Required:", runway.required_duration);
 }
 ```
 
 **Performance**: Completes in <100ms for typical timelines (20 blocks)
-
 
 ### TriageService
 
@@ -503,6 +530,7 @@ identifyKeystoneActivity(
 Identifies the most critical activity to protect during triage.
 
 **Priority Order**:
+
 1. For class/seminar: anchor itself
 2. For appointment: prep if >15min, else anchor
 3. Default: anchor
@@ -517,6 +545,7 @@ getTriageState(
 Gets complete triage state for UI rendering.
 
 **Returns**:
+
 ```typescript
 {
   active: boolean;
@@ -527,18 +556,21 @@ Gets complete triage state for UI rendering.
 ```
 
 **Example**:
+
 ```typescript
-import { TriageService } from '@/lib/triage/triage-service';
+import { TriageService } from "@/lib/triage/triage-service";
 
 const service = new TriageService();
 const triageState = service.getTriageState(timeBlocks, runway);
 
 if (triageState.active) {
-  console.log('Keystone:', triageState.keystone_activity?.activityName);
-  console.log('Options:', triageState.options.map(o => o.label));
+  console.log("Keystone:", triageState.keystone_activity?.activityName);
+  console.log(
+    "Options:",
+    triageState.options.map((o) => o.label),
+  );
 }
 ```
-
 
 ### StateFilterService
 
@@ -559,6 +591,7 @@ filterTimeline(
 Applies state-specific filtering logic to timeline.
 
 **Returns**:
+
 ```typescript
 {
   visible_blocks: TimeBlock[];
@@ -578,33 +611,35 @@ shouldShowStatePrompt(
 Determines if state declaration prompt should be shown.
 
 **Logic**:
+
 - Don't show if declared within last 30 minutes
 - Show if within 2 hours of any anchor
 - Otherwise don't show
 
 **Example**:
+
 ```typescript
-import { StateFilterService } from '@/lib/triage/state-filter';
+import { StateFilterService } from "@/lib/triage/state-filter";
 
 const service = new StateFilterService();
 const filtered = service.filterTimeline(timeBlocks, {
-  state: 'ready_for_anchor',
-  timestamp: new Date()
+  state: "ready_for_anchor",
+  timestamp: new Date(),
 });
 
-console.log('Visible:', filtered.visible_blocks.length);
-console.log('Hidden:', filtered.hidden_blocks.length);
-console.log('Reason:', filtered.filter_reason);
+console.log("Visible:", filtered.visible_blocks.length);
+console.log("Hidden:", filtered.hidden_blocks.length);
+console.log("Reason:", filtered.filter_reason);
 ```
 
 **State Filter Behaviors**:
+
 - `starting_day`: Shows blocks from current time forward
 - `ready_for_anchor`: Hides activation chain, shows departure onwards
 - `mid_chain`: Marks prior steps complete, shows from selected step
 - `at_anchor`: Marks prep/travel complete
 - `missed_it`: Marks anchor as skipped
 - `just_checking`: No filtering
-
 
 ## React Components
 
@@ -615,6 +650,7 @@ Main container component for Mirror UI.
 **Location**: `src/components/daily-plan/MirrorUI.tsx`
 
 **Props**:
+
 ```typescript
 {
   userId: string;
@@ -622,6 +658,7 @@ Main container component for Mirror UI.
 ```
 
 **State Management**:
+
 - Loads mirror data on mount
 - Handles recalculation
 - Handles state declaration
@@ -629,13 +666,15 @@ Main container component for Mirror UI.
 - Manages edit mode toggle
 
 **Example Usage**:
-```tsx
-import { MirrorUI } from '@/components/daily-plan/MirrorUI';
 
-<MirrorUI userId={user.id} />
+```tsx
+import { MirrorUI } from "@/components/daily-plan/MirrorUI";
+
+<MirrorUI userId={user.id} />;
 ```
 
 **Key Methods**:
+
 - `loadMirrorData()`: Fetches data from mirror API
 - `handleRecalculate()`: Triggers recalculation
 - `handleStateDeclaration(state, stepId?)`: Applies state filter
@@ -648,6 +687,7 @@ Header component with navigation, edit toggle, and recalc button.
 **Location**: `src/components/daily-plan/MirrorHeader.tsx`
 
 **Props**:
+
 ```typescript
 {
   editMode: boolean;
@@ -657,6 +697,7 @@ Header component with navigation, edit toggle, and recalc button.
 ```
 
 **Features**:
+
 - Token balance display
 - Edit mode toggle
 - Recalculate button
@@ -664,6 +705,7 @@ Header component with navigation, edit toggle, and recalc button.
 - Responsive hamburger menu
 
 **Example**:
+
 ```tsx
 <MirrorHeader
   editMode={editMode}
@@ -672,7 +714,6 @@ Header component with navigation, edit toggle, and recalc button.
 />
 ```
 
-
 ### StateDeclarationPrompt
 
 Bottom sheet prompt for state declaration.
@@ -680,6 +721,7 @@ Bottom sheet prompt for state declaration.
 **Location**: `src/components/daily-plan/StateDeclarationPrompt.tsx`
 
 **Props**:
+
 ```typescript
 {
   onDeclare: (state: UserState, stepId?: string) => void;
@@ -688,6 +730,7 @@ Bottom sheet prompt for state declaration.
 ```
 
 **Features**:
+
 - 6 radio button options
 - Mid-chain expansion with step selector
 - Swipe-down to dismiss
@@ -695,6 +738,7 @@ Bottom sheet prompt for state declaration.
 - Safe area inset support
 
 **Example**:
+
 ```tsx
 <StateDeclarationPrompt
   onDeclare={(state, stepId) => handleStateDeclaration(state, stepId)}
@@ -709,6 +753,7 @@ Triage decision prompt with 3 options.
 **Location**: `src/components/daily-plan/TriagePrompt.tsx`
 
 **Props**:
+
 ```typescript
 {
   triageState: TriageState;
@@ -717,6 +762,7 @@ Triage decision prompt with 3 options.
 ```
 
 **Features**:
+
 - Displays runway vs required duration
 - Shows keystone activity
 - 3 option buttons (Protect, Skip, Recalculate)
@@ -724,13 +770,13 @@ Triage decision prompt with 3 options.
 - Accessible (ARIA labels, keyboard nav)
 
 **Example**:
+
 ```tsx
 <TriagePrompt
   triageState={triageState}
   onDecision={(decision) => handleTriageDecision(decision)}
 />
 ```
-
 
 ### Timeline
 
@@ -739,6 +785,7 @@ Vertical timeline component displaying time blocks.
 **Location**: `src/components/daily-plan/Timeline.tsx`
 
 **Props**:
+
 ```typescript
 {
   timeBlocks: TimeBlock[];
@@ -750,6 +797,7 @@ Vertical timeline component displaying time blocks.
 ```
 
 **Features**:
+
 - Chronological ordering
 - Current time indicator (sticky)
 - Deadline banners
@@ -758,6 +806,7 @@ Vertical timeline component displaying time blocks.
 - Edit buttons (when editMode enabled)
 
 **Example**:
+
 ```tsx
 <Timeline
   timeBlocks={timeBlocks}
@@ -775,6 +824,7 @@ Individual time block card component.
 **Location**: `src/components/daily-plan/TimeBlock.tsx`
 
 **Props**:
+
 ```typescript
 {
   block: TimeBlock;
@@ -786,6 +836,7 @@ Individual time block card component.
 ```
 
 **Features**:
+
 - Time range display
 - Duration badge
 - Activity name
@@ -796,6 +847,7 @@ Individual time block card component.
 - Visual state styling
 
 **Example**:
+
 ```tsx
 <TimeBlock
   block={block}
@@ -806,7 +858,6 @@ Individual time block card component.
 />
 ```
 
-
 ### InlineEditor
 
 Inline editing component for anchors and steps.
@@ -814,6 +865,7 @@ Inline editing component for anchors and steps.
 **Location**: `src/components/daily-plan/InlineEditor.tsx`
 
 **Props**:
+
 ```typescript
 {
   block: TimeBlock;
@@ -824,6 +876,7 @@ Inline editing component for anchors and steps.
 ```
 
 **Features**:
+
 - Time range inputs
 - Duration input (5-480 minutes)
 - Activity name input
@@ -834,6 +887,7 @@ Inline editing component for anchors and steps.
 - Delete button (anchors only)
 
 **Example**:
+
 ```tsx
 <InlineEditor
   block={block}
@@ -850,6 +904,7 @@ Deadline display for commitment envelopes.
 **Location**: `src/components/daily-plan/DeadlineBanner.tsx`
 
 **Props**:
+
 ```typescript
 {
   envelope: CommitmentEnvelope;
@@ -858,6 +913,7 @@ Deadline display for commitment envelopes.
 ```
 
 **Features**:
+
 - Calculates deadline from last prep/activation step
 - Displays "Complete by [TIME]"
 - Shows time remaining
@@ -865,13 +921,10 @@ Deadline display for commitment envelopes.
 - Sticky positioning when approaching deadline
 
 **Example**:
-```tsx
-<DeadlineBanner
-  envelope={envelope}
-  currentTime={new Date()}
-/>
-```
 
+```tsx
+<DeadlineBanner envelope={envelope} currentTime={new Date()} />
+```
 
 ### StartTimeLabel
 
@@ -880,6 +933,7 @@ Start time label for commitment envelopes.
 **Location**: `src/components/daily-plan/StartTimeLabel.tsx`
 
 **Props**:
+
 ```typescript
 {
   envelope: CommitmentEnvelope;
@@ -888,17 +942,16 @@ Start time label for commitment envelopes.
 ```
 
 **Features**:
+
 - Displays "Start at [TIME]"
 - Shows countdown if before start time
 - Shows lateness if after start time
 - Positioned above envelope
 
 **Example**:
+
 ```tsx
-<StartTimeLabel
-  envelope={envelope}
-  currentTime={new Date()}
-/>
+<StartTimeLabel envelope={envelope} currentTime={new Date()} />
 ```
 
 ### IntentSignalBanner
@@ -908,6 +961,7 @@ Re-engagement banner after 7+ day absence.
 **Location**: `src/components/daily-plan/IntentSignalBanner.tsx`
 
 **Props**:
+
 ```typescript
 {
   onGeneratePlan: () => void;
@@ -916,19 +970,20 @@ Re-engagement banner after 7+ day absence.
 ```
 
 **Features**:
+
 - Checks for 7+ day absence
 - Neutral re-engagement message
 - Two options: "Yes, generate plan" and "No, not today"
 - Session-only dismissal (not persistent)
 
 **Example**:
+
 ```tsx
 <IntentSignalBanner
-  onGeneratePlan={() => navigate('/daily-plan/generate')}
+  onGeneratePlan={() => navigate("/daily-plan/generate")}
   onDismiss={() => setShowBanner(false)}
 />
 ```
-
 
 ## Testing Strategy
 
@@ -963,7 +1018,7 @@ The feature uses property-based testing (PBT) with fast-check to validate correc
 **Test Data Generators** (`src/test/generators/timeline-generators.ts`):
 
 ```typescript
-import * as fc from 'fast-check';
+import * as fc from "fast-check";
 
 // Generate random time blocks
 export const timeBlockArbitrary = fc.record({
@@ -971,50 +1026,45 @@ export const timeBlockArbitrary = fc.record({
   startTime: fc.date(),
   endTime: fc.date(),
   activityName: fc.string(),
-  status: fc.constantFrom('pending', 'completed', 'skipped'),
+  status: fc.constantFrom("pending", "completed", "skipped"),
   // ... other fields
 });
 
 // Generate timeline with anchors
-export const timelineWithAnchors = (
-  anchorCount: number = 3
-) => fc.array(timeBlockArbitrary, { minLength: anchorCount * 5 });
+export const timelineWithAnchors = (anchorCount: number = 3) =>
+  fc.array(timeBlockArbitrary, { minLength: anchorCount * 5 });
 ```
 
 **Example Property Test**:
 
 ```typescript
-import * as fc from 'fast-check';
-import { TimePhysicsService } from '@/lib/triage/time-physics';
+import * as fc from "fast-check";
+import { TimePhysicsService } from "@/lib/triage/time-physics";
 
-test('Property: Runway calculation correctness', () => {
+test("Property: Runway calculation correctness", () => {
   fc.assert(
-    fc.property(
-      timelineWithAnchors(),
-      fc.date(),
-      (timeline, currentTime) => {
-        const service = new TimePhysicsService();
-        const runway = service.calculateRunway(timeline, currentTime);
-        
-        // Property: runway = (next_anchor_start - current_time) in minutes
-        if (runway.runway !== null) {
-          const expected = Math.floor(
-            (runway.next_anchor_start!.getTime() - currentTime.getTime()) / 60000
-          );
-          expect(runway.runway).toBe(expected);
-        }
+    fc.property(timelineWithAnchors(), fc.date(), (timeline, currentTime) => {
+      const service = new TimePhysicsService();
+      const runway = service.calculateRunway(timeline, currentTime);
+
+      // Property: runway = (next_anchor_start - current_time) in minutes
+      if (runway.runway !== null) {
+        const expected = Math.floor(
+          (runway.next_anchor_start!.getTime() - currentTime.getTime()) / 60000,
+        );
+        expect(runway.runway).toBe(expected);
       }
-    )
+    }),
   );
 });
 ```
-
 
 ### Unit Tests
 
 Test individual service classes and components in isolation.
 
 **Running Unit Tests**:
+
 ```bash
 npm test src/test/unit/
 ```
@@ -1022,35 +1072,35 @@ npm test src/test/unit/
 **Example Unit Test**:
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { TriageService } from '@/lib/triage/triage-service';
+import { describe, it, expect } from "vitest";
+import { TriageService } from "@/lib/triage/triage-service";
 
-describe('TriageService', () => {
-  it('should activate triage when runway < required_duration', () => {
+describe("TriageService", () => {
+  it("should activate triage when runway < required_duration", () => {
     const service = new TriageService();
     const runway = {
       runway: 30,
       required_duration: 45,
-      next_anchor_id: 'anchor-1',
+      next_anchor_id: "anchor-1",
       next_anchor_start: new Date(),
       current_time: new Date(),
       has_sufficient_time: false,
     };
-    
+
     expect(service.shouldActivateTriage(runway)).toBe(true);
   });
-  
-  it('should not activate triage when runway >= required_duration', () => {
+
+  it("should not activate triage when runway >= required_duration", () => {
     const service = new TriageService();
     const runway = {
       runway: 60,
       required_duration: 45,
-      next_anchor_id: 'anchor-1',
+      next_anchor_id: "anchor-1",
       next_anchor_start: new Date(),
       current_time: new Date(),
       has_sufficient_time: true,
     };
-    
+
     expect(service.shouldActivateTriage(runway)).toBe(false);
   });
 });
@@ -1061,6 +1111,7 @@ describe('TriageService', () => {
 Test API endpoints with database interactions.
 
 **Running Integration Tests**:
+
 ```bash
 npm test src/test/integration/
 ```
@@ -1068,46 +1119,46 @@ npm test src/test/integration/
 **Example Integration Test**:
 
 ```typescript
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createTestUser, createTestPlan } from '@/test/helpers';
+import { describe, it, expect, beforeEach } from "vitest";
+import { createTestUser, createTestPlan } from "@/test/helpers";
 
-describe('Mirror API', () => {
+describe("Mirror API", () => {
   let user: TestUser;
-  
+
   beforeEach(async () => {
     user = await createTestUser();
   });
-  
-  it('should load mirror data successfully', async () => {
+
+  it("should load mirror data successfully", async () => {
     await createTestPlan(user.id);
-    
-    const response = await fetch('/api/daily-plan/mirror', {
-      headers: { 'Cookie': user.sessionCookie },
+
+    const response = await fetch("/api/daily-plan/mirror", {
+      headers: { Cookie: user.sessionCookie },
     });
-    
+
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.plan).toBeDefined();
     expect(data.timeBlocks).toBeInstanceOf(Array);
     expect(data.runway).toBeDefined();
   });
-  
-  it('should return 404 when no plan exists', async () => {
-    const response = await fetch('/api/daily-plan/mirror', {
-      headers: { 'Cookie': user.sessionCookie },
+
+  it("should return 404 when no plan exists", async () => {
+    const response = await fetch("/api/daily-plan/mirror", {
+      headers: { Cookie: user.sessionCookie },
     });
-    
+
     expect(response.status).toBe(404);
   });
 });
 ```
-
 
 ### End-to-End Tests
 
 Test complete user flows from UI interaction to database persistence.
 
 **Running E2E Tests**:
+
 ```bash
 npm test src/test/e2e/
 ```
@@ -1122,35 +1173,35 @@ import { MirrorUI } from '@/components/daily-plan/MirrorUI';
 describe('Mirror UI User Flows', () => {
   it('should complete full state declaration flow', async () => {
     const { container } = render(<MirrorUI userId="test-user" />);
-    
+
     // Wait for data to load
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
-    
+
     // State prompt should appear
     expect(screen.getByText('Starting my day')).toBeInTheDocument();
-    
+
     // Select "Ready for anchor"
     fireEvent.click(screen.getByText('Ready for anchor'));
     fireEvent.click(screen.getByText('Continue'));
-    
+
     // Timeline should update
     await waitFor(() => {
       expect(screen.queryByText('Prep')).not.toBeInTheDocument();
       expect(screen.getByText('Travel')).toBeInTheDocument();
     });
   });
-  
+
   it('should complete triage decision flow', async () => {
     render(<MirrorUI userId="test-user" />);
-    
+
     await waitFor(() => {
       expect(screen.getByText('Protect Keystone')).toBeInTheDocument();
     });
-    
+
     fireEvent.click(screen.getByText('Protect Keystone'));
-    
+
     await waitFor(() => {
       // Only keystone and anchor should remain
       const blocks = screen.getAllByTestId('time-block');
@@ -1165,6 +1216,7 @@ describe('Mirror UI User Flows', () => {
 Validate performance constraints and optimization effectiveness.
 
 **Running Performance Tests**:
+
 ```bash
 npm test src/test/performance/
 ```
@@ -1172,34 +1224,33 @@ npm test src/test/performance/
 **Example Performance Test**:
 
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { TimePhysicsService } from '@/lib/triage/time-physics';
-import { generateLargeTimeline } from '@/test/generators/timeline-generators';
+import { describe, it, expect } from "vitest";
+import { TimePhysicsService } from "@/lib/triage/time-physics";
+import { generateLargeTimeline } from "@/test/generators/timeline-generators";
 
-describe('Performance', () => {
-  it('should calculate runway in <100ms for 20 blocks', () => {
+describe("Performance", () => {
+  it("should calculate runway in <100ms for 20 blocks", () => {
     const service = new TimePhysicsService();
     const timeline = generateLargeTimeline(20);
-    
+
     const start = performance.now();
     service.calculateRunway(timeline);
     const duration = performance.now() - start;
-    
+
     expect(duration).toBeLessThan(100);
   });
-  
-  it('should load Mirror UI in <500ms', async () => {
+
+  it("should load Mirror UI in <500ms", async () => {
     const start = performance.now();
-    
-    const response = await fetch('/api/daily-plan/mirror');
+
+    const response = await fetch("/api/daily-plan/mirror");
     await response.json();
-    
+
     const duration = performance.now() - start;
     expect(duration).toBeLessThan(500);
   });
 });
 ```
-
 
 ## Architecture Diagrams
 
@@ -1290,27 +1341,30 @@ Update Database (time_blocks + user_preferences)
 Refresh Timeline
 ```
 
-
 ## Development Workflow
 
 ### Local Development
 
 1. **Start dev server**:
+
 ```bash
 npm run dev
 ```
 
 2. **Navigate to Mirror UI**:
+
 ```
 http://localhost:4321/daily-plan/mirror
 ```
 
 3. **Run tests in watch mode**:
+
 ```bash
 npm run test:watch
 ```
 
 4. **Format code**:
+
 ```bash
 npm run format
 ```
@@ -1327,47 +1381,54 @@ npm run format
 ### Debugging
 
 **Server-side (API routes)**:
+
 ```typescript
-console.log('[Mirror API]', { runway, triageState });
+console.log("[Mirror API]", { runway, triageState });
 ```
 
 **Client-side (React components)**:
+
 ```typescript
-console.log('[MirrorUI]', { data, loading, error });
+console.log("[MirrorUI]", { data, loading, error });
 ```
 
 **Database queries**:
+
 ```typescript
 const { data, error } = await supabase
-  .from('time_blocks')
-  .select('*')
-  .eq('user_id', userId);
-  
-console.log('[DB Query]', { data, error });
+  .from("time_blocks")
+  .select("*")
+  .eq("user_id", userId);
+
+console.log("[DB Query]", { data, error });
 ```
 
 ### Common Issues
 
 **Issue**: Mirror API returns 404
+
 - **Cause**: No daily_plan exists for today
 - **Solution**: Generate a plan first via `/api/daily-plan/generate`
 
 **Issue**: Triage mode not activating
+
 - **Cause**: runway >= required_duration
 - **Solution**: Check runway calculation, ensure anchors exist
 
 **Issue**: State prompt not showing
+
 - **Cause**: Declared state within last 30 minutes OR not within 2hr of anchor
 - **Solution**: This is expected behavior
 
 **Issue**: Recalculation times out
+
 - **Cause**: Too many anchors (6+) or slow database
 - **Solution**: Reduce anchors or optimize queries
 
 **Issue**: Completion state not persisting
+
 - **Cause**: Database write failed or RLS policy blocking
 - **Solution**: Check user_id scoping and RLS policies
-
 
 ## Security Considerations
 
@@ -1376,12 +1437,12 @@ console.log('[DB Query]', { data, error });
 All API endpoints use `serverAuth.requireAuth()`:
 
 ```typescript
-import { createServerAuth } from '@/lib/auth/simple-multi-user';
+import { createServerAuth } from "@/lib/auth/simple-multi-user";
 
 export async function GET({ cookies }: APIContext) {
   const serverAuth = createServerAuth(cookies);
   const user = await serverAuth.requireAuth(); // Throws if not authenticated
-  
+
   // user.id is now guaranteed to be valid
 }
 ```
@@ -1392,10 +1453,10 @@ All database queries filter by `user_id`:
 
 ```typescript
 const { data } = await supabase
-  .from('time_blocks')
-  .select('*')
-  .eq('user_id', user.id) // CRITICAL: Always filter by user_id
-  .eq('date', today);
+  .from("time_blocks")
+  .select("*")
+  .eq("user_id", user.id) // CRITICAL: Always filter by user_id
+  .eq("date", today);
 ```
 
 ### Input Validation
@@ -1404,14 +1465,26 @@ All API endpoints validate input:
 
 ```typescript
 // Validate state
-const validStates = ['starting_day', 'ready_for_anchor', 'mid_chain', 'at_anchor', 'missed_it', 'just_checking'];
+const validStates = [
+  "starting_day",
+  "ready_for_anchor",
+  "mid_chain",
+  "at_anchor",
+  "missed_it",
+  "just_checking",
+];
 if (!validStates.includes(state)) {
-  return new Response(JSON.stringify({ error: 'Invalid state' }), { status: 400 });
+  return new Response(JSON.stringify({ error: "Invalid state" }), {
+    status: 400,
+  });
 }
 
 // Validate duration
 if (duration < 5 || duration > 480) {
-  return new Response(JSON.stringify({ error: 'Duration must be 5-480 minutes' }), { status: 400 });
+  return new Response(
+    JSON.stringify({ error: "Duration must be 5-480 minutes" }),
+    { status: 400 },
+  );
 }
 ```
 
@@ -1420,6 +1493,7 @@ if (duration < 5 || duration > 480) {
 Supabase RLS is enabled on all tables. Application-level scoping is defense-in-depth.
 
 **Example RLS Policy**:
+
 ```sql
 CREATE POLICY "Users can only access their own time blocks"
 ON time_blocks
@@ -1433,7 +1507,9 @@ Triage decisions are session-only (not persisted):
 
 ```typescript
 // Triage decisions stored in component state, not database
-const [triageDecision, setTriageDecision] = useState<TriageDecision | null>(null);
+const [triageDecision, setTriageDecision] = useState<TriageDecision | null>(
+  null,
+);
 ```
 
 State declarations are persisted but scoped to user:
@@ -1441,16 +1517,15 @@ State declarations are persisted but scoped to user:
 ```typescript
 // Saved to user_preferences.preferences JSONB
 await supabase
-  .from('user_preferences')
+  .from("user_preferences")
   .update({
     preferences: {
       ...existingPrefs,
-      last_state_declaration: { state, timestamp: new Date() }
-    }
+      last_state_declaration: { state, timestamp: new Date() },
+    },
   })
-  .eq('user_id', user.id);
+  .eq("user_id", user.id);
 ```
-
 
 ## Performance Optimization
 
@@ -1459,7 +1534,7 @@ await supabase
 Expensive calculations are memoized:
 
 ```typescript
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
 const runway = useMemo(() => {
   return timePhysicsService.calculateRunway(timeBlocks, currentTime);
@@ -1475,13 +1550,13 @@ const filteredTimeline = useMemo(() => {
 User inputs are debounced:
 
 ```typescript
-import { useDebouncedCallback } from 'use-debounce';
+import { useDebouncedCallback } from "use-debounce";
 
 const debouncedSave = useDebouncedCallback(
   (updates: Partial<TimeBlock>) => {
     handleSave(updates);
   },
-  300 // 300ms delay
+  300, // 300ms delay
 );
 ```
 
@@ -1492,11 +1567,11 @@ Queries use indexes and limit results:
 ```typescript
 // Use indexes on user_id and date
 const { data } = await supabase
-  .from('time_blocks')
-  .select('*')
-  .eq('user_id', user.id)
-  .eq('date', today)
-  .order('start_time', { ascending: true });
+  .from("time_blocks")
+  .select("*")
+  .eq("user_id", user.id)
+  .eq("date", today)
+  .order("start_time", { ascending: true });
 ```
 
 ### Component Lazy Loading
@@ -1525,7 +1600,6 @@ useEffect(() => {
   loadMirrorData();
 }, []); // Empty deps = load once on mount
 ```
-
 
 ## Accessibility Implementation
 
@@ -1588,7 +1662,7 @@ Focus is managed on prompt open/close:
 useEffect(() => {
   if (isOpen) {
     // Focus first interactive element
-    const firstButton = dialogRef.current?.querySelector('button');
+    const firstButton = dialogRef.current?.querySelector("button");
     firstButton?.focus();
   }
 }, [isOpen]);
@@ -1607,7 +1681,6 @@ Important state changes are announced:
   {completedCount} of {totalCount} steps completed
 </div>
 ```
-
 
 ## Mobile-Specific Implementation
 
@@ -1632,11 +1705,11 @@ const onTouchMove = (e: React.TouchEvent) => {
 
 const onTouchEnd = () => {
   if (!touchStart || !touchEnd) return;
-  
+
   const distance = touchStart - touchEnd;
   const isLeftSwipe = distance > minSwipeDistance;
   const isRightSwipe = distance < -minSwipeDistance;
-  
+
   if (isRightSwipe) {
     handleComplete();
   } else if (isLeftSwipe) {
@@ -1656,7 +1729,7 @@ Bottom sheets use slide-up animation and backdrop:
 >
   {/* Backdrop */}
   <div className="absolute inset-0 bg-black/50" />
-  
+
   {/* Sheet */}
   <div
     className={`
@@ -1704,7 +1777,6 @@ Handle mobile viewport quirks:
 }
 ```
 
-
 ## Error Handling
 
 ### API Error Handling
@@ -1716,19 +1788,19 @@ async function loadMirrorData() {
   try {
     setLoading(true);
     setError(null);
-    
-    const response = await fetch('/api/daily-plan/mirror');
-    
+
+    const response = await fetch("/api/daily-plan/mirror");
+
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to load mirror data');
+      throw new Error(errorData.error || "Failed to load mirror data");
     }
-    
+
     const data = await response.json();
     setData(data);
   } catch (err) {
-    console.error('[MirrorUI] Load error:', err);
-    setError(err instanceof Error ? err.message : 'Unknown error');
+    console.error("[MirrorUI] Load error:", err);
+    setError(err instanceof Error ? err.message : "Unknown error");
   } finally {
     setLoading(false);
   }
@@ -1760,7 +1832,7 @@ import { ErrorBoundary } from '@/components/daily-plan/ErrorBoundary';
 Failed requests can be retried:
 
 ```typescript
-import { RetryHandler } from '@/lib/triage/retry-handler';
+import { RetryHandler } from "@/lib/triage/retry-handler";
 
 const retryHandler = new RetryHandler({
   maxRetries: 3,
@@ -1768,8 +1840,8 @@ const retryHandler = new RetryHandler({
 });
 
 const data = await retryHandler.execute(async () => {
-  const response = await fetch('/api/daily-plan/mirror');
-  if (!response.ok) throw new Error('Request failed');
+  const response = await fetch("/api/daily-plan/mirror");
+  if (!response.ok) throw new Error("Request failed");
   return response.json();
 });
 ```
@@ -1782,20 +1854,19 @@ Errors are translated to user-friendly messages:
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     switch (error.message) {
-      case 'NO_PLAN_EXISTS':
-        return 'No plan found for today. Generate a plan first.';
-      case 'TIMEOUT':
-        return 'Request timed out. Please try again.';
-      case 'UNAUTHORIZED':
-        return 'Please log in to continue.';
+      case "NO_PLAN_EXISTS":
+        return "No plan found for today. Generate a plan first.";
+      case "TIMEOUT":
+        return "Request timed out. Please try again.";
+      case "UNAUTHORIZED":
+        return "Please log in to continue.";
       default:
         return error.message;
     }
   }
-  return 'An unexpected error occurred.';
+  return "An unexpected error occurred.";
 }
 ```
-
 
 ## Deployment
 
@@ -1829,11 +1900,11 @@ The app uses Vercel adapter for Astro:
 
 ```javascript
 // astro.config.mjs
-import { defineConfig } from 'astro/config';
-import vercel from '@astrojs/vercel/serverless';
+import { defineConfig } from "astro/config";
+import vercel from "@astrojs/vercel/serverless";
 
 export default defineConfig({
-  output: 'server',
+  output: "server",
   adapter: vercel(),
 });
 ```
@@ -1869,7 +1940,6 @@ npm run db:generate-types
 5. Test completion tracking
 6. Check mobile responsiveness
 
-
 ## Monitoring and Analytics
 
 ### Triage Metrics
@@ -1877,7 +1947,7 @@ npm run db:generate-types
 Track triage mode usage:
 
 ```typescript
-import { TriageMetrics } from '@/lib/monitoring/triage-metrics';
+import { TriageMetrics } from "@/lib/monitoring/triage-metrics";
 
 const metrics = new TriageMetrics();
 
@@ -1892,7 +1962,7 @@ metrics.trackTriageActivation({
 // Track triage decision
 metrics.trackTriageDecision({
   user_id: user.id,
-  decision: 'protect_keystone',
+  decision: "protect_keystone",
   anchor_id: anchorId,
 });
 ```
@@ -1902,26 +1972,26 @@ metrics.trackTriageDecision({
 Track user interactions:
 
 ```typescript
-import { Analytics } from '@/lib/monitoring/analytics';
+import { Analytics } from "@/lib/monitoring/analytics";
 
 const analytics = new Analytics();
 
 // Track state declaration
-analytics.track('state_declared', {
-  state: 'ready_for_anchor',
+analytics.track("state_declared", {
+  state: "ready_for_anchor",
   user_id: user.id,
 });
 
 // Track completion
-analytics.track('step_completed', {
+analytics.track("step_completed", {
   block_id: blockId,
   activity_name: activityName,
   user_id: user.id,
 });
 
 // Track recalculation
-analytics.track('plan_recalculated', {
-  trigger: 'manual',
+analytics.track("plan_recalculated", {
+  trigger: "manual",
   duration_ms: duration,
   user_id: user.id,
 });
@@ -1932,17 +2002,17 @@ analytics.track('plan_recalculated', {
 Monitor performance metrics:
 
 ```typescript
-import { PerformanceMonitor } from '@/lib/monitoring/performance';
+import { PerformanceMonitor } from "@/lib/monitoring/performance";
 
 const monitor = new PerformanceMonitor();
 
 // Track API response time
 const start = performance.now();
-const response = await fetch('/api/daily-plan/mirror');
+const response = await fetch("/api/daily-plan/mirror");
 const duration = performance.now() - start;
 
 monitor.trackApiCall({
-  endpoint: '/api/daily-plan/mirror',
+  endpoint: "/api/daily-plan/mirror",
   duration_ms: duration,
   status: response.status,
 });
@@ -1953,13 +2023,12 @@ useEffect(() => {
   return () => {
     const duration = performance.now() - start;
     monitor.trackComponentRender({
-      component: 'MirrorUI',
+      component: "MirrorUI",
       duration_ms: duration,
     });
   };
 }, []);
 ```
-
 
 ## Contributing
 
@@ -2046,6 +2115,7 @@ For questions or issues:
 ### Version 1.0.0 (Initial Release)
 
 **Features**:
+
 - Mirror UI with vertical timeline
 - Runway calculation and triage mode
 - State declaration with 6 options
@@ -2058,6 +2128,7 @@ For questions or issues:
 - Accessibility compliance
 
 **API Endpoints**:
+
 - GET /api/daily-plan/mirror
 - POST /api/daily-plan/recalculate
 - POST /api/daily-plan/state
@@ -2069,11 +2140,13 @@ For questions or issues:
 - POST /api/time-blocks/insert
 
 **Service Classes**:
+
 - TimePhysicsService
 - TriageService
 - StateFilterService
 
 **Components**:
+
 - MirrorUI
 - MirrorHeader
 - StateDeclarationPrompt
@@ -2086,6 +2159,7 @@ For questions or issues:
 - IntentSignalBanner
 
 **Testing**:
+
 - 33 correctness properties
 - Unit tests for all services
 - Integration tests for all APIs

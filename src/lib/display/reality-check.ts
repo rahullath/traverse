@@ -1,205 +1,234 @@
 // Reality Check Service
-// Calculates what's possible given current time and next anchor
-// Philosophy: Neutral assessment, no warnings, just options
+// Requirements: 7.2, 7.4
 
-import type { TimeBlock } from '@/types/daily-plan';
+import type { TimeBlock } from "@/types/daily-plan";
+import { TriageService } from "@/lib/triage/triage-service";
 
+/**
+ * Reality check result showing what's possible given current time
+ */
 export interface RealityCheckResult {
-  canMakeIt: boolean;
   possibleSteps: TimeBlock[];
-  skippableSteps: TimeBlock[];
-  departureTime: Date | null;
-  minutesAvailable: number;
+  skippedSteps: TimeBlock[];
+  canMakeAnchor: boolean;
+  alternatives: RealityCheckAlternative[];
+  runway: number;
+  requiredDuration: number;
 }
 
+/**
+ * Alternative simplified option for reality check
+ */
+export interface RealityCheckAlternative {
+  id: string;
+  label: string;
+  description: string;
+  steps: TimeBlock[];
+  estimatedDuration: number;
+}
+
+/**
+ * Service for user-initiated reality check calculations
+ *
+ * Provides neutral assessment of what activities are possible given current time,
+ * without judgment language or automatic warnings.
+ */
 export class RealityCheckService {
+  private triageService: TriageService;
+
+  constructor() {
+    this.triageService = new TriageService();
+  }
+
   /**
-   * Calculate what's possible given current time and next anchor
-   * Returns neutral assessment without judgment
+   * Calculate which chain steps fit within available runway
+   *
+   * Requirements: 7.2
+   *
+   * @param timeBlocks - All time blocks in the plan
+   * @param runway - Minutes until next anchor
+   * @param nextAnchor - The next anchor block
+   * @param currentTime - Current time for calculations
+   * @returns Reality check result with possible and skipped steps
    */
-  calculateRealityCheck(
+  calculatePossibleSteps(
     timeBlocks: TimeBlock[],
-    anchorId: string,
-    currentTime: Date = new Date()
+    runway: number,
+    nextAnchor: TimeBlock,
+    currentTime: Date,
   ): RealityCheckResult {
-    // Find the anchor
-    const anchor = timeBlocks.find(
+    // Get all chain blocks for this anchor (before the anchor time)
+    const chainBlocks = timeBlocks.filter(
       (block) =>
-        block.activityId === anchorId &&
-        block.metadata?.role?.type === 'anchor'
+        block.startTime < nextAnchor.startTime &&
+        block.metadata?.anchor_id === nextAnchor.activityId &&
+        block.startTime >= currentTime,
     );
 
-    if (!anchor) {
-      return {
-        canMakeIt: false,
-        possibleSteps: [],
-        skippableSteps: [],
-        departureTime: null,
-        minutesAvailable: 0,
-      };
+    // Calculate duration for each block
+    const blocksWithDuration = chainBlocks.map((block) => ({
+      block,
+      duration: Math.floor(
+        (block.endTime.getTime() - block.startTime.getTime()) / 60000,
+      ),
+    }));
+
+    // Sort by start time (earliest first)
+    blocksWithDuration.sort(
+      (a, b) => a.block.startTime.getTime() - b.block.startTime.getTime(),
+    );
+
+    // Calculate total required duration
+    const requiredDuration = blocksWithDuration.reduce(
+      (sum, { duration }) => sum + duration,
+      0,
+    );
+
+    let accumulatedDuration = 0;
+    const possibleSteps: TimeBlock[] = [];
+    const skippedSteps: TimeBlock[] = [];
+
+    // Determine which steps fit within runway
+    for (const { block, duration } of blocksWithDuration) {
+      if (accumulatedDuration + duration <= runway) {
+        possibleSteps.push(block);
+        accumulatedDuration += duration;
+      } else {
+        skippedSteps.push(block);
+      }
     }
 
-    // Find all blocks in the commitment envelope before the anchor
-    const envelopeBlocks = timeBlocks
-      .filter(
-        (block) =>
-          block.metadata?.anchor_id === anchorId &&
-          block.startTime < anchor.startTime
-      )
-      .sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
-
-    // Find departure time (first travel_there block)
-    const travelBlock = envelopeBlocks.find(
-      (block) =>
-        block.metadata?.commitment_envelope?.envelope_type === 'travel_there'
+    // Generate alternatives
+    const keystoneId = this.findKeystoneId(timeBlocks, nextAnchor.activityId);
+    const alternatives = this.generateAlternatives(
+      timeBlocks,
+      runway,
+      keystoneId,
+      nextAnchor,
     );
-
-    const departureTime = travelBlock?.startTime || anchor.startTime;
-
-    // Calculate minutes available until departure
-    const minutesAvailable = Math.floor(
-      (departureTime.getTime() - currentTime.getTime()) / 60000
-    );
-
-    // If already past departure, can't make it with full chain
-    if (minutesAvailable <= 0) {
-      return {
-        canMakeIt: false,
-        possibleSteps: [],
-        skippableSteps: envelopeBlocks,
-        departureTime,
-        minutesAvailable: Math.max(0, minutesAvailable),
-      };
-    }
-
-    // Calculate which steps fit in available time
-    const { possibleSteps, skippableSteps } = this.fitStepsInTime(
-      envelopeBlocks,
-      minutesAvailable,
-      currentTime
-    );
-
-    // Can make it if all essential steps fit
-    const canMakeIt = this.hasEssentialSteps(possibleSteps, envelopeBlocks);
 
     return {
-      canMakeIt,
       possibleSteps,
-      skippableSteps,
-      departureTime,
-      minutesAvailable,
+      skippedSteps,
+      canMakeAnchor: accumulatedDuration <= runway,
+      alternatives,
+      runway,
+      requiredDuration,
     };
   }
 
   /**
-   * Determine which steps fit in available time
-   * Prioritizes keystone activities
+   * Generate alternative simplified options
+   *
+   * Requirements: 7.4
+   *
+   * @param timeBlocks - All time blocks in the plan
+   * @param runway - Minutes until next anchor
+   * @param keystoneId - ID of the keystone block
+   * @param nextAnchor - The next anchor block
+   * @returns Array of alternative options
    */
-  private fitStepsInTime(
-    blocks: TimeBlock[],
-    minutesAvailable: number,
-    currentTime: Date
-  ): { possibleSteps: TimeBlock[]; skippableSteps: TimeBlock[] } {
-    const possibleSteps: TimeBlock[] = [];
-    const skippableSteps: TimeBlock[] = [];
-    let timeUsed = 0;
+  generateAlternatives(
+    timeBlocks: TimeBlock[],
+    runway: number,
+    keystoneId: string | null,
+    nextAnchor: TimeBlock,
+  ): RealityCheckAlternative[] {
+    const alternatives: RealityCheckAlternative[] = [];
 
-    // Identify keystone (usually the longest prep step or marked as keystone)
-    const keystoneBlock = this.identifyKeystone(blocks);
+    // Option 1: Keystone only
+    if (keystoneId) {
+      const keystoneBlock = timeBlocks.find((b) => b.id === keystoneId);
+      if (keystoneBlock) {
+        const keystoneDuration = Math.floor(
+          (keystoneBlock.endTime.getTime() -
+            keystoneBlock.startTime.getTime()) /
+            60000,
+        );
 
-    // Try to fit keystone first
-    if (keystoneBlock) {
-      const keystoneDuration = this.getBlockDuration(keystoneBlock);
-      if (timeUsed + keystoneDuration <= minutesAvailable) {
-        possibleSteps.push(keystoneBlock);
-        timeUsed += keystoneDuration;
-      } else {
-        // Try quick version (half duration)
-        const quickDuration = Math.ceil(keystoneDuration / 2);
-        if (timeUsed + quickDuration <= minutesAvailable) {
-          // Create modified block with quick duration
-          const quickBlock = {
-            ...keystoneBlock,
-            activityName: `Quick ${keystoneBlock.activityName}`,
-            endTime: new Date(
-              keystoneBlock.startTime.getTime() + quickDuration * 60000
-            ),
-          };
-          possibleSteps.push(quickBlock);
-          timeUsed += quickDuration;
-        } else {
-          skippableSteps.push(keystoneBlock);
+        if (keystoneDuration <= runway) {
+          alternatives.push({
+            id: "keystone_only",
+            label: "Just do keystone",
+            description: `Quick ${keystoneBlock.activityName} and go`,
+            steps: [keystoneBlock],
+            estimatedDuration: keystoneDuration,
+          });
         }
       }
     }
 
-    // Try to fit other blocks
-    for (const block of blocks) {
-      if (block === keystoneBlock) continue; // Already handled
+    // Option 2: Skip everything, just go
+    alternatives.push({
+      id: "skip_all",
+      label: "Skip prep, just go",
+      description: "Head straight to anchor",
+      steps: [],
+      estimatedDuration: 0,
+    });
 
-      const duration = this.getBlockDuration(block);
-      if (timeUsed + duration <= minutesAvailable) {
-        possibleSteps.push(block);
-        timeUsed += duration;
-      } else {
-        skippableSteps.push(block);
-      }
+    // Option 3: Show everything anyway
+    const allChainBlocks = timeBlocks.filter(
+      (block) =>
+        block.startTime < nextAnchor.startTime &&
+        block.metadata?.anchor_id === nextAnchor.activityId,
+    );
+
+    const totalDuration = allChainBlocks.reduce((sum, block) => {
+      const duration = Math.floor(
+        (block.endTime.getTime() - block.startTime.getTime()) / 60000,
+      );
+      return sum + duration;
+    }, 0);
+
+    alternatives.push({
+      id: "show_all",
+      label: "Show me everything anyway",
+      description: "See full chain regardless of time",
+      steps: allChainBlocks,
+      estimatedDuration: totalDuration,
+    });
+
+    return alternatives;
+  }
+
+  /**
+   * Format reality check result in neutral language
+   *
+   * Requirements: 7.3, 7.5
+   *
+   * Never uses judgment terms: "late", "behind", "missed", "failed", "should have started"
+   *
+   * @param result - Reality check result
+   * @returns Neutral language description
+   */
+  formatRealityCheck(result: RealityCheckResult): string {
+    if (result.possibleSteps.length === 0) {
+      return "You have time to head straight to your anchor.";
     }
 
-    return { possibleSteps, skippableSteps };
+    const stepNames = result.possibleSteps
+      .map((step) => step.activityName)
+      .join(", ");
+
+    return `You have time for: ${stepNames}`;
   }
 
   /**
-   * Identify the keystone activity in the chain
-   * Usually the longest prep step or explicitly marked
+   * Find keystone activity ID for an anchor
+   *
+   * @param timeBlocks - All time blocks
+   * @param anchorId - Anchor activity ID
+   * @returns Keystone block ID or null
    */
-  private identifyKeystone(blocks: TimeBlock[]): TimeBlock | null {
-    // Look for explicitly marked keystone
-    const markedKeystone = blocks.find(
-      (block) => block.metadata?.is_keystone === true
+  private findKeystoneId(
+    timeBlocks: TimeBlock[],
+    anchorId: string,
+  ): string | null {
+    const keystoneBlock = this.triageService.identifyKeystoneActivity(
+      timeBlocks,
+      anchorId,
     );
-    if (markedKeystone) return markedKeystone;
-
-    // Find longest prep block as fallback
-    const prepBlocks = blocks.filter(
-      (block) =>
-        block.metadata?.commitment_envelope?.envelope_type === 'prep'
-    );
-
-    if (prepBlocks.length === 0) return null;
-
-    return prepBlocks.reduce((longest, current) => {
-      const longestDuration = this.getBlockDuration(longest);
-      const currentDuration = this.getBlockDuration(current);
-      return currentDuration > longestDuration ? current : longest;
-    });
-  }
-
-  /**
-   * Check if essential steps are included
-   * Essential = keystone or travel
-   */
-  private hasEssentialSteps(
-    possibleSteps: TimeBlock[],
-    allBlocks: TimeBlock[]
-  ): boolean {
-    const keystone = this.identifyKeystone(allBlocks);
-    if (!keystone) return true; // No keystone defined, any steps are fine
-
-    // Check if keystone or quick version is included
-    return possibleSteps.some(
-      (step) =>
-        step.id === keystone.id ||
-        step.activityName.includes(keystone.activityName)
-    );
-  }
-
-  /**
-   * Get block duration in minutes
-   */
-  private getBlockDuration(block: TimeBlock): number {
-    return Math.floor(
-      (block.endTime.getTime() - block.startTime.getTime()) / 60000
-    );
+    return keystoneBlock?.id || null;
   }
 }

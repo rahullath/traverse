@@ -1,7 +1,7 @@
 // src/components/monitoring/MetricsDashboard.tsx
 // Dashboard component for displaying monitoring metrics
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface MetricsData {
   performance: {
@@ -46,13 +46,15 @@ export function MetricsDashboard() {
 
   async function loadMetrics() {
     try {
-      const response = await fetch(`/api/monitoring/metrics?timeWindow=${timeWindow}`);
-      if (!response.ok) throw new Error('Failed to load metrics');
+      const response = await fetch(
+        `/api/monitoring/metrics?timeWindow=${timeWindow}`,
+      );
+      if (!response.ok) throw new Error("Failed to load metrics");
       const data = await response.json();
       setMetrics(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,9 @@ export function MetricsDashboard() {
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-text-primary">Triage Mirror Metrics</h2>
+        <h2 className="text-2xl font-bold text-text-primary">
+          Triage Mirror Metrics
+        </h2>
         <select
           value={timeWindow}
           onChange={(e) => setTimeWindow(parseInt(e.target.value))}
@@ -96,7 +100,7 @@ export function MetricsDashboard() {
       {/* Performance Metrics */}
       <section className="space-y-4">
         <h3 className="text-xl font-semibold text-text-primary">Performance</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MetricCard
             title="Runway Calculation"
@@ -114,31 +118,43 @@ export function MetricsDashboard() {
       {/* Engagement Metrics */}
       <section className="space-y-4">
         <h3 className="text-xl font-semibold text-text-primary">Engagement</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 bg-surface border border-border rounded-lg">
-            <div className="text-sm text-text-secondary mb-1">Triage Activation Rate</div>
+            <div className="text-sm text-text-secondary mb-1">
+              Triage Activation Rate
+            </div>
             <div className="text-3xl font-bold text-text-primary">
               {(metrics.engagement.triage_activation_rate * 100).toFixed(1)}%
             </div>
           </div>
 
           <div className="p-4 bg-surface border border-border rounded-lg">
-            <div className="text-sm text-text-secondary mb-1">Completion Rate</div>
+            <div className="text-sm text-text-secondary mb-1">
+              Completion Rate
+            </div>
             <div className="text-3xl font-bold text-text-primary">
               {(metrics.engagement.completion_rate * 100).toFixed(1)}%
             </div>
           </div>
 
           <div className="p-4 bg-surface border border-border rounded-lg">
-            <div className="text-sm text-text-secondary mb-2">State Declarations</div>
+            <div className="text-sm text-text-secondary mb-2">
+              State Declarations
+            </div>
             <div className="space-y-1 text-sm">
-              {Object.entries(metrics.engagement.state_declaration_usage).map(([state, count]) => (
-                <div key={state} className="flex justify-between">
-                  <span className="text-text-secondary">{formatStateName(state)}</span>
-                  <span className="text-text-primary font-medium">{count}</span>
-                </div>
-              ))}
+              {Object.entries(metrics.engagement.state_declaration_usage).map(
+                ([state, count]) => (
+                  <div key={state} className="flex justify-between">
+                    <span className="text-text-secondary">
+                      {formatStateName(state)}
+                    </span>
+                    <span className="text-text-primary font-medium">
+                      {count}
+                    </span>
+                  </div>
+                ),
+              )}
             </div>
           </div>
         </div>
@@ -147,17 +163,21 @@ export function MetricsDashboard() {
       {/* Error Rates */}
       <section className="space-y-4">
         <h3 className="text-xl font-semibold text-text-primary">Error Rates</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <ErrorRateCard title="Mirror API" rate={metrics.errors.mirror_api} />
-          <ErrorRateCard title="Recalculate API" rate={metrics.errors.recalculate_api} />
+          <ErrorRateCard
+            title="Recalculate API"
+            rate={metrics.errors.recalculate_api}
+          />
           <ErrorRateCard title="State API" rate={metrics.errors.state_api} />
           <ErrorRateCard title="Triage API" rate={metrics.errors.triage_api} />
         </div>
       </section>
 
       <div className="text-xs text-text-secondary text-center">
-        Showing data from the last {timeWindowHours} hours • Auto-refreshes every minute
+        Showing data from the last {timeWindowHours} hours • Auto-refreshes
+        every minute
       </div>
     </div>
   );
@@ -179,19 +199,22 @@ function MetricCard({
         <div>
           <div className="text-xs text-text-secondary">p50</div>
           <div className="text-lg font-semibold text-text-primary">
-            {metrics.p50_ms.toFixed(0)}{unit}
+            {metrics.p50_ms.toFixed(0)}
+            {unit}
           </div>
         </div>
         <div>
           <div className="text-xs text-text-secondary">p95</div>
           <div className="text-lg font-semibold text-text-primary">
-            {metrics.p95_ms.toFixed(0)}{unit}
+            {metrics.p95_ms.toFixed(0)}
+            {unit}
           </div>
         </div>
         <div>
           <div className="text-xs text-text-secondary">p99</div>
           <div className="text-lg font-semibold text-text-primary">
-            {metrics.p99_ms.toFixed(0)}{unit}
+            {metrics.p99_ms.toFixed(0)}
+            {unit}
           </div>
         </div>
       </div>
@@ -211,7 +234,7 @@ function ErrorRateCard({ title, rate }: { title: string; rate: number }) {
       <div className="text-sm text-text-secondary mb-1">{title}</div>
       <div
         className={`text-2xl font-bold ${
-          isHigh ? 'text-error' : 'text-success'
+          isHigh ? "text-error" : "text-success"
         }`}
       >
         {percentage}%
@@ -222,7 +245,7 @@ function ErrorRateCard({ title, rate }: { title: string; rate: number }) {
 
 function formatStateName(state: string): string {
   return state
-    .split('_')
+    .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(" ");
 }

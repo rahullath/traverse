@@ -103,45 +103,84 @@ if (preferences) {
     <form id="onboarding-form" class="card" action="/api/user/complete-onboarding" method="POST">
       <div class="grid">
         <div class="field">
-          <label for="commitments">1. Do you have fixed commitments most days?</label>
-          <select id="commitments" name="commitments" required>
+          <label for="primary_goal">1. What should this app solve first?</label>
+          <select id="primary_goal" name="primary_goal" required>
             <option value="" disabled selected>Select one</option>
-            <option value="yes-many">Yes, several fixed anchors</option>
-            <option value="yes-few">Yes, one or two anchors</option>
-            <option value="none">No, mostly unstructured days</option>
+            <option value="activation">Help me start at all</option>
+            <option value="leaving_on_time">Help me leave on time</option>
+            <option value="panic_reduction">Reduce panic and overload</option>
+            <option value="sleep_regularity">Stabilize sleep/wake timing</option>
           </select>
         </div>
 
         <div class="field">
-          <label for="starting_difficulty">2. What is hardest right now?</label>
-          <select id="starting_difficulty" name="starting_difficulty" required>
-            <option value="" disabled selected>Select one</option>
-            <option value="starting">Starting tasks at all</option>
-            <option value="switching">Switching between tasks</option>
-            <option value="finishing">Finishing and closing loops</option>
+          <label for="keystone_activity">2. Keystone activity (first action)</label>
+          <input id="keystone_activity" name="keystone_activity" type="text" placeholder="e.g. Leave bed, shower, meds" required />
+        </div>
+
+        <div class="field">
+          <label for="activation_chain_minutes">3. Typical activation chain length (minutes)</label>
+          <input id="activation_chain_minutes" name="activation_chain_minutes" type="number" min="5" max="240" step="5" value="45" required />
+        </div>
+
+        <div class="field">
+          <label for="infeasible_response">4. If plan becomes infeasible, default response?</label>
+          <select id="infeasible_response" name="infeasible_response" required>
+            <option value="alternatives">Show alternatives first</option>
+            <option value="strict_skip">Strict skip guidance</option>
           </select>
         </div>
 
         <div class="field">
-          <label for="structure_style">3. Structure style you prefer?</label>
-          <select id="structure_style" name="structure_style" required>
-            <option value="" disabled selected>Select one</option>
-            <option value="gentle">Gentle guidance and flexibility</option>
-            <option value="balanced">Balanced structure</option>
-            <option value="firm">Firm sequence and clear checkboxes</option>
-          </select>
+          <label for="wake_window_start">5. Wake window start</label>
+          <input id="wake_window_start" name="wake_window_start" type="time" value="07:00" required />
         </div>
 
         <div class="field">
-          <label for="usual_wake_time">4. Typical wake time?</label>
-          <input type="time" id="usual_wake_time" name="usual_wake_time" value="07:00" required />
+          <label for="wake_window_end">6. Wake window end</label>
+          <input id="wake_window_end" name="wake_window_end" type="time" value="09:00" required />
         </div>
+
+        <div class="field">
+          <label for="sleep_window_start">7. Sleep window start</label>
+          <input id="sleep_window_start" name="sleep_window_start" type="time" value="22:30" required />
+        </div>
+
+        <div class="field">
+          <label for="sleep_window_end">8. Sleep window end</label>
+          <input id="sleep_window_end" name="sleep_window_end" type="time" value="00:30" required />
+        </div>
+
+        <div class="field">
+          <label for="min_sleep_hours">9. Minimum sleep target (hours)</label>
+          <input id="min_sleep_hours" name="min_sleep_hours" type="number" min="4" max="12" step="0.5" value="7.5" required />
+        </div>
+
+        <div class="field">
+          <label for="first_location_label">10. First reusable location label</label>
+          <input id="first_location_label" name="first_location_label" type="text" placeholder="University, Workplace, Home" required />
+        </div>
+
+        <div class="field">
+          <label for="first_location_travel_minutes">11. Total travel minutes to that label</label>
+          <input id="first_location_travel_minutes" name="first_location_travel_minutes" type="number" min="0" max="480" step="1" value="20" required />
+        </div>
+
+        <div class="field">
+          <label for="first_location_departure_slots">12. Departure slots (optional, comma separated)</label>
+          <input id="first_location_departure_slots" name="first_location_departure_slots" type="text" placeholder="12:27, 12:47" />
+        </div>
+
+        <input type="hidden" name="commitments" value="none" />
+        <input type="hidden" name="starting_difficulty" value="starting" />
+        <input type="hidden" name="structure_style" value="balanced" />
+        <input type="hidden" name="usual_wake_time" value="07:00" />
       </div>
 
       <button type="submit" id="submit-btn" class="btn">
-        Continue to Dashboard
+        Save Phase 1 and Continue
       </button>
-      <p class="meta">You can change everything later in Settings.</p>
+      <p class="meta">Phase 2 appears after your first successful day to tune anchors, lateness, and prompt intensity.</p>
     </form>
   </main>
 

@@ -30,21 +30,34 @@ export class TimePhysicsService {
     timeBlocks: TimeBlock[],
     currentTime: Date = new Date(),
   ): RunwayCalculation {
-    // Find next anchor after current time
-    // Requirement 1.1: Identify next anchor
-    const futureAnchors = timeBlocks
+    const candidateAnchors = timeBlocks
+      .filter((block) => block.metadata?.role?.type === "anchor")
+      .map((anchor) => {
+        const maxLateMinutes = Math.max(
+          0,
+          Number(anchor.metadata?.timing_signals?.max_late_minutes || 0),
+        );
+        const effectiveDeadlineIso =
+          anchor.metadata?.timing_signals?.effective_arrival_deadline;
+        const effectiveDeadline = effectiveDeadlineIso
+          ? new Date(effectiveDeadlineIso)
+          : new Date(anchor.startTime.getTime() + maxLateMinutes * 60_000);
+
+        return {
+          anchor,
+          effectiveDeadline,
+        };
+      })
       .filter(
-        (block) =>
-          block.metadata?.role?.type === "anchor" &&
-          new Date(block.startTime) > currentTime,
+        ({ effectiveDeadline }) =>
+          effectiveDeadline.getTime() > currentTime.getTime(),
       )
       .sort(
         (a, b) =>
-          new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+          a.effectiveDeadline.getTime() - b.effectiveDeadline.getTime(),
       );
 
-    // Requirement 1.4: Handle null cases (no future anchors)
-    if (futureAnchors.length === 0) {
+    if (candidateAnchors.length === 0) {
       return {
         runway: null,
         required_duration: null,
@@ -55,45 +68,58 @@ export class TimePhysicsService {
       };
     }
 
-    const nextAnchor = futureAnchors[0];
+    const { anchor: nextAnchor, effectiveDeadline } = candidateAnchors[0];
     const nextAnchorStart = new Date(nextAnchor.startTime);
 
-    // Requirement 1.1: Calculate runway as (next_anchor_start - current_time) in minutes
     const runwayMinutes = Math.floor(
-      (nextAnchorStart.getTime() - currentTime.getTime()) / 60000,
+      (effectiveDeadline.getTime() - currentTime.getTime()) / 60_000,
     );
 
-    // Requirement 1.2: Calculate required duration from commitment envelope
-    // Find all blocks that are part of the commitment envelope for this anchor
-    const anchorId = nextAnchor.activityId || nextAnchor.id;
-    const envelopeBlocks = timeBlocks.filter((block) => {
-      // Include blocks that are part of this anchor's commitment envelope
-      // and occur before the anchor start time
-      const isPartOfEnvelope =
-        block.metadata?.anchor_id === anchorId ||
-        block.metadata?.commitment_envelope?.envelope_id === anchorId;
-      const isBeforeAnchor = new Date(block.startTime) < nextAnchorStart;
+    const envelopeId = nextAnchor.metadata?.commitment_envelope?.envelope_id;
+    const relatedBlocks = envelopeId
+      ? timeBlocks.filter(
+          (block) =>
+            block.metadata?.commitment_envelope?.envelope_id === envelopeId,
+        )
+      : timeBlocks.filter(
+          (block) =>
+            block.metadata?.anchor_id ===
+            (nextAnchor.activityId || nextAnchor.metadata?.anchor_id),
+        );
 
-      return isPartOfEnvelope && isBeforeAnchor;
-    });
+    // Required duration is remaining prep + travel_there only.
+    const requiredDuration = relatedBlocks
+      .filter((block) => {
+        const envelopeType = block.metadata?.commitment_envelope?.envelope_type;
+        if (envelopeType !== "prep" && envelopeType !== "travel_there") {
+          return false;
+        }
+        return (
+          block.endTime.getTime() > currentTime.getTime() &&
+          block.status !== "completed" &&
+          block.status !== "skipped"
+        );
+      })
+      .reduce((total, block) => {
+        const remainingStart = Math.max(
+          block.startTime.getTime(),
+          currentTime.getTime(),
+        );
+        const remainingMinutes = Math.max(
+          0,
+          Math.floor((block.endTime.getTime() - remainingStart) / 60_000),
+        );
+        return total + remainingMinutes;
+      }, 0);
 
-    // Sum durations of all envelope steps (prep + travel_there)
-    const requiredDuration = envelopeBlocks.reduce((total, block) => {
-      const blockStart = new Date(block.startTime);
-      const blockEnd = new Date(block.endTime);
-      const duration = Math.floor(
-        (blockEnd.getTime() - blockStart.getTime()) / 60000,
-      );
-      return total + duration;
-    }, 0);
-
-    // Determine if user has sufficient time
     const hasSufficientTime = runwayMinutes >= requiredDuration;
+    const nextAnchorId =
+      nextAnchor.activityId || nextAnchor.metadata?.anchor_id || nextAnchor.id;
 
     return {
       runway: runwayMinutes,
       required_duration: requiredDuration,
-      next_anchor_id: anchorId,
+      next_anchor_id: nextAnchorId,
       next_anchor_start: nextAnchorStart,
       current_time: currentTime,
       has_sufficient_time: hasSufficientTime,

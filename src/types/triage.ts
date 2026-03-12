@@ -107,6 +107,19 @@ export interface FilteredTimeline {
 export interface MirrorData {
   /** Time blocks for display */
   time_blocks: TimeBlock[];
+  /** Envelope-level timing signals for explicit start/leave/anchor guidance */
+  timing_signals?: Array<{
+    envelope_id: string;
+    anchor_id: string | null;
+    suggested_start_by: string;
+    ready_to_leave_by: string;
+    anchor_at: string;
+    effective_arrival_deadline: string;
+    max_late_minutes: number;
+    travel_duration_minutes: number;
+    selected_departure_slot?: string | null;
+    next_feasible_departure_slot?: string | null;
+  }>;
   /** Runway calculation */
   runway: RunwayCalculation;
   /** Triage state */
