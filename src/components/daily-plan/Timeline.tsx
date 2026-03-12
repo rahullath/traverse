@@ -262,31 +262,34 @@ export default function Timeline({
       role="region"
       aria-label="Daily timeline"
     >
+      {/* Mobile-first sticky context bar - Task 13.3: Single compact sticky bar */}
       <div
-        className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border-primary py-2 px-3 sm:px-4 mb-3 sm:mb-4"
+        className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border-primary py-3 px-4 mb-4"
         role="status"
         aria-live="polite"
         aria-atomic="true"
       >
-        <div className="flex items-center justify-between gap-3">
+        {/* Mobile: Stacked layout, Desktop: Horizontal */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="flex items-center min-w-0">
-            <div className="w-2.5 h-2.5 bg-accent-primary rounded-full animate-pulse mr-2.5" />
-            <span className="text-xs sm:text-sm font-medium text-text-primary truncate">
+            <div className="w-2.5 h-2.5 bg-accent-primary rounded-full animate-pulse mr-2.5 shrink-0" />
+            <span className="text-sm font-medium text-text-primary truncate">
               {projectedCurrentTime ? "Projected Time" : "Current Time"}
             </span>
           </div>
-          <span className="text-base sm:text-lg font-semibold text-accent-primary">
+          <span className="text-xl sm:text-lg font-semibold text-accent-primary">
             {formatTime(effectiveCurrentTime)}
           </span>
         </div>
         {projectionNote && (
-          <p className="mt-1 text-[11px] sm:text-xs text-text-muted truncate">
+          <p className="mt-2 text-xs text-text-muted line-clamp-2 sm:line-clamp-1">
             {projectionNote}
           </p>
         )}
       </div>
 
-      <div className="space-y-3 sm:space-y-4 px-2 sm:px-4">
+      {/* Mobile-first spacing - Task 13.3: No horizontal squeeze */}
+      <div className="space-y-4 px-4">
         {filteredBlocks.map((block, index) => {
           const duration = calculateDuration(block.startTime, block.endTime);
           const envelopeType = block.metadata?.commitment_envelope?.envelope_type;
@@ -342,16 +345,20 @@ export default function Timeline({
 
           return (
             <React.Fragment key={block.id}>
+              {/* Mobile-first card layout - Task 13.3: Content first, controls second */}
               <div
-                className={`rounded-lg border-2 p-3 sm:p-4 transition-all ${getBlockStateClass(
+                className={`rounded-lg border-2 p-4 transition-all ${getBlockStateClass(
                   block,
                 )}`}
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                {/* Mobile: Vertical stack, Desktop: Horizontal */}
+                <div className="flex flex-col gap-4">
+                  {/* Content section - Always first on mobile */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center text-xs sm:text-sm text-text-muted mb-1.5">
+                    {/* Time display - Mobile optimized typography */}
+                    <div className="flex items-center text-sm text-text-muted mb-2">
                       <svg
-                        className="w-4 h-4 mr-1"
+                        className="w-4 h-4 mr-1.5 shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -363,13 +370,14 @@ export default function Timeline({
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <span>{getBlockDisplayTime(block)}</span>
+                      <span className="truncate">{getBlockDisplayTime(block)}</span>
                     </div>
 
-                    <div className="flex items-center mb-1.5">
+                    {/* Activity name - Mobile optimized */}
+                    <div className="flex items-start mb-2">
                       {isKeystoneBlock(block) && (
                         <span
-                          className="text-xl sm:text-2xl mr-2"
+                          className="text-2xl mr-2 shrink-0"
                           aria-label="Keystone activity"
                           title="Keystone activity"
                         >
@@ -377,7 +385,7 @@ export default function Timeline({
                         </span>
                       )}
                       <h3
-                        className={`text-base sm:text-lg font-semibold ${getBlockTextClass(
+                        className={`text-lg font-semibold leading-tight ${getBlockTextClass(
                           block,
                         )}`}
                       >
@@ -385,10 +393,11 @@ export default function Timeline({
                       </h3>
                     </div>
 
+                    {/* Envelope label */}
                     {envelopeLabel && (
-                      <div className="flex items-center text-xs text-text-muted mb-1.5">
+                      <div className="flex items-center text-xs text-text-muted mb-2">
                         <svg
-                          className="w-3 h-3 mr-1"
+                          className="w-3.5 h-3.5 mr-1.5 shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -404,10 +413,11 @@ export default function Timeline({
                       </div>
                     )}
 
+                    {/* Skip reason */}
                     {block.status === "skipped" && block.skipReason && (
-                      <div className="mt-1.5 text-sm text-yellow-400 flex items-center">
+                      <div className="mt-2 text-sm text-yellow-400 flex items-start">
                         <svg
-                          className="w-4 h-4 mr-1"
+                          className="w-4 h-4 mr-1.5 mt-0.5 shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -419,18 +429,19 @@ export default function Timeline({
                             d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                           />
                         </svg>
-                        Skipped: {block.skipReason}
+                        <span className="break-words">Skipped: {block.skipReason}</span>
                       </div>
                     )}
                   </div>
 
+                  {/* Controls section - Task 13.3: Touch targets >= 44x44 */}
                   {showCompletionControls && (
-                    <div className="flex items-center gap-2 sm:ml-4 shrink-0">
+                    <div className="flex items-center gap-3 pt-2 border-t border-border/50">
                       {block.status === "pending" && (
                         <>
                           <button
                             onClick={() => onBlockComplete(block.id)}
-                            className="p-2 rounded-lg bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            className="flex-1 sm:flex-none p-3 rounded-lg bg-green-500/20 hover:bg-green-500/30 active:bg-green-500/40 border border-green-500/40 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
                             title="Mark as complete"
                             aria-label={`Mark ${block.activityName} as complete`}
                           >
@@ -451,7 +462,7 @@ export default function Timeline({
 
                           <button
                             onClick={() => handleSkipClick(block.id)}
-                            className="p-2 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            className="flex-1 sm:flex-none p-3 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 active:bg-yellow-500/40 border border-yellow-500/40 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
                             title="Skip"
                             aria-label={`Skip ${block.activityName}`}
                           >
@@ -475,7 +486,7 @@ export default function Timeline({
                       {editMode && (
                         <button
                           onClick={() => onBlockEdit(block.id)}
-                          className="p-2 rounded-lg bg-accent-primary/20 hover:bg-accent-primary/30 border border-accent-primary/40 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                          className="flex-1 sm:flex-none p-3 rounded-lg bg-accent-primary/20 hover:bg-accent-primary/30 active:bg-accent-primary/40 border border-accent-primary/40 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
                           title="Edit"
                           aria-label={`Edit ${block.activityName}`}
                         >

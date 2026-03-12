@@ -70,87 +70,94 @@ export function AnchorInfoCard({
     <div
       role="region"
       aria-label="Anchor information"
-      className="mb-3 sm:mb-4 p-3 sm:p-4 bg-surface-primary border border-border rounded-lg"
+      className="mb-4 p-4 bg-surface-primary border border-border rounded-lg"
     >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <h3 className="text-base sm:text-lg font-semibold text-text-primary mb-1">
-            Anchor at {formatAnchorTime(anchorAt)}
-          </h3>
+      {/* Mobile-first layout - Task 13.3 */}
+      <div className="flex flex-col gap-3">
+        {/* Header section */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            {/* Anchor time - Mobile optimized typography */}
+            <h3 className="text-xl font-semibold text-text-primary mb-1 leading-tight">
+              Anchor at {formatAnchorTime(anchorAt)}
+            </h3>
 
-          {/* Activity name */}
-          <p className="text-sm text-text-secondary mb-2 leading-snug">
-            {anchor.activityName}
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs sm:text-sm">
-            {startBy && (
-              <p className="text-text-muted">
-                Start by{" "}
-                <span className="text-text-secondary font-medium">
-                  {formatAnchorTime(startBy)}
-                </span>
-              </p>
-            )}
-            {leaveBy && (
-              <p className="text-text-muted">
-                Leave by{" "}
-                <span className="text-text-secondary font-medium">
-                  {formatAnchorTime(leaveBy)}
-                </span>
-              </p>
-            )}
-            <p className="text-text-muted">
-              Latest arrival{" "}
-              <span className="text-text-secondary font-medium">
-                {formatAnchorTime(effectiveDeadline)}
-              </span>
+            {/* Activity name */}
+            <p className="text-sm text-text-secondary mb-3 leading-snug break-words">
+              {anchor.activityName}
             </p>
           </div>
 
-          <p className="text-xs sm:text-sm text-text-muted mt-2" aria-live="polite">
-            {timeRemaining > 0
-              ? formatTimeRemaining(timeRemaining)
-              : "(anchor time has passed)"}
-          </p>
+          {/* Expand/collapse button - Task 13.3: Touch target >= 44x44 */}
+          {onToggleExpand && (
+            <button
+              onClick={onToggleExpand}
+              className="p-3 text-text-secondary hover:text-text-primary active:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary rounded min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0 touch-manipulation"
+              aria-label={
+                isExpanded ? "Collapse anchor details" : "Expand anchor details"
+              }
+              aria-expanded={isExpanded}
+            >
+              <svg
+                className={`w-6 h-6 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          )}
         </div>
 
-        {/* Expand/collapse button for multi-anchor scenarios - Req 12.2, 12.3 */}
-        {onToggleExpand && (
-          <button
-            onClick={onToggleExpand}
-            className="ml-4 p-2 text-text-secondary hover:text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary rounded"
-            aria-label={
-              isExpanded ? "Collapse anchor details" : "Expand anchor details"
-            }
-            aria-expanded={isExpanded}
-          >
-            <svg
-              className={`w-5 h-5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-        )}
-      </div>
+        {/* Timing details - Mobile: Stacked, Desktop: Grid */}
+        <div className="flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:gap-3 text-sm">
+          {startBy && (
+            <div className="flex items-baseline gap-2">
+              <span className="text-text-muted shrink-0">Start by</span>
+              <span className="text-text-secondary font-medium">
+                {formatAnchorTime(startBy)}
+              </span>
+            </div>
+          )}
+          {leaveBy && (
+            <div className="flex items-baseline gap-2">
+              <span className="text-text-muted shrink-0">Leave by</span>
+              <span className="text-text-secondary font-medium">
+                {formatAnchorTime(leaveBy)}
+              </span>
+            </div>
+          )}
+          <div className="flex items-baseline gap-2">
+            <span className="text-text-muted shrink-0">Latest arrival</span>
+            <span className="text-text-secondary font-medium">
+              {formatAnchorTime(effectiveDeadline)}
+            </span>
+          </div>
+        </div>
 
-      {/* Can I make it? button - Req 1.2 */}
-      <button
-        onClick={onRealityCheck}
-      className="mt-3 w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-background"
-      aria-label="Check if you can make this anchor"
-    >
-      Can I make it?
-      </button>
+        {/* Time remaining */}
+        <p className="text-sm text-text-muted" aria-live="polite">
+          {timeRemaining > 0
+            ? formatTimeRemaining(timeRemaining)
+            : "(anchor time has passed)"}
+        </p>
+
+        {/* Can I make it? button - Task 13.3: Touch target >= 44x44 */}
+        <button
+          onClick={onRealityCheck}
+          className="w-full px-4 py-3 text-sm font-medium rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-surface-hover active:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-background min-h-[44px] touch-manipulation"
+          aria-label="Check if you can make this anchor"
+        >
+          Can I make it?
+        </button>
+      </div>
     </div>
   );
 }

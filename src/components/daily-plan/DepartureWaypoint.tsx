@@ -102,60 +102,82 @@ export function DepartureWaypoint({
     <div
       role="region"
       aria-label="Departure waypoint"
-      className={`mb-3 sm:mb-4 p-3 sm:p-4 bg-surface-primary rounded-lg transition-all ${highlightClasses}`}
+      className={`mb-4 p-4 bg-surface-primary rounded-lg transition-all ${highlightClasses}`}
     >
-      {/* Leave by [time] - Req 6.2, 6.4 */}
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-sm sm:text-sm text-text-muted uppercase tracking-wide">
-          Leave by
-        </span>
-        <span className="text-2xl sm:text-2xl font-semibold text-text-primary">
-          {formatDepartureTime(departureAt)}
-        </span>
+      {/* Mobile-first layout - Task 13.3 */}
+      <div className="flex flex-col gap-3">
+        {/* Leave by [time] - Req 6.2, 6.4 - Mobile optimized */}
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-text-muted uppercase tracking-wide">
+            Leave by
+          </span>
+          <span className="text-3xl font-semibold text-text-primary leading-none">
+            {formatDepartureTime(departureAt)}
+          </span>
+        </div>
+
+        {/* Countdown - Req 6.3 */}
+        <p className="text-base text-text-secondary" aria-live="polite">
+          {formatCountdown(minutesUntilDeparture)}
+        </p>
+
+        {/* Destination context - Mobile: Collapsible details */}
+        <details className="group">
+          <summary className="text-sm text-text-muted cursor-pointer hover:text-text-primary transition-colors list-none flex items-center gap-2 touch-manipulation py-2">
+            <svg
+              className="w-4 h-4 transition-transform group-open:rotate-90"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+            <span>Travel details</span>
+          </summary>
+          <div className="mt-2 pl-6 text-sm text-text-muted space-y-2">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-text-muted">Travel to</span>
+              <span className="text-text-secondary break-words">{anchor.activityName}</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs text-text-muted shrink-0">Travel time:</span>
+              <span className="text-text-secondary">{travelDuration} min</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs text-text-muted shrink-0">Anchor starts:</span>
+              <span className="text-text-secondary">
+                {formatDepartureTime(anchorStartAt)}
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xs text-text-muted shrink-0">Latest arrival:</span>
+              <span className="text-text-secondary">
+                {formatDepartureTime(effectiveDeadline)}
+              </span>
+            </div>
+            {selectedSlot && (
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs text-text-muted shrink-0">Slot used:</span>
+                <span className="text-text-secondary">{selectedSlot}</span>
+              </div>
+            )}
+            {nextFeasibleSlot && (
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs text-text-muted shrink-0">Next feasible slot:</span>
+                <span className="text-text-secondary">{nextFeasibleSlot}</span>
+              </div>
+            )}
+          </div>
+        </details>
       </div>
 
-      {/* Countdown - Req 6.3 */}
-      <p className="text-sm sm:text-base text-text-secondary mb-2" aria-live="polite">
-        {formatCountdown(minutesUntilDeparture)}
-      </p>
-
-      {/* Destination context */}
-      <div className="text-xs sm:text-sm text-text-muted space-y-1">
-        <p>
-          Travel to:{" "}
-          <span className="text-text-secondary">{anchor.activityName}</span>
-        </p>
-        <p>
-          Travel time:{" "}
-          <span className="text-text-secondary">{travelDuration} min</span>
-        </p>
-        <p>
-          Anchor starts:{" "}
-          <span className="text-text-secondary">
-            {formatDepartureTime(anchorStartAt)}
-          </span>
-        </p>
-        <p>
-          Latest arrival:{" "}
-          <span className="text-text-secondary">
-            {formatDepartureTime(effectiveDeadline)}
-          </span>
-        </p>
-        {selectedSlot && (
-          <p>
-            Slot used: <span className="text-text-secondary">{selectedSlot}</span>
-          </p>
-        )}
-        {nextFeasibleSlot && (
-          <p>
-            Next feasible slot:{" "}
-            <span className="text-text-secondary">{nextFeasibleSlot}</span>
-          </p>
-        )}
-      </div>
-
-      {/* Visual hierarchy note: This component uses larger text (text-2xl) than 
-          chain steps (text-base), but smaller than anchor time display (text-3xl).
+      {/* Visual hierarchy note: This component uses larger text (text-3xl) than 
+          chain steps (text-lg), but smaller than anchor time display (text-xl on mobile).
           Req 6.4: Anchor time (largest) → Departure time (prominent) → Chain steps (smaller) */}
     </div>
   );
