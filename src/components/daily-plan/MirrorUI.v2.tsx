@@ -170,17 +170,9 @@ export default function MirrorUIV2({ userId }: MirrorUIV2Props) {
   const displayModeService = useMemo(() => new DisplayModeService(), []);
   const displayModeSerializer = useMemo(() => new DisplayModeSerializer(), []);
 
-  // Feature flags
+  // Feature flags — read here but early return moved to after all hooks
   const isFeatureDisabled = !isFeatureEnabled("TRIAGE_MIRROR_ENABLED");
   const isV2Enabled = isFeatureEnabled("MIRROR_V2_ENABLED");
-
-  if (isFeatureDisabled) {
-    return (
-      <Page>
-        <Prose style={{ margin: 0 }}>Mirror view is currently disabled.</Prose>
-      </Page>
-    );
-  }
 
   // ── Memos (identical to MirrorUI.tsx) ───────────────────────────
   const memoizedRunway = useMemo(() => data?.runway || null, [data?.runway]);
@@ -777,6 +769,15 @@ export default function MirrorUIV2({ userId }: MirrorUIV2Props) {
   }
 
   // ── Render ───────────────────────────────────────────────────────
+  // All hooks are above this point. Conditional returns only below.
+
+  if (isFeatureDisabled) {
+    return (
+      <Page>
+        <Prose style={{ margin: 0 }}>Mirror view is currently disabled.</Prose>
+      </Page>
+    );
+  }
 
   if (loading) {
     return (
