@@ -6,6 +6,7 @@
 import { supabase } from "../supabase/client";
 import { icalParser } from "./ical-parser";
 import { googleCalendar } from "./google-calendar";
+import { outlookCalendar } from "./outlook-calendar";
 import type {
   CalendarSource,
   CalendarEvent,
@@ -197,6 +198,9 @@ export class CalendarService {
         case "google":
           newEvents = await this.syncGoogleSource(source);
           break;
+        case "outlook":
+          newEvents = await this.syncOutlookSource(source);
+          break;
         case "manual":
           // Manual sources don't need syncing
           result.success = true;
@@ -360,6 +364,56 @@ export class CalendarService {
 
     return googleCalendar.convertToCalendarEvents(
       response.items,
+      source,
+      source.user_id,
+    );
+  }
+
+  /**
+   * Sync Outlook Calendar source
+   */
+  private async syncOutlookSource(
+    source: CalendarSource,
+  ): Promise<Omit<CalendarEvent, "id" | "created_at" | "updated_at">[]> {
+    if (!source.credentials?.access_token) {
+      throw new Error("Outlook Calendar source missing credentials");
+    }
+
+    let accessToken = source.credentials.access_token;
+
+    if (
+      source.credentials.expires_at &&
+      Date.now() >= source.credentials.expires_at
+    ) {
+      if (!source.credentials.refresh_token) {
+        throw new Error("Outlook Calendar refresh token missing");
+      }
+
+      const refreshed = await outlookCalendar.refreshAccessToken(
+        source.credentials.refresh_token,
+      );
+      accessToken = refreshed.access_token;
+
+      await this.storeGoogleCredentials(source.id, {
+        access_token: refreshed.access_token,
+        refresh_token: source.credentials.refresh_token,
+        expires_in: refreshed.expires_in,
+      });
+    }
+
+    const timeMin = new Date();
+    timeMin.setDate(timeMin.getDate() - 30);
+    const timeMax = new Date();
+    timeMax.setDate(timeMax.getDate() + 90);
+
+    const response = await outlookCalendar.fetchEvents(accessToken, {
+      timeMin,
+      timeMax,
+      maxResults: 2500,
+    });
+
+    return outlookCalendar.convertToCalendarEvents(
+      response.value,
       source,
       source.user_id,
     );

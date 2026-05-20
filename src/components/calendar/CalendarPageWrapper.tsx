@@ -9,6 +9,20 @@ import { CalendarSourceManager } from "./CalendarSourceManager";
 import { UnifiedCalendarView } from "./UnifiedCalendarView";
 import "../../styles/task-calendar-integration.css";
 
+const SUCCESS_MESSAGES: Record<string, string> = {
+  google_connected: "Google Calendar connected successfully!",
+  outlook_connected: "Outlook Calendar connected successfully!",
+};
+
+const ERROR_MESSAGES: Record<string, string> = {
+  oauth_denied: "Authorization was denied. Please try again.",
+  missing_code: "Authorization failed: missing code.",
+  invalid_state: "Authorization failed: invalid state.",
+  missing_state: "Authorization failed: missing state.",
+  callback_failed: "Calendar connection failed. Please try again.",
+  credentials_failed: "Failed to save credentials. Please try again.",
+};
+
 interface CalendarPageWrapperProps {
   userId: string;
 }
@@ -29,6 +43,10 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({
     null,
   );
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [banner, setBanner] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const fetchData = async () => {
     try {
@@ -64,16 +82,36 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({
 
   useEffect(() => {
     fetchData();
+
+    // Handle OAuth return params
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get("success");
+    const error = params.get("error");
+
+    if (success && SUCCESS_MESSAGES[success]) {
+      setBanner({ type: "success", message: SUCCESS_MESSAGES[success] });
+      // Clean up URL without reload
+      window.history.replaceState({}, "", window.location.pathname);
+      setTimeout(() => setBanner(null), 5000);
+    } else if (error && ERROR_MESSAGES[error]) {
+      setBanner({ type: "error", message: ERROR_MESSAGES[error] });
+      window.history.replaceState({}, "", window.location.pathname);
+      setTimeout(() => setBanner(null), 7000);
+    }
   }, []);
 
   const handleAddSource = async (source: CreateCalendarSourceRequest) => {
+    // Normalize webcal:// to https:// for iCal sources
+    if (source.url?.startsWith("webcal://")) {
+      source = { ...source, url: "https://" + source.url.slice(9) };
+    }
     const response = await fetch("/api/calendar/sources", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(source),
     });
     if (response.ok) {
-      fetchData(); // Refresh all data
+      fetchData();
     }
   };
 
@@ -167,6 +205,39 @@ const CalendarPageWrapper: React.FC<CalendarPageWrapperProps> = ({
 
   return (
     <>
+      {banner && (
+        <div
+          style={{
+            padding: "12px 20px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: banner.type === "success" ? "#d1fae5" : "#fee2e2",
+            border: `1px solid ${banner.type === "success" ? "#6ee7b7" : "#fca5a5"}`,
+            color: banner.type === "success" ? "#065f46" : "#991b1b",
+            fontWeight: 500,
+          }}
+        >
+          <span>
+            {banner.type === "success" ? "✅" : "❌"} {banner.message}
+          </span>
+          <button
+            onClick={() => setBanner(null)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "1.2rem",
+              opacity: 0.6,
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <div className="calendar-controls">
         <div className="view-controls">
           <button

@@ -1,9 +1,9 @@
 /**
  * Calendar Source Manager Component
- * Manages calendar sources with CRUD operations
+ * Manages calendar sources with CRUD operations and OAuth integrations
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type {
   CalendarSource,
   CreateCalendarSourceRequest,
@@ -48,17 +48,13 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
       color: formData.get("color") as string,
       sync_frequency: parseInt(formData.get("sync_frequency") as string),
     };
-
     await onAddSource(sourceData);
     setShowAddModal(false);
   };
 
   const handleCsvImport = async (data: any[]) => {
     const user = await authService.getCurrentUser();
-    if (!user) {
-      // Handle user not logged in
-      return;
-    }
+    if (!user) return;
 
     const events = parseCsvData(data);
     const sourceData: CreateCalendarSourceRequest = {
@@ -87,10 +83,20 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
     const labels = {
       google: "Google Calendar",
       ical: "iCal Feed",
-      outlook: "Outlook",
+      outlook: "Outlook / Microsoft 365",
       manual: "Manual",
     };
     return labels[type] || type;
+  };
+
+  const getSourceTypeIcon = (type: CalendarSource["type"]) => {
+    const icons = {
+      google: "🔵",
+      ical: "📡",
+      outlook: "🔷",
+      manual: "✏️",
+    };
+    return icons[type] || "📅";
   };
 
   const formatLastSync = (lastSync?: Date) => {
@@ -98,12 +104,9 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
     return new Date(lastSync).toLocaleString();
   };
 
-  console.log(
-    "CalendarSourceManager render - sources.length:",
-    sources.length,
-    "showAddModal:",
-    showAddModal,
-  );
+  const isOAuthSource = (source: CalendarSource) =>
+    (source.type === "google" || source.type === "outlook") &&
+    !source.credentials?.access_token;
 
   if (sources.length === 0) {
     return (
@@ -112,35 +115,25 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
           <div className="empty-icon">📅</div>
           <h3>No Calendar Sources</h3>
           <p>
-            Add your first calendar source to get started with unified calendar
-            management.
+            Connect Google Calendar, Outlook, or add an iCal feed to get
+            started.
           </p>
           <button
-            onClick={() => {
-              console.log("Add Calendar Source button clicked (empty state)");
-              setShowAddModal(true);
-              console.log("showAddModal set to true");
-            }}
+            onClick={() => setShowAddModal(true)}
             className="btn btn-primary"
           >
             Add Calendar Source
           </button>
         </div>
 
-        {/* Add Source Modal - must be here too for empty state */}
-        {showAddModal ? (
+        {showAddModal && (
           <AddSourceModal
-            key="add-source-modal"
             onSubmit={handleAddSource}
-            onClose={() => {
-              console.log("Closing modal");
-              setShowAddModal(false);
-            }}
+            onClose={() => setShowAddModal(false)}
             setShowCsvImporter={setShowCsvImporter}
           />
-        ) : null}
+        )}
 
-        {/* CSV Importer Modal */}
         {showCsvImporter && (
           <CSVImporter
             onImport={handleCsvImport}
@@ -156,11 +149,7 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
       <div className="manager-header">
         <h2>Calendar Sources</h2>
         <button
-          onClick={() => {
-            console.log("Add Source button clicked (header)");
-            setShowAddModal(true);
-            console.log("showAddModal set to true");
-          }}
+          onClick={() => setShowAddModal(true)}
           className="btn btn-primary"
         >
           <span className="icon">➕</span>
@@ -178,7 +167,9 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
                   style={{ backgroundColor: source.color }}
                 />
                 <div>
-                  <h3>{source.name}</h3>
+                  <h3>
+                    {getSourceTypeIcon(source.type)} {source.name}
+                  </h3>
                   <span className="source-type">
                     {getSourceTypeLabel(source.type)}
                   </span>
@@ -191,10 +182,26 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
               </div>
             </div>
 
+            {isOAuthSource(source) && (
+              <div
+                style={{
+                  background: "#fef3c7",
+                  border: "1px solid #f59e0b",
+                  borderRadius: "6px",
+                  padding: "8px 12px",
+                  fontSize: "0.8rem",
+                  color: "#92400e",
+                  marginBottom: "8px",
+                }}
+              >
+                ⚠️ Not connected — credentials missing. Delete and re-add to
+                authorize.
+              </div>
+            )}
+
             <div className="source-details">
               <div className="detail-row">
-                <strong>Sync Frequency:</strong> Every {source.sync_frequency}{" "}
-                minutes
+                <strong>Sync:</strong> Every {source.sync_frequency} minutes
               </div>
               <div className="detail-row">
                 <strong>Last Sync:</strong> {formatLastSync(source.last_sync)}
@@ -210,13 +217,15 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
             </div>
 
             <div className="source-actions">
-              <button
-                onClick={() => handleSync(source.id)}
-                disabled={loading[source.id]}
-                className="btn btn-sm btn-secondary"
-              >
-                {loading[source.id] ? "⏳ Syncing..." : "🔄 Sync"}
-              </button>
+              {!isOAuthSource(source) && (
+                <button
+                  onClick={() => handleSync(source.id)}
+                  disabled={loading[source.id]}
+                  className="btn btn-sm btn-secondary"
+                >
+                  {loading[source.id] ? "⏳ Syncing..." : "🔄 Sync"}
+                </button>
+              )}
 
               <button
                 onClick={() => handleToggleActive(source)}
@@ -251,20 +260,14 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
         ))}
       </div>
 
-      {/* Add Source Modal */}
-      {showAddModal ? (
+      {showAddModal && (
         <AddSourceModal
-          key="add-source-modal"
           onSubmit={handleAddSource}
-          onClose={() => {
-            console.log("Closing modal");
-            setShowAddModal(false);
-          }}
+          onClose={() => setShowAddModal(false)}
           setShowCsvImporter={setShowCsvImporter}
         />
-      ) : null}
+      )}
 
-      {/* Edit Source Modal */}
       {editingSource && (
         <EditSourceModal
           source={editingSource}
@@ -276,7 +279,6 @@ export const CalendarSourceManager: React.FC<CalendarSourceManagerProps> = ({
         />
       )}
 
-      {/* CSV Importer Modal */}
       {showCsvImporter && (
         <CSVImporter
           onImport={handleCsvImport}
@@ -299,27 +301,142 @@ const AddSourceModal: React.FC<AddSourceModalProps> = ({
   onClose,
   setShowCsvImporter,
 }) => {
-  console.log("AddSourceModal component rendering");
   const [sourceType, setSourceType] = useState<
     "google" | "ical" | "outlook" | "manual"
-  >("ical");
+  >("google");
   const [loading, setLoading] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+
+  const isOAuthType = sourceType === "google" || sourceType === "outlook";
+
+  const handleOAuthConnect = async (
+    name: string,
+    color: string,
+    syncFrequency: number,
+  ) => {
+    setLoading(true);
+    setOauthError(null);
+
+    try {
+      // 1. Create the source record first
+      const createRes = await fetch("/api/calendar/sources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          type: sourceType,
+          color,
+          sync_frequency: syncFrequency,
+        }),
+      });
+
+      if (!createRes.ok) {
+        const err = await createRes.json();
+        throw new Error(err.error || "Failed to create calendar source");
+      }
+
+      const { source } = await createRes.json();
+
+      // 2. Get the OAuth authorization URL
+      const authRes = await fetch(`/api/calendar/${sourceType}/auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceId: source.id }),
+      });
+
+      if (!authRes.ok) {
+        const err = await authRes.json();
+        // Clean up the created source if auth URL generation fails
+        await fetch(`/api/calendar/sources?id=${source.id}`, {
+          method: "DELETE",
+        });
+        throw new Error(err.error || "Failed to get authorization URL");
+      }
+
+      const { authUrl } = await authRes.json();
+
+      // 3. Redirect to OAuth provider
+      window.location.href = authUrl;
+    } catch (error) {
+      setOauthError(
+        error instanceof Error ? error.message : "Authorization failed",
+      );
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    if (isOAuthType) {
+      const name =
+        (formData.get("name") as string) ||
+        (sourceType === "google" ? "Google Calendar" : "Outlook Calendar");
+      const color = (formData.get("color") as string) || "#3B82F6";
+      const syncFrequency = parseInt(
+        (formData.get("sync_frequency") as string) || "60",
+      );
+      await handleOAuthConnect(name, color, syncFrequency);
+      return;
+    }
+
     try {
-      const formData = new FormData(e.currentTarget);
       await onSubmit(formData);
     } finally {
       setLoading(false);
     }
   };
 
+  const typeCards: {
+    type: "google" | "outlook" | "ical" | "manual";
+    label: string;
+    icon: string;
+    desc: string;
+    color: string;
+  }[] = [
+    {
+      type: "google",
+      label: "Google Calendar",
+      icon: "🔵",
+      desc: "Connect via OAuth",
+      color: "#4285F4",
+    },
+    {
+      type: "outlook",
+      label: "Outlook / Office 365",
+      icon: "🔷",
+      desc: "Connect via OAuth",
+      color: "#0078D4",
+    },
+    {
+      type: "ical",
+      label: "iCal Feed",
+      icon: "📡",
+      desc: "Any .ics URL",
+      color: "#10B981",
+    },
+    {
+      type: "manual",
+      label: "Manual",
+      icon: "✏️",
+      desc: "Create events yourself",
+      color: "#8B5CF6",
+    },
+  ];
+
+  const selectedTypeInfo = typeCards.find((c) => c.type === sourceType)!;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-content"
+        style={{ maxWidth: "480px" }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <h3>Add Calendar Source</h3>
           <button onClick={onClose} className="modal-close">
@@ -327,23 +444,161 @@ const AddSourceModal: React.FC<AddSourceModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Calendar Type</label>
-            <select
-              name="type"
-              value={sourceType}
-              onChange={(e) => setSourceType(e.target.value as any)}
-              required
+        {/* Type selector */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "8px",
+            marginBottom: "20px",
+          }}
+        >
+          {typeCards.map((card) => (
+            <button
+              key={card.type}
+              type="button"
+              onClick={() => setSourceType(card.type)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "10px 14px",
+                border: `2px solid ${sourceType === card.type ? card.color : "#e5e7eb"}`,
+                borderRadius: "8px",
+                background:
+                  sourceType === card.type ? `${card.color}18` : "transparent",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.15s",
+              }}
             >
-              <option value="ical">iCal Feed (University Schedule)</option>
-              <option value="google">Google Calendar</option>
-              <option value="outlook">Outlook Calendar</option>
-              <option value="manual">Manual Events</option>
-            </select>
-          </div>
+              <span style={{ fontSize: "1.4rem" }}>{card.icon}</span>
+              <div>
+                <div
+                  style={{
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    color: sourceType === card.type ? card.color : "inherit",
+                  }}
+                >
+                  {card.label}
+                </div>
+                <div style={{ fontSize: "0.72rem", opacity: 0.6 }}>
+                  {card.desc}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          {/* Hidden type field for non-OAuth types */}
+          <input type="hidden" name="type" value={sourceType} />
 
           <div className="form-group">
+            <label>Calendar Name</label>
+            <input
+              type="text"
+              name="name"
+              placeholder={
+                sourceType === "google"
+                  ? "My Google Calendar"
+                  : sourceType === "outlook"
+                    ? "My Outlook Calendar"
+                    : sourceType === "ical"
+                      ? "e.g., University Schedule"
+                      : "Personal Events"
+              }
+            />
+          </div>
+
+          {/* iCal-specific: URL input */}
+          {sourceType === "ical" && (
+            <div className="form-group">
+              <label>iCal Feed URL *</label>
+              <input
+                type="text"
+                name="url"
+                required
+                placeholder="https://example.com/calendar.ics  or  webcal://..."
+              />
+              <small>
+                Supports https:// and webcal:// URLs. Most calendar apps
+                provide an "Export" or "Share" link ending in .ics
+              </small>
+            </div>
+          )}
+
+          {/* OAuth info panel */}
+          {isOAuthType && (
+            <div
+              style={{
+                background: `${selectedTypeInfo.color}12`,
+                border: `1px solid ${selectedTypeInfo.color}40`,
+                borderRadius: "8px",
+                padding: "14px",
+                marginBottom: "16px",
+                fontSize: "0.85rem",
+              }}
+            >
+              <p style={{ margin: "0 0 8px", fontWeight: 600 }}>
+                {sourceType === "google"
+                  ? "🔵 Sign in with Google"
+                  : "🔷 Sign in with Microsoft"}
+              </p>
+              <p style={{ margin: "0", opacity: 0.8 }}>
+                You'll be redirected to{" "}
+                {sourceType === "google" ? "Google" : "Microsoft"} to authorize
+                read access to your calendar. No events will be modified.
+              </p>
+            </div>
+          )}
+
+          {oauthError && (
+            <div
+              style={{
+                background: "#fee2e2",
+                border: "1px solid #f87171",
+                borderRadius: "6px",
+                padding: "10px",
+                color: "#b91c1c",
+                fontSize: "0.85rem",
+                marginBottom: "12px",
+              }}
+            >
+              ❌ {oauthError}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "12px",
+            }}
+          >
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Color</label>
+              <input
+                type="color"
+                name="color"
+                defaultValue={selectedTypeInfo.color}
+              />
+            </div>
+
+            <div className="form-group" style={{ margin: 0 }}>
+              <label>Sync Frequency</label>
+              <select name="sync_frequency" defaultValue="60">
+                <option value="30">Every 30 min</option>
+                <option value="60">Every hour</option>
+                <option value="120">Every 2 hours</option>
+                <option value="360">Every 6 hours</option>
+                <option value="1440">Daily</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginTop: "8px" }}>
             <button
               type="button"
               onClick={() => {
@@ -351,51 +606,13 @@ const AddSourceModal: React.FC<AddSourceModalProps> = ({
                 onClose();
               }}
               className="btn btn-secondary"
+              style={{ fontSize: "0.8rem", padding: "6px 12px" }}
             >
-              Import from CSV
+              📂 Import from CSV instead
             </button>
           </div>
 
-          <div className="form-group">
-            <label>Calendar Name</label>
-            <input
-              type="text"
-              name="name"
-              required
-              placeholder="e.g., University Schedule, Personal Calendar"
-            />
-          </div>
-
-          {sourceType === "ical" && (
-            <div className="form-group">
-              <label>iCal Feed URL</label>
-              <input
-                type="url"
-                name="url"
-                required
-                placeholder="https://example.com/calendar.ics"
-              />
-              <small>Paste your university's iCal feed URL here</small>
-            </div>
-          )}
-
-          <div className="form-group">
-            <label>Color</label>
-            <input type="color" name="color" defaultValue="#3B82F6" />
-          </div>
-
-          <div className="form-group">
-            <label>Sync Frequency</label>
-            <select name="sync_frequency" defaultValue="60">
-              <option value="30">Every 30 minutes</option>
-              <option value="60">Every hour</option>
-              <option value="120">Every 2 hours</option>
-              <option value="360">Every 6 hours</option>
-              <option value="1440">Daily</option>
-            </select>
-          </div>
-
-          <div className="modal-actions">
+          <div className="modal-actions" style={{ marginTop: "20px" }}>
             <button
               type="button"
               onClick={onClose}
@@ -407,8 +624,22 @@ const AddSourceModal: React.FC<AddSourceModalProps> = ({
               type="submit"
               disabled={loading}
               className="btn btn-primary"
+              style={
+                isOAuthType
+                  ? { background: selectedTypeInfo.color, border: "none" }
+                  : {}
+              }
             >
-              {loading ? "Adding..." : "Add Calendar"}
+              {loading ? (
+                "⏳ Connecting..."
+              ) : isOAuthType ? (
+                <>
+                  {selectedTypeInfo.icon} Connect with{" "}
+                  {sourceType === "google" ? "Google" : "Microsoft"}
+                </>
+              ) : (
+                "Add Calendar"
+              )}
             </button>
           </div>
         </form>

@@ -234,10 +234,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
 
       if (!existingManualAnchor) {
+        // departure_slots and location_travel_minutes are stored on
+        // location_travel_profiles, not manual_anchors — omit them here.
+        const {
+          departure_slots: _ds,
+          location_travel_minutes: _ltm,
+          ...manualAnchorCoreFields
+        } = parsedManualAnchor;
+
         const manualAnchorInsertPayload = {
           user_id: user.id,
           anchor_date: anchorDate,
-          ...parsedManualAnchor,
+          ...manualAnchorCoreFields,
         } as any;
 
         let { error: manualAnchorError } = await supabase
@@ -247,7 +255,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         if (
           manualAnchorError &&
           (manualAnchorError.message.includes("location_label") ||
-            manualAnchorError.message.includes("max_late_minutes"))
+            manualAnchorError.message.includes("max_late_minutes") ||
+            manualAnchorError.message.includes("location_travel_minutes") ||
+            manualAnchorError.message.includes("departure_slots"))
         ) {
           const { location_label, max_late_minutes, ...legacyPayload } =
             manualAnchorInsertPayload;

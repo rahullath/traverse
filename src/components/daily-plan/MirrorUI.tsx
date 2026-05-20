@@ -239,18 +239,26 @@ export default function MirrorUI({ userId }: MirrorUIProps) {
   }, [isV2Enabled, analyticsEnabled, data]);
 
   // Load display mode from sessionStorage on mount (Req 18.2, 18.3)
+  // Always clear stale entries — stale times cause "anchor time has passed" bug
   useEffect(() => {
+    displayModeSerializer.clearOldEntries();
+
     if (isV2Enabled) {
       const stored = displayModeSerializer.loadFromStorage();
       if (stored) {
-        setDisplayMode(stored.mode);
-        setChainStartTime(stored.startTime);
-        setShowTimes(stored.showTimes);
-        setShowIntentPrompt(false); // Don't show prompt if we have stored state
+        // Only restore if the stored timestamp is from today
+        const storedDate = new Date(stored.timestamp);
+        const isToday = storedDate.toDateString() === new Date().toDateString();
+        if (isToday) {
+          setDisplayMode(stored.mode);
+          setChainStartTime(stored.startTime);
+          setShowTimes(stored.showTimes);
+          setShowIntentPrompt(false);
+        } else {
+          // Stale — clear it
+          displayModeSerializer.clearOldEntries();
+        }
       }
-
-      // Clear old entries (Req 18.4)
-      displayModeSerializer.clearOldEntries();
     }
   }, [isV2Enabled]);
 
@@ -1591,10 +1599,10 @@ export default function MirrorUI({ userId }: MirrorUIProps) {
           onBlockEdit={handleBlockEdit}
           onRefresh={loadMirrorData}
           onBlockDelete={handleBlockDelete}
-          onRealityCheck={isV2Enabled ? handleRealityCheck : undefined}
+          onRealityCheck={handleRealityCheck}
           showTimes={isV2Enabled ? showTimes : true}
           showCompletionControls={
-            isV2Enabled ? showCompletionControls : true
+            isV2Enabled ? showCompletionControls : showCompletionControls
           }
           showRecoveryBlocks={isV2Enabled ? showRecoveryBlocks : true}
           displayMode={

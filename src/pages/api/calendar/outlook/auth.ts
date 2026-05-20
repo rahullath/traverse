@@ -1,9 +1,9 @@
 /**
- * Google Calendar OAuth Initiation API
+ * Microsoft Outlook Calendar OAuth Initiation
  */
 
 import type { APIRoute } from "astro";
-import { googleCalendar } from "lib/calendar/google-calendar";
+import { outlookCalendar } from "lib/calendar/outlook-calendar";
 import { createServerAuth } from "lib/auth/simple-multi-user";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -31,14 +31,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       JSON.stringify({ userId: user.id, sourceId }),
     );
 
-    const authUrl = googleCalendar.getAuthUrl(state);
+    const authUrl = outlookCalendar.getAuthUrl(state);
 
     return new Response(JSON.stringify({ authUrl }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error generating Google Calendar auth URL:", error);
+    console.error("Error generating Outlook auth URL:", error);
     return new Response(
       JSON.stringify({
         error: "Failed to generate authorization URL",
