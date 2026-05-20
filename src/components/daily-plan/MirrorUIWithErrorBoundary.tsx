@@ -1,23 +1,19 @@
 import React from "react";
 import { ErrorBoundary } from "./ErrorBoundary";
 import MirrorUI, { type MirrorUIProps } from "./MirrorUI";
+import MirrorUIV2 from "./MirrorUI.v2";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
-/**
- * MirrorUI wrapped with ErrorBoundary for production error handling
- * This component catches and handles any React errors in the Mirror UI tree
- */
 export default function MirrorUIWithErrorBoundary(props: MirrorUIProps) {
   const handleError = (error: Error, errorInfo: React.ErrorInfo) => {
-    // Log to console in development
     console.error("MirrorUI Error:", error, errorInfo);
-
-    // In production, you would send this to a monitoring service
-    // Example: logErrorToMonitoring({ error, errorInfo, userId: props.userId });
   };
+
+  const Mirror = isFeatureEnabled("MIRROR_V2_ENABLED") ? MirrorUIV2 : MirrorUI;
 
   return (
     <ErrorBoundary onError={handleError}>
-      <MirrorUI {...props} />
+      <Mirror {...props} />
     </ErrorBoundary>
   );
 }
