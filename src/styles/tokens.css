@@ -1,0 +1,382 @@
+/* ============================================================
+   traverse — design tokens · paper-and-ink
+   Import AFTER messy-theme.css. Variable names don't conflict.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+:root {
+  /* — Daylight (calm light) — */
+  --paper:         oklch(0.975 0.008 80);
+  --paper-deep:    oklch(0.94 0.012 80);
+  --rule:          oklch(0.86 0.012 80);
+  --rule-strong:   oklch(0.74 0.012 80);
+  --ink:           oklch(0.22 0.018 70);
+  --ink-soft:      oklch(0.42 0.015 70);
+  --ink-mute:      oklch(0.62 0.012 70);
+  --ink-trace:     oklch(0.80 0.010 70);
+  --accent:        oklch(0.42 0.085 245);
+  --accent-soft:   oklch(0.55 0.060 245);
+  --accent-trace:  oklch(0.94 0.020 245);
+  --warn:          oklch(0.50 0.090 50);
+}
+
+[data-theme="lamp"] {
+  /* — Lamp (low-stim dark) — warm charcoal, not OLED black — */
+  --paper:         oklch(0.175 0.010 80);
+  --paper-deep:    oklch(0.135 0.010 80);
+  --rule:          oklch(0.28 0.010 80);
+  --rule-strong:   oklch(0.40 0.010 80);
+  --ink:           oklch(0.92 0.008 80);
+  --ink-soft:      oklch(0.72 0.010 80);
+  --ink-mute:      oklch(0.52 0.010 80);
+  --ink-trace:     oklch(0.35 0.010 80);
+  --accent:        oklch(0.75 0.070 240);
+  --accent-soft:   oklch(0.62 0.060 240);
+  --accent-trace:  oklch(0.28 0.030 240);
+  --warn:          oklch(0.72 0.090 55);
+}
+
+/* Density scale */
+:root {
+  --density: 1;
+  --space-1: calc(4px  * var(--density));
+  --space-2: calc(8px  * var(--density));
+  --space-3: calc(12px * var(--density));
+  --space-4: calc(16px * var(--density));
+  --space-5: calc(24px * var(--density));
+  --space-6: calc(32px * var(--density));
+  --space-7: calc(48px * var(--density));
+  --space-8: calc(64px * var(--density));
+
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --sans:  'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* App root — applied by <Page> wrapper, not globally */
+.tv-app {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  min-height: 100%;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background 240ms ease, color 240ms ease;
+}
+
+/* Page padding (after status bar) */
+.tv-page {
+  padding: 64px var(--space-5) var(--space-7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+/* — Typography — */
+.tv-serif { font-family: var(--serif); font-weight: 400; letter-spacing: -0.005em; }
+.tv-mono  { font-family: var(--mono);  font-variant-numeric: tabular-nums; }
+
+.tv-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-mute);
+  font-weight: 400;
+}
+
+.tv-display {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.tv-display em { font-style: italic; color: var(--ink-soft); }
+
+.tv-prose {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+.tv-prose strong { color: var(--ink); font-weight: 500; }
+
+.tv-ui   { font-family: var(--sans); font-size: 14px; color: var(--ink); }
+.tv-ui-s { font-family: var(--sans); font-size: 12.5px; color: var(--ink-soft); }
+
+/* — Rules — */
+.tv-rule        { height: 1px; background: var(--rule); border: 0; margin: 0; }
+.tv-rule-strong { background: var(--rule-strong); }
+
+/* — Margin marks — */
+.tv-marginrow {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+.tv-mark          { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); text-align: right; padding-top: 2px; letter-spacing: 0.04em; }
+.tv-mark--now     { color: var(--accent); }
+.tv-mark--keystone{ color: var(--accent); }
+.tv-mark--past    { color: var(--ink-trace); text-decoration: line-through; text-decoration-thickness: 1px; }
+
+/* — Time block (timeline row) — */
+.tv-block {
+  display: grid;
+  grid-template-columns: 56px 12px 1fr;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  align-items: start;
+}
+.tv-block + .tv-block { border-top: 1px solid var(--rule); }
+
+.tv-block__time {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-soft);
+  padding-top: 2px;
+  letter-spacing: 0.01em;
+}
+.tv-block__gutter {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-mute);
+  text-align: center;
+  padding-top: 3px;
+  line-height: 1;
+}
+.tv-block__body  { display: flex; flex-direction: column; gap: 2px; }
+.tv-block__name  { font-family: var(--serif); font-size: 17px; font-weight: 400; color: var(--ink); line-height: 1.25; }
+.tv-block__meta  { font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); letter-spacing: 0.08em; text-transform: lowercase; }
+
+/* States */
+.tv-block--past .tv-block__time,
+.tv-block--past .tv-block__name { color: var(--ink-trace); }
+.tv-block--past .tv-block__name { text-decoration: line-through; text-decoration-thickness: 1px; text-decoration-color: var(--ink-trace); }
+.tv-block--past .tv-block__meta { color: var(--ink-trace); }
+
+/* "now" bleeds to page edges — only works inside .tv-page (padding: var(--space-5)) */
+.tv-block--now {
+  background: var(--accent-trace);
+  margin: 0 calc(var(--space-5) * -1);
+  padding-left: var(--space-5);
+  padding-right: var(--space-5);
+  border-top: 1px solid var(--accent) !important;
+  border-bottom: 1px solid var(--accent);
+}
+.tv-block--now + .tv-block         { border-top: 1px solid var(--accent) !important; }
+.tv-block--now .tv-block__time     { color: var(--accent); font-weight: 500; }
+.tv-block--now .tv-block__name     { color: var(--ink); font-weight: 500; }
+
+.tv-block--keystone .tv-block__name::before { content: "·"; color: var(--accent); margin-right: 0; }
+
+/* — Buttons — */
+.tv-btn {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  border-radius: 0;
+  padding: 12px 16px;
+  cursor: default;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.tv-btn:hover   { border-color: var(--ink); }
+.tv-btn:active  { background: var(--paper-deep); }
+
+.tv-btn__hint {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.tv-btn--primary             { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.tv-btn--primary:hover       { background: var(--ink); }
+.tv-btn--primary .tv-btn__hint { color: var(--ink-trace); }
+
+.tv-btn--ghost               { border-color: transparent; padding-left: 0; padding-right: 0; }
+.tv-btn--ghost:hover         { border-color: transparent; color: var(--accent); }
+
+.tv-btn--quiet               { border-color: var(--rule); color: var(--ink-soft); }
+
+/* — Cards (used sparingly) — */
+.tv-card {
+  border: 1px solid var(--rule);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: transparent;
+}
+.tv-card--quote {
+  border-left: 2px solid var(--accent);
+  border-top: none; border-right: none; border-bottom: none;
+  padding-left: var(--space-4);
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* — Action stack — */
+.tv-actions { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* — Footer nav — */
+.tv-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--paper);
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: space-around;
+  padding: var(--space-3) var(--space-4) calc(var(--space-3) + 14px);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.tv-footer button { background: none; border: 0; font: inherit; color: inherit; padding: var(--space-2); letter-spacing: inherit; text-transform: inherit; cursor: default; }
+.tv-footer button[aria-current="true"] { color: var(--accent); }
+
+/* — Header — */
+.tv-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-2);
+}
+.tv-head__date  { font-family: var(--mono); font-size: 11.5px; color: var(--ink-mute); letter-spacing: 0.10em; text-transform: uppercase; }
+.tv-head__clock { font-family: var(--mono); font-size: 11.5px; color: var(--ink-mute); letter-spacing: 0.04em; }
+
+/* — Runway readout — */
+.tv-runway {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid var(--rule);
+}
+.tv-runway__num {
+  font-family: var(--mono);
+  font-size: 38px;
+  font-weight: 300;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.tv-runway__label {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* — Prompts — */
+.tv-prompt {
+  border-top: 1px solid var(--ink);
+  padding: var(--space-5) 0 var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.tv-prompt__header { display: flex; justify-content: space-between; align-items: baseline; }
+.tv-prompt__title  { font-family: var(--serif); font-size: 22px; line-height: 1.2; color: var(--ink); letter-spacing: -0.01em; text-wrap: pretty; margin: 0; }
+.tv-prompt__caption{ font-family: var(--serif); font-size: 14px; font-style: italic; color: var(--ink-soft); margin: 0; }
+
+/* — Settings rows — */
+.tv-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.tv-setting__label { display: flex; flex-direction: column; gap: 2px; }
+.tv-setting__name  { font-family: var(--sans); font-size: 14px; color: var(--ink); font-weight: 500; }
+.tv-setting__hint  { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-soft); }
+
+/* Segmented control */
+.tv-seg { display: inline-flex; border: 1px solid var(--rule-strong); }
+.tv-seg button {
+  background: none;
+  border: 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 6px 10px;
+  cursor: default;
+  border-right: 1px solid var(--rule);
+}
+.tv-seg button:last-child          { border-right: 0; }
+.tv-seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* — Clinical mapping list — */
+.tv-cl-row       { display: grid; gap: var(--space-2); padding: var(--space-4) 0; border-bottom: 1px solid var(--rule); }
+.tv-cl-row__feat { font-family: var(--serif); font-size: 18px; color: var(--ink); }
+.tv-cl-row__lit  { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); }
+.tv-cl-row__cite { font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); letter-spacing: 0.04em; }
+
+/* — Onboarding pager dots — */
+.tv-pager-dots { display: flex; gap: 6px; justify-content: center; padding: var(--space-3) 0; }
+.tv-pager-dots span { width: 18px; height: 1px; background: var(--rule-strong); display: inline-block; }
+.tv-pager-dots span[aria-current="true"] { background: var(--ink); }
+
+/* — Close button — */
+.tv-close {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-mute);
+  background: none;
+  border: 0;
+  cursor: default;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+  padding: 0;
+}
+
+/* — Footnote — */
+.tv-foot-note {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-mute);
+  text-align: center;
+  padding-top: var(--space-4);
+  text-wrap: pretty;
+  margin: 0;
+}
+
+/* — Page transitions — */
+.tv-fade { animation: tvFade 240ms ease both; }
+@keyframes tvFade {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: none; }
+}
+[data-motion="off"] .tv-fade,
+.tv-page[data-motion="off"] { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .tv-fade { animation: none; } }

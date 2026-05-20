@@ -4,6 +4,18 @@ export default {
   theme: {
     extend: {
       colors: {
+        /* — tv design system — */
+        paper:         "var(--paper)",
+        "paper-deep":  "var(--paper-deep)",
+        ink:           "var(--ink)",
+        "ink-soft":    "var(--ink-soft)",
+        "ink-mute":    "var(--ink-mute)",
+        "ink-trace":   "var(--ink-trace)",
+        rule:          "var(--rule)",
+        "rule-strong": "var(--rule-strong)",
+        "tv-accent":   "var(--accent)",
+        "tv-warn":     "var(--warn)",
+        /* — legacy messy entries — */
         background: "rgb(var(--background) / <alpha-value>)",
         surface: "rgb(var(--surface) / <alpha-value>)",
         "surface-hover": "rgb(var(--surface-hover) / <alpha-value>)",
@@ -19,7 +31,9 @@ export default {
         "accent-purple": "rgb(var(--accent-purple) / <alpha-value>)",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans:  ["Inter", "system-ui", "sans-serif"],
+        serif: ["Newsreader", "Georgia", "serif"],
+        mono:  ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-in-out",
