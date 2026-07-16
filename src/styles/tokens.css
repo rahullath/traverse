@@ -61,7 +61,10 @@
   font-family: var(--sans);
   font-size: 15px;
   line-height: 1.45;
-  min-height: 100%;
+  /* 100vh, not 100%: html/body have no explicit height, so a percentage here
+     collapses to the content's own auto height on any page shorter than the
+     viewport, exposing the legacy dark body background underneath. */
+  min-height: 100vh;
   width: 100%;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -203,6 +206,7 @@
 }
 .tv-btn:hover   { border-color: var(--ink); }
 .tv-btn:active  { background: var(--paper-deep); }
+.tv-inline-btn  { width: auto; }
 
 .tv-btn__hint {
   font-family: var(--mono);
@@ -256,8 +260,8 @@
   text-transform: uppercase;
   color: var(--ink-mute);
 }
-.tv-footer button { background: none; border: 0; font: inherit; color: inherit; padding: var(--space-2); letter-spacing: inherit; text-transform: inherit; cursor: default; }
-.tv-footer button[aria-current="true"] { color: var(--accent); }
+.tv-footer button, .tv-footer a { background: none; border: 0; font: inherit; color: inherit; padding: var(--space-2); letter-spacing: inherit; text-transform: inherit; cursor: default; text-decoration: none; }
+.tv-footer button[aria-current="true"], .tv-footer a[aria-current="true"] { color: var(--accent); }
 
 /* — Header — */
 .tv-head {
@@ -380,3 +384,221 @@
 [data-motion="off"] .tv-fade,
 .tv-page[data-motion="off"] { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .tv-fade { animation: none; } }
+
+/* ============================================================
+   Desktop platform shell (sidebar nav, wide canvas)
+   CSS-only breakpoint — no JS platform detection. Same markup,
+   same component tree; the media query below is the only branch.
+   ============================================================ */
+.tv-sidebar { display: none; }
+.tv-splitrow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.tv-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+@media (min-width: 900px) {
+  .tv-app { display: flex; min-height: 100%; }
+  .tv-footer { display: none; }
+  .tv-sidebar {
+    display: flex;
+    width: 220px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--rule);
+    padding: var(--space-6) var(--space-4);
+    flex-direction: column;
+    gap: var(--space-6);
+    box-sizing: border-box;
+  }
+  .tv-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+  }
+  .tv-page {
+    max-width: 760px;
+    width: 100%;
+    padding: var(--space-7) var(--space-6) var(--space-8);
+  }
+  .tv-page[data-wide="true"] {
+    max-width: 980px;
+  }
+  .tv-splitrow {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: var(--space-6) var(--space-7);
+    align-items: start;
+  }
+}
+.tv-sidebar__mark {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--ink);
+}
+.tv-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tv-sidebar button, .tv-sidebar a {
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 10px 12px;
+  cursor: default;
+  text-decoration: none;
+  display: block;
+}
+.tv-sidebar button[aria-current="true"], .tv-sidebar a[aria-current="true"] {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-trace);
+}
+
+/* ============================================================
+   Timing strip — Start by / Leave by / Anchor at
+   ============================================================ */
+.tv-timing {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3) 0 var(--space-4);
+  border-bottom: 1px solid var(--rule);
+}
+.tv-timing__item { display: flex; flex-direction: column; gap: 2px; }
+.tv-timing__label {
+  font-family: var(--mono); font-size: 9.5px; text-transform: uppercase;
+  letter-spacing: 0.10em; color: var(--ink-mute);
+}
+.tv-timing__val {
+  font-family: var(--mono); font-size: 20px; font-weight: 400;
+  color: var(--ink); letter-spacing: -0.01em; font-variant-numeric: tabular-nums;
+}
+.tv-timing__item--leave .tv-timing__val { color: var(--accent); }
+.tv-timing__note {
+  font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--ink-soft);
+}
+.tv-lateness {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+  color: var(--ink-soft); padding: 2px 0;
+}
+.tv-lateness--ontrack { color: var(--accent); }
+.tv-lateness--late { color: var(--warn); }
+
+/* ============================================================
+   Banners — offline / queued / install / error boundary
+   ============================================================ */
+.tv-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  border: 1px solid var(--rule-strong);
+  padding: 10px 14px;
+  font-family: var(--sans); font-size: 12.5px; color: var(--ink);
+}
+.tv-banner__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-mute); flex-shrink: 0; }
+.tv-banner--offline { border-color: var(--warn); }
+.tv-banner--offline .tv-banner__dot { background: var(--warn); }
+.tv-banner--queued .tv-banner__dot { background: var(--accent); animation: tvPulse 1.4s ease-in-out infinite; }
+.tv-banner--install { border-style: dashed; }
+@keyframes tvPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+.tv-banner__text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.tv-banner__title { font-weight: 500; }
+.tv-banner__sub { font-family: var(--serif); font-style: italic; color: var(--ink-soft); font-size: 12px; }
+.tv-banner__action {
+  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--accent); background: none; border: 0; cursor: default; white-space: nowrap;
+}
+
+.tv-error {
+  border: 1px solid var(--warn);
+  padding: var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-3);
+}
+.tv-error .tv-label { color: var(--warn); }
+
+/* ============================================================
+   Connect rows (calendar) / profile rows (travel)
+   ============================================================ */
+.tv-connect-row, .tv-profile-row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-3) 0; border-bottom: 1px solid var(--rule);
+}
+.tv-connect-row__name { font-family: var(--sans); font-size: 14px; color: var(--ink); font-weight: 500; }
+.tv-connect-row__meta, .tv-profile-row__meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute); letter-spacing: 0.06em; }
+.tv-profile-row__label { font-family: var(--serif); font-size: 16px; color: var(--ink); }
+.tv-pill-status {
+  font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 3px 8px; border: 1px solid var(--rule-strong); color: var(--ink-mute);
+}
+.tv-pill-status--on { color: var(--accent); border-color: var(--accent); }
+
+/* ============================================================
+   Auth — oauth rows, divider, form fields
+   ============================================================ */
+.tv-oauth__mark {
+  width: 20px; text-align: center;
+  font-family: var(--serif); font-size: 15px; color: var(--ink-soft);
+}
+.tv-divider {
+  display: flex; align-items: center; gap: var(--space-3);
+  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: 0.10em; color: var(--ink-mute);
+}
+.tv-divider::before, .tv-divider::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+.tv-form { display: flex; flex-direction: column; gap: var(--space-4); }
+.tv-field { display: flex; flex-direction: column; gap: 4px; }
+.tv-field__label {
+  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: 0.10em; color: var(--ink-mute);
+}
+.tv-field__input {
+  font-family: var(--sans); font-size: 15px; color: var(--ink);
+  background: transparent; border: 0; border-bottom: 1px solid var(--rule-strong);
+  padding: 8px 0; outline: none; width: 100%; box-sizing: border-box;
+}
+.tv-field__input:focus { border-bottom-color: var(--accent); }
+.tv-field__input::placeholder { color: var(--ink-trace); }
+.tv-field-error {
+  font-family: var(--sans); font-size: 13px; color: var(--warn);
+}
+.tv-btn:disabled { opacity: 0.55; }
+
+/* ============================================================
+   Hard override — belt-and-suspenders against the legacy
+   dark-theme !important bleed in forms-dark-theme-fix.css.
+   That file is scoped with @scope (body) to (.tv-app), which is
+   the real fix — these rules exist only in case @scope isn't
+   honored in some environment. They win on plain specificity
+   (body + .tv-app + tag beats the legacy file's bare-tag
+   selectors) so they don't depend on @scope support at all.
+   ============================================================ */
+body .tv-app button              { color: var(--ink) !important; }
+body .tv-app .tv-btn--primary,
+body .tv-app .tv-seg button[aria-pressed="true"] { color: var(--paper) !important; }
+body .tv-app .tv-btn--quiet      { color: var(--ink-soft) !important; }
+body .tv-app .tv-close           { color: var(--ink-mute) !important; }
+body .tv-app input,
+body .tv-app select,
+body .tv-app textarea {
+  color: var(--ink) !important;
+  background: transparent !important;
+  border-color: var(--rule-strong) !important;
+}
+body .tv-app label               { color: inherit !important; }
+body .tv-app [role="dialog"] {
+  background: transparent !important;
+  color: var(--ink) !important;
+  border: 0 !important;
+}
