@@ -88,3 +88,48 @@ Everything from Phase 4 onwards in the Migration Guide:
 - **Phase 8** — Delete `messy-theme.css`, habits, billing, old `MirrorUI.tsx`, drop tables
 
 The v2 UI currently looks rough because the sub-prompts (`IntentPrompt`, `StateDeclarationPrompt`, etc.) still render with messy-theme styles inside the new paper shell — Phase 7 fixes that.
+
+Note: the final `TodayPageContent.tsx`/`PlanPageContent.tsx` implementation diverged from this v2 shell — it's a fresh rewrite, not a reskin, and dropped more functionality than the guide called for in the process. See [`parity-gaps.md`](./parity-gaps.md) for the prioritized list of what's a real gap (worth restoring) vs. an intentional cut per this guide's own ethos calls.
+
+---
+
+## 2026-07-16 — commit checkpoint
+
+A large amount of Phase 4+ work (IA collapse redirects in `src/middleware.ts`, the new
+`/today`, `/plan`, `/clinical`, `/settings/*` pages and their components, `MIRROR_V2_ENABLED`
+flipped on, PWA manifest/service-worker rename to `traverse`) had been sitting **uncommitted**
+in the working tree — none of it had reached GitHub. It's committed as of this checkpoint so
+it isn't one lost laptop away from disappearing. It has **not** been independently line-audited
+this session beyond: a clean `npm run build`, and browser smoke tests of `/login` and
+`/reset-password`. Treat it as "believed working, not yet reviewed" rather than "verified."
+
+Also done this session, fully verified (build + browser, mobile + desktop viewport):
+- **Reset-password flow reskinned.** `src/components/auth/ResetPasswordScreen.tsx` (new) replaces
+  the old dark-theme `PasswordResetForm.tsx` for the post-email-link "set a new password" step.
+  The "request a link" step already lived inline in `AuthScreen.tsx` (new design) — this closes
+  the one leg of the auth flow still on the old theme. `src/pages/reset-password.astro` now only
+  ever renders the update-mode screen; hitting it without a valid reset token redirects to
+  `/login` server-side (the request flow lives there). Old page preserved at
+  `reset-password.legacy.astro` per the same rollback convention already used for
+  login/onboarding/settings.
+- **Fixed a real (pre-existing) mobile layout bug found while testing the above**: `.tv-app` used
+  `min-height: 100%`, which only resolves against an ancestor's explicit height. Since `html`/`body`
+  never get one, any tv/-design page shorter than the viewport (any auth screen's success state,
+  this new reset screen, etc.) showed a strip of the old dark theme's body background bleeding in
+  underneath. Fixed by switching to `min-height: 100vh` in `src/styles/tokens.css` (viewport-relative,
+  no ancestor-height dependency). Confirmed fixed on `/reset-password` at 375×812; confirmed no
+  regression on `/login` at both viewport sizes.
+
+**Not done, flagged for whoever picks this up next** (see `parity-gaps.md` for the fuller,
+prioritized version of this list):
+- No error boundary wraps `/today` or `/plan` — an unhandled render exception still produces a
+  blank page. `src/components/daily-plan/ErrorBoundary.tsx` exists and is reusable; it just isn't
+  wired to these pages yet.
+- `handleComplete`/`handleSkip` in `TodayPageContent.tsx` swallow fetch failures silently
+  (`.catch(() => {})`) — no retry, no offline queueing, no error surfaced to the user, even though
+  `NetworkBanner`'s "queued" variant is already built and listening for events nothing yet fires.
+- State declaration only offers 3 of the old 6 states (missing "already at anchor," "missed it,"
+  "mid-chain").
+- No calendar import (ICS/link), no anchor-type taxonomy/suggestions, no editable plan-generation
+  fields (wake/sleep/anchor type are hardcoded in `PlanPageContent.tsx`) — all still to build for
+  beta per the user's stated scope.
