@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>traverse — migration guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper: oklch(0.975 0.008 80);
+  --paper-deep: oklch(0.94 0.012 80);
+  --rule: oklch(0.86 0.012 80);
+  --rule-strong: oklch(0.74 0.012 80);
+  --ink: oklch(0.22 0.018 70);
+  --ink-soft: oklch(0.42 0.015 70);
+  --ink-mute: oklch(0.62 0.012 70);
+  --ink-trace: oklch(0.80 0.010 70);
+  --accent: oklch(0.42 0.085 245);
+  --accent-trace: oklch(0.94 0.020 245);
+  --warn: oklch(0.50 0.090 50);
+  --serif: 'Newsreader', Georgia, serif;
+  --sans: 'Instrument Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding:48px 28px 96px}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:400;letter-spacing:-0.012em;color:var(--ink);text-wrap:balance;margin:0}
+h1{font-size:42px;line-height:1.1;margin-bottom:8px}
+h2{font-size:28px;line-height:1.2;margin:48px 0 4px;border-top:1px solid var(--ink);padding-top:20px}
+h3{font-size:20px;line-height:1.25;margin:28px 0 6px}
+h4{font-size:16px;line-height:1.3;font-weight:500;margin:18px 0 4px;font-style:italic;color:var(--ink-soft)}
+p{margin:8px 0 14px;color:var(--ink-soft);font-family:var(--serif);font-size:16px;line-height:1.6;text-wrap:pretty}
+p strong{color:var(--ink);font-weight:500}
+p em{color:var(--ink-soft)}
+ul,ol{margin:8px 0 16px;padding-left:22px;color:var(--ink-soft);font-family:var(--serif);font-size:16px;line-height:1.6}
+li{margin:4px 0;text-wrap:pretty}
+li strong{color:var(--ink);font-weight:500}
+.label{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.14em;color:var(--ink-mute);font-weight:400;display:block;margin-bottom:6px}
+.sub{font-family:var(--serif);font-style:italic;font-size:16px;color:var(--ink-soft);margin:0 0 24px}
+code,kbd{font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--paper-deep);padding:1px 5px;border-radius:0}
+pre{font-family:var(--mono);font-size:12.5px;color:var(--ink);background:var(--paper-deep);padding:14px 16px;line-height:1.55;overflow-x:auto;border-left:2px solid var(--rule-strong);margin:14px 0;white-space:pre}
+hr{border:0;height:1px;background:var(--rule);margin:24px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0 18px;font-family:var(--sans);font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--rule);color:var(--ink-soft)}
+th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.10em;color:var(--ink-mute);font-weight:400;border-bottom:1px solid var(--ink)}
+td strong{color:var(--ink);font-weight:500}
+td code{font-size:12px;padding:0;background:transparent;color:var(--ink)}
+.cover{padding-bottom:32px;border-bottom:1px solid var(--ink);margin-bottom:8px}
+.cover .meta{display:flex;gap:18px;font-family:var(--mono);font-size:11px;color:var(--ink-mute);letter-spacing:0.06em;text-transform:uppercase;margin-top:18px}
+.toc{display:flex;flex-direction:column;gap:2px;margin:16px 0 8px;border-top:1px solid var(--rule);padding-top:14px}
+.toc a{display:grid;grid-template-columns:36px 1fr auto;gap:12px;text-decoration:none;color:var(--ink);font-family:var(--sans);font-size:14px;padding:6px 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.toc a:hover{color:var(--accent)}
+.toc .n{font-family:var(--mono);font-size:11px;color:var(--ink-mute);letter-spacing:0.08em}
+.toc .pg{font-family:var(--mono);font-size:11px;color:var(--ink-mute);font-style:normal}
+.callout{border-left:2px solid var(--accent);padding:6px 0 6px 16px;margin:18px 0;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ink-soft);text-wrap:pretty}
+.callout strong{color:var(--ink);font-style:normal;font-weight:500}
+.warn{border-left-color:var(--warn)}
+.check{list-style:none;padding-left:0}
+.check li{padding-left:26px;position:relative;font-family:var(--sans);font-size:14px;color:var(--ink);line-height:1.5}
+.check li::before{content:"□";position:absolute;left:0;top:0;font-family:var(--mono);color:var(--ink-mute);font-size:14px}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:6px 18px;margin:10px 0 18px;font-family:var(--sans);font-size:14px}
+.kv dt{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:0.10em;color:var(--ink-mute);padding-top:3px}
+.kv dd{margin:0;color:var(--ink-soft);font-family:var(--serif);font-size:15px;line-height:1.5}
+.kv dd strong{color:var(--ink);font-weight:500}
+.tier{border:1px solid var(--rule);padding:14px 16px;margin:10px 0}
+.tier h4{margin:0 0 4px;font-style:normal;color:var(--ink);font-size:15px}
+.tier .label{margin-bottom:2px}
+.tier p{margin:4px 0;font-size:14.5px}
+.tier ul{font-size:14.5px;margin:6px 0}
+.tier--delete{border-color:var(--warn);border-left-width:2px}
+.day{display:grid;grid-template-columns:80px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.day__d{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.10em;text-transform:uppercase;padding-top:4px}
+.day__body p{margin:2px 0}
+.day__body strong{color:var(--ink)}
+.foot{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--ink-mute);text-align:center;padding-top:48px;text-wrap:pretty}
+@media print{
+  .wrap{max-width:none;padding:24px}
+  h2{break-before:page}
+  pre,table,.tier,.day{break-inside:avoid}
+  a{color:inherit;text-decoration:none}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<section class="cover">
+  <span class="label">Migration guide · v1</span>
+  <h1>From <em>messy-theme</em> to marginalia.</h1>
+  <p class="sub">Rolling the prototype design into <code>feature/mirror-recovery-v2</code> without breaking what already works — for one solo dev, in one week.</p>
+  <div class="meta">
+    <span>branch · feature/marginalia</span>
+    <span>scope · whole product</span>
+    <span>time · 5 days</span>
+  </div>
+</section>
+
+<section>
+  <span class="label">Contents</span>
+  <nav class="toc">
+    <a href="#premise"><span class="n">00</span><span>Premise &amp; the three things that will sink this</span><span class="pg">·</span></a>
+    <a href="#shape"><span class="n">01</span><span>Rollout shape — the call I'm making, and why not the others</span><span class="pg">·</span></a>
+    <a href="#phase0"><span class="n">02</span><span>Phase 0 — branch hygiene &amp; parity screenshots</span><span class="pg">·</span></a>
+    <a href="#phase1"><span class="n">03</span><span>Phase 1 — tokens (additive, not destructive)</span><span class="pg">·</span></a>
+    <a href="#phase2"><span class="n">04</span><span>Phase 2 — primitives (the <code>tv-*</code> components)</span><span class="pg">·</span></a>
+    <a href="#phase3"><span class="n">05</span><span>Phase 3 — Today/Mirror as the pilot vertical slice</span><span class="pg">·</span></a>
+    <a href="#phase4"><span class="n">06</span><span>Phase 4 — information architecture collapse</span><span class="pg">·</span></a>
+    <a href="#phase5"><span class="n">07</span><span>Phase 5 — state, retention, account management</span><span class="pg">·</span></a>
+    <a href="#phase6"><span class="n">08</span><span>Phase 6 — onboarding rewrite</span><span class="pg">·</span></a>
+    <a href="#phase7"><span class="n">09</span><span>Phase 7 — settings, clinical, the rest</span><span class="pg">·</span></a>
+    <a href="#phase8"><span class="n">10</span><span>Phase 8 — cleanup &amp; deletions</span><span class="pg">·</span></a>
+    <a href="#week"><span class="n">11</span><span>The week — Mon → Fri</span><span class="pg">·</span></a>
+    <a href="#risks"><span class="n">12</span><span>Risk register — your named worries, answered</span><span class="pg">·</span></a>
+    <a href="#snippets"><span class="n">13</span><span>Appendix — copy-paste snippets</span><span class="pg">·</span></a>
+  </nav>
+</section>
+
+<section id="premise">
+  <h2>00 · Premise</h2>
+  <p>You have a prototype (<code>traverse.html</code>) that nails the new sensibility — paper-and-ink, marginalia, no streak fire, no glowing cyan, voice that names time physics instead of the person. The repo at <code>feature/mirror-recovery-v2</code> is still wearing <code>messy-theme.css</code>: OLED black, neon gradients, <code>--messy-streak-fire</code> animations. That gap is large but mechanical. The risk is not the visual swap — it's everything underneath.</p>
+  <p>Three concrete failure modes will sink this if you don't plan around them. They map exactly to what you flagged.</p>
+
+  <div class="callout">
+    <strong>1. Static beauty, broken wiring.</strong> The redesign looks finished on paper but the Mirror screen renders <code>—</code> for runway because the new component doesn't subscribe to the same data shape. Mitigation: ship one screen at a time as a <em>vertical slice</em> — real Supabase data, real API calls — before generalizing.
+  </div>
+  <div class="callout">
+    <strong>2. Confusing navigation, especially onboarding &amp; account.</strong> You have 20+ routes today: <code>/dashboard</code>, <code>/daily-plan</code>, <code>/habits</code>, <code>/calendar</code>, <code>/profile</code>, <code>/billing</code>, <code>/import</code>, <code>/about</code>, two onboarding bypass routes, monitoring pages, etc. Half of them implement an ethos you no longer believe in. Mitigation: collapse to seven, redirect the rest, put account management in one place — Settings.
+  </div>
+  <div class="callout">
+    <strong>3. Stateless ambition vs Supabase reality.</strong> "Stateless" is the goal, but the app still needs an account so NHS-bound users can sign in on another device. Mitigation: a <em>state tier classification</em> — every table answers "what breaks if this is forgotten?" Anything with a "nothing" answer gets deleted or auto-expired. Today's plan is the only thing that persists beyond settings, and even that expires nightly.
+  </div>
+</section>
+
+<section id="shape">
+  <h2>01 · Rollout shape</h2>
+  <p>The call I'm making for you: <strong>token-first, then primitives, then a single vertical slice on Today, then IA collapse, then the rest, then deletions.</strong> A feature flag (<code>src/lib/feature-flags.ts</code> already exists) gates the new path until it's solid.</p>
+
+  <h3>Why this and not the alternatives</h3>
+  <table>
+    <thead><tr><th style="width:32%">Shape</th><th>Why it's wrong for you, this week, solo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Big-bang.</strong> One branch, swap everything.</td><td>You have a 52KB <code>MirrorUI.tsx</code> and a 35KB <code>ChainView.tsx</code>. Touching both at once in one PR means Friday is a debugger marathon, not a merge.</td></tr>
+      <tr><td><strong>Token-first only.</strong> Change CSS variables, let everything inherit.</td><td>Cosmetic. The whole point is that the marginalia layout (rules instead of cards, margin-marks instead of filled chips) is <em>structural</em> — not a recolor.</td></tr>
+      <tr><td><strong>Component-by-component, leaf to root.</strong></td><td>Leaves the app bilingual for weeks — half marginalia, half cyber. Cognitive load you can't afford solo.</td></tr>
+      <tr><td><strong>Screen-by-screen, behind a flag.</strong></td><td>This is what we're picking — but bias toward <em>one</em> screen done fully, then the rest faster once primitives are settled.</td></tr>
+      <tr><td><strong>Parallel <code>/v2</code> directory.</strong></td><td>Doubles your component count and you stop merging routes back. Skip.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The order, at a glance</h3>
+  <ol>
+    <li><strong>Phase 0</strong> — branch, parity screenshots, kill-switch list.</li>
+    <li><strong>Phase 1</strong> — additive token layer alongside <code>messy-theme.css</code>.</li>
+    <li><strong>Phase 2</strong> — primitives in <code>src/components/tv/</code>, dev preview route.</li>
+    <li><strong>Phase 3</strong> — <code>MirrorUI.v2.tsx</code> behind a feature flag, real data, real APIs.</li>
+    <li><strong>Phase 4</strong> — IA collapse + middleware redirects so old links don't 404.</li>
+    <li><strong>Phase 5</strong> — state tiers, retention job, account section.</li>
+    <li><strong>Phase 6</strong> — onboarding rewrite (4 questions, not 12).</li>
+    <li><strong>Phase 7</strong> — settings sections, clinical page.</li>
+    <li><strong>Phase 8</strong> — flip flag, delete <code>messy-theme.css</code>, habits, billing.</li>
+  </ol>
+</section>
+
+<section id="phase0">
+  <h2>02 · Phase 0 — branch hygiene</h2>
+  <p>The boring step that prevents Friday-night chaos. Do it Monday morning, all of it, before you write a line of new code.</p>
+
+  <h3>Branch</h3>
+  <pre>git checkout feature/mirror-recovery-v2
+git pull
+git checkout -b feature/marginalia
+git tag pre-marginalia  # so you can diff back later</pre>
+
+  <h3>Parity screenshots</h3>
+  <p>Open every live route, take a full-page screenshot, save into <code>docs/parity/BEFORE/</code>. The list:</p>
+  <ul>
+    <li><code>/</code>, <code>/login</code>, <code>/onboarding</code>, <code>/dashboard</code>, <code>/daily-plan</code>, <code>/habits</code>, <code>/calendar</code>, <code>/settings</code>, <code>/profile</code>, <code>/billing</code>, <code>/import</code>, <code>/about</code></li>
+  </ul>
+  <p>These are not for nostalgia. You will look at them in week two when something feels "wrong but I can't name why."</p>
+
+  <h3>Kill-switch audit</h3>
+  <p>List, in <code>docs/migration/kill-list.md</code>, every <em>module</em> whose presence in the new design is genuinely up for debate. Initial list — adjust as you go:</p>
+  <ul>
+    <li><strong>Habits / streaks.</strong> Stance: delete UI, archive data, drop tables. Keep <code>src/lib/import/enhanced-loop-habits-v2.ts</code> as a one-shot export to CSV so users can leave with their history.</li>
+    <li><strong>Billing / tokens.</strong> Stance: stub <code>getBillingSnapshot()</code> to always return <code>{ isAccessAllowed: true }</code>. Drop tables after a soak.</li>
+    <li><strong>Dashboard.</strong> Stance: redirect to <code>/today</code>. There is no separate "dashboard" in a one-day-at-a-time tool.</li>
+    <li><strong>Confetti / chart.js / recharts / canvas-confetti.</strong> Stance: remove from <code>package.json</code> at the end of the week.</li>
+    <li><strong>Monitoring routes.</strong> Stance: <code>NODE_ENV=development</code> only.</li>
+  </ul>
+
+  <h3>Solo-dev safety rails</h3>
+  <ul class="check">
+    <li>Run <code>npm run build</code> at the end of every phase. Solo means no PR reviewer; the build is your reviewer.</li>
+    <li>Commit on every working state, even ugly. Small reversible steps beat big "ship it" commits.</li>
+    <li>Keep the dev server open on a second monitor / phone, refreshing as you go.</li>
+    <li>Don't delete <em>anything</em> in this phase. Renaming and stubbing only.</li>
+  </ul>
+</section>
+
+<section id="phase1">
+  <h2>03 · Phase 1 — tokens</h2>
+  <p>Drop the prototype's <code>styles.css</code> into the repo as <code>src/styles/tokens.css</code>. Import it <em>after</em> <code>messy-theme.css</code> so for any shared variable name, the new value wins. Nothing in the existing UI breaks because the variable names are different namespaces (<code>--paper</code>, <code>--ink</code>, <code>--accent</code> vs <code>--messy-bg</code>, <code>--messy-text-primary</code>, <code>--messy-primary</code>).</p>
+
+  <h3>Files</h3>
+  <pre>// src/styles/tokens.css      ← port styles.css from prototype, minus .tv-app shell
+// src/layouts/DashboardLayout.astro
+//   &lt;link rel="stylesheet" href="/src/styles/messy-theme.css" /&gt;
+//   &lt;link rel="stylesheet" href="/src/styles/tokens.css" /&gt;   ← add this AFTER</pre>
+  <p>(Astro usually wants the stylesheet imported as ESM in the frontmatter. Match whatever your existing imports look like — don't switch styles.)</p>
+
+  <h3>Tailwind</h3>
+  <p>Extend <code>tailwind.config.mjs</code> with a parallel namespace. Do <strong>not</strong> remove the <code>messy-*</code> entries yet — half the codebase references them.</p>
+  <pre>colors: {
+  // existing messy-* entries stay
+  paper:        "var(--paper)",
+  "paper-deep": "var(--paper-deep)",
+  ink:          "var(--ink)",
+  "ink-soft":   "var(--ink-soft)",
+  "ink-mute":   "var(--ink-mute)",
+  "ink-trace":  "var(--ink-trace)",
+  rule:         "var(--rule)",
+  "rule-strong":"var(--rule-strong)",
+  "tv-accent":  "var(--accent)",
+},
+fontFamily: {
+  serif: ["Newsreader", "Georgia", "serif"],
+  sans:  ["Instrument Sans", "system-ui", "sans-serif"],
+  mono:  ["JetBrains Mono", "ui-monospace", "monospace"],
+}</pre>
+  <p>Remove <code>Inter</code> from the existing <code>sans</code> stack only when you start using the new <code>fontFamily.sans</code> in new code — not before.</p>
+
+  <h3>Variable map (for when you migrate a component)</h3>
+  <table>
+    <thead><tr><th>Old (messy)</th><th>New</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td><code>--messy-bg</code></td><td><code>--paper</code></td><td>Light by default; <code>[data-theme="lamp"]</code> for dark</td></tr>
+      <tr><td><code>--messy-card-bg</code></td><td><em>none</em></td><td>Cards are mostly gone — use <code>--rule</code> hairlines instead</td></tr>
+      <tr><td><code>--messy-text-primary</code></td><td><code>--ink</code></td><td></td></tr>
+      <tr><td><code>--messy-text-secondary</code></td><td><code>--ink-soft</code></td><td></td></tr>
+      <tr><td><code>--messy-text-muted</code></td><td><code>--ink-mute</code></td><td></td></tr>
+      <tr><td><code>--messy-border</code></td><td><code>--rule</code></td><td></td></tr>
+      <tr><td><code>--messy-primary</code> (cyan)</td><td><code>--accent</code> (ballpoint blue)</td><td>Use sparingly — only for "now" and keystone marks</td></tr>
+      <tr><td><code>--messy-secondary</code> (purple)</td><td><em>none</em></td><td>Deliberately deleted</td></tr>
+      <tr><td><code>--messy-success/warning/error</code></td><td><em>mostly none</em></td><td><code>--warn</code> exists, used only for "time physics" copy. No green ticks.</td></tr>
+      <tr><td><code>--messy-gradient-*</code></td><td><em>none</em></td><td>Gradients are out of the system</td></tr>
+      <tr><td><code>--messy-shadow-*</code></td><td><em>none</em></td><td>Shadows are out of the system</td></tr>
+    </tbody>
+  </table>
+
+  <ul class="check">
+    <li><code>tokens.css</code> in place</li>
+    <li>Tailwind extended; build still green</li>
+    <li>Variable map committed to <code>docs/migration/tokens-map.md</code></li>
+  </ul>
+</section>
+
+<section id="phase2">
+  <h2>04 · Phase 2 — primitives</h2>
+  <p>Port the prototype's classes as React components into <code>src/components/tv/</code>. <em>Don't</em> re-implement them inline in screens — they're the vocabulary, and every screen pulls from them.</p>
+
+  <h3>The set</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Replaces</th><th>Props</th></tr></thead>
+    <tbody>
+      <tr><td><code>&lt;Page&gt;</code></td><td>Ad-hoc page wrappers, <code>DashboardLayout</code> inner padding</td><td><code>header</code> slot</td></tr>
+      <tr><td><code>&lt;Display&gt;</code> <code>&lt;Prose&gt;</code> <code>&lt;Label&gt;</code></td><td>Inline <code>text-*</code> Tailwind classes</td><td>—</td></tr>
+      <tr><td><code>&lt;Rule&gt;</code></td><td>Card borders, divider <code>div</code>s</td><td><code>strong?</code></td></tr>
+      <tr><td><code>&lt;Block&gt;</code></td><td>Timeline row in <code>MirrorUI.tsx</code></td><td><code>time</code>, <code>state: 'past'|'now'|'future'</code>, <code>keystone?</code>, <code>name</code>, <code>meta</code></td></tr>
+      <tr><td><code>&lt;Mark&gt;</code></td><td>Status pill chips</td><td><code>kind: 'now'|'keystone'|'past'</code></td></tr>
+      <tr><td><code>&lt;Runway&gt;</code></td><td>Big countdown in <code>MirrorHeader.tsx</code></td><td><code>num</code>, <code>caption</code></td></tr>
+      <tr><td><code>&lt;Prompt&gt;</code></td><td><code>IntentPrompt</code>, <code>RealityCheckPrompt</code>, <code>FeltHelpfulPrompt</code> chrome</td><td><code>title</code>, <code>caption</code>, <code>children</code></td></tr>
+      <tr><td><code>&lt;Button&gt;</code></td><td><code>messy-btn-primary</code>, <code>messy-btn-secondary</code></td><td><code>variant: 'primary'|'quiet'|'ghost'</code></td></tr>
+      <tr><td><code>&lt;Setting&gt;</code></td><td>Settings row pattern</td><td><code>name</code>, <code>hint</code>, <code>control</code></td></tr>
+      <tr><td><code>&lt;Seg&gt;</code></td><td>Segmented control (theme/voice/etc.)</td><td><code>value</code>, <code>options</code>, <code>onChange</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Dev preview route</h3>
+  <p>You don't run Storybook actively, so add <code>src/pages/_dev/tv.astro</code> that renders one of each. Gate it:</p>
+  <pre>---
+if (import.meta.env.PROD) return Astro.redirect('/');
+---</pre>
+  <p>This is where you eyeball "does <code>&lt;Block state='now'&gt;</code> still look right after I tweaked the rule colour" without loading real data.</p>
+
+  <ul class="check">
+    <li>All primitives written, exported from <code>src/components/tv/index.ts</code></li>
+    <li><code>/_dev/tv</code> renders cleanly in light and lamp themes</li>
+    <li>Voice register prop wired to <code>&lt;Prompt&gt;</code> (reads from a context — see Phase 3)</li>
+  </ul>
+</section>
+
+<section id="phase3">
+  <h2>05 · Phase 3 — Today as the pilot</h2>
+  <p>This is the heart of the redesign and also where you'll learn whether the new vocabulary actually maps onto the real data. Spend Tuesday on this. The rule for the day: <strong>do not touch <code>MirrorUI.tsx</code></strong>. Build alongside.</p>
+
+  <h3>The move</h3>
+  <ol>
+    <li>Create <code>src/components/daily-plan/MirrorUI.v2.tsx</code>. It receives the same props as the original (look at what <code>MirrorUIWithErrorBoundary.tsx</code> passes).</li>
+    <li>Add a feature flag in <code>src/lib/feature-flags.ts</code>: <code>MIRROR_V2: boolean</code>, default <code>false</code> in prod, <code>true</code> in dev.</li>
+    <li>In <code>MirrorUIWithErrorBoundary.tsx</code>, branch on the flag: <code>{flag ? &lt;MirrorUI.v2 ... /&gt; : &lt;MirrorUI ... /&gt;}</code>. The error boundary stays around both — keep the safety net.</li>
+    <li>Build v2 using the primitives. Map existing data:</li>
+  </ol>
+  <table>
+    <thead><tr><th>Data in</th><th>Renders as</th></tr></thead>
+    <tbody>
+      <tr><td><code>timeBlocks[]</code> with <code>{ startTime, name, kind, status }</code></td><td><code>&lt;Block time state name meta /&gt;</code> rows</td></tr>
+      <tr><td>The block where <code>now ∈ [start, end]</code></td><td><code>state="now"</code> — the bracketed band, not a filled card</td></tr>
+      <tr><td><code>kind === 'anchor'</code> and <code>isKeystone</code></td><td><code>keystone</code> dot in margin</td></tr>
+      <tr><td><code>exitTime</code> from <code>/api/daily-plan/exit-gate-template</code></td><td><code>&lt;Runway&gt;</code> at top, mono number + serif caption "to keystone"</td></tr>
+      <tr><td>State prompts triggered by <code>/api/daily-plan/state</code></td><td><code>&lt;Prompt&gt;</code> with the appropriate copy variant</td></tr>
+      <tr><td>Reality check from <code>/api/daily-plan/reality-check</code></td><td>Same <code>&lt;Prompt&gt;</code> chrome, voice-aware copy</td></tr>
+      <tr><td>Felt-helpful via <code>/api/analytics/felt-helpful</code></td><td>Same <code>&lt;Prompt&gt;</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>The voice dictionary</h3>
+  <p>The state/triage/felt-helpful prompts have three copy registers (plain / clinical / warm). Don't scatter the strings — put them in <code>src/lib/copy/voice.ts</code> and read via a <code>useVoice()</code> hook that pulls from the user's <code>user_preferences.voice</code>. Saves you from a search-and-replace later. See the Appendix for a skeleton.</p>
+
+  <h3>Wiring checks — the "does it actually work" pass</h3>
+  <ul class="check">
+    <li>Load <code>/today</code> with a real, freshly-generated plan from <code>/api/daily-plan/generate</code>. Nothing reads <code>undefined</code>.</li>
+    <li>Hit the four prompt endpoints from the screen and confirm they round-trip.</li>
+    <li>Take a screenshot into <code>docs/parity/AFTER/today-real-data.png</code>. Compare against <code>BEFORE</code>. Same data, new clothes.</li>
+    <li><code>npm test</code> passes. The Mirror has tests; they should still pass because you haven't touched the v1.</li>
+    <li>Flip flag to <code>true</code> for your dev account in Supabase (or env var); live on it for half a day.</li>
+  </ul>
+</section>
+
+<section id="phase4">
+  <h2>06 · Phase 4 — IA collapse</h2>
+  <p>You currently have twenty top-level routes. The redesigned product is seven. Mapping table — implement these as redirects in <code>src/middleware.ts</code> so existing tabs, PWA shortcuts, and shared links don't 404.</p>
+
+  <table>
+    <thead><tr><th>Old route</th><th>New route</th><th>Method</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code> (auth'd)</td><td><code>/today</code></td><td>middleware redirect (already does <code>/dashboard</code>; change target)</td></tr>
+      <tr><td><code>/</code> (anon)</td><td><code>/</code></td><td>Landing page stays — public, NHS-facing</td></tr>
+      <tr><td><code>/dashboard</code></td><td><code>/today</code></td><td>301</td></tr>
+      <tr><td><code>/daily-plan</code></td><td><code>/today</code></td><td>301</td></tr>
+      <tr><td><code>/daily-plan/*</code></td><td><code>/today</code></td><td>301 catch-all</td></tr>
+      <tr><td><code>/habits</code>, <code>/habits/*</code></td><td><code>/settings/data</code></td><td>301 — the only place habit history surfaces is "export legacy"</td></tr>
+      <tr><td><code>/calendar</code></td><td><code>/settings/calendar</code></td><td>301</td></tr>
+      <tr><td><code>/profile</code></td><td><code>/settings/account</code></td><td>301</td></tr>
+      <tr><td><code>/billing</code></td><td><code>/settings/support</code></td><td>301 — donation-mode</td></tr>
+      <tr><td><code>/import</code></td><td><code>/settings/data</code></td><td>301</td></tr>
+      <tr><td><code>/about</code></td><td><code>/clinical</code></td><td>Move to in-app; about content folds into landing</td></tr>
+      <tr><td><code>/monitoring/*</code></td><td><em>dev-only</em></td><td>404 in prod via <code>RouteClassifier</code></td></tr>
+      <tr><td><code>/bypass-onboarding</code>, <code>/skip-onboarding</code></td><td>keep, undocumented</td><td>Solo-dev escape hatch</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Target route map</h3>
+  <pre>/                  public landing (NHS / new users)
+/login             auth
+/onboarding        4 cards, post-signup only
+/today             the live runtime — Mirror v2
+/today?plan=new    plan generator (or /plan if you prefer; both work)
+/today?empty=1    anchor-less state (driven by user preference)
+/clinical          NHS-readable mechanism map
+/settings          single hub
+  ├─ /comfort        theme / motion / density
+  ├─ /voice          register, time format
+  ├─ /anchorless     default behaviour
+  ├─ /calendar       sources, manual anchors
+  ├─ /data           import, export, reset, clear history
+  ├─ /account        email, password, sign out, delete
+  └─ /support        donate (not subscribe)</pre>
+
+  <h3>RouteClassifier update</h3>
+  <p>You have <code>src/lib/utils/route-classifier.ts</code>. Add <code>/today</code>, <code>/clinical</code>, and the <code>/settings/*</code> subpaths to its protected list; remove or downgrade the ones you're redirecting away from. Without this, middleware will still try to billing-gate <code>/billing</code> users who land there from a 301.</p>
+
+  <ul class="check">
+    <li>Middleware redirects in place; old URLs resolve to new ones</li>
+    <li>Bottom-nav (or wherever your nav lives) shows: Today · Plan · Clinical · Settings. That's it.</li>
+    <li><code>RouteClassifier</code> updated</li>
+    <li>One round of clicking through every old URL by hand</li>
+  </ul>
+</section>
+
+<section id="phase5">
+  <h2>07 · Phase 5 — state, retention, account</h2>
+  <p>This is the part you flagged hardest. The doctrine: <strong>state earns its place by surviving the question "what breaks if this is forgotten?"</strong> Most of your current schema doesn't survive that question.</p>
+
+  <h3>Five-tier classification, applied to your tables</h3>
+
+  <div class="tier">
+    <span class="label">Tier 1 · Identity</span>
+    <h4>Persisted, unavoidable</h4>
+    <p><code>auth.users</code>, <code>profiles</code>. Email, password/oauth, display name, timezone. Nothing else.</p>
+    <p>Retention: until the user clicks <em>Delete account</em>. Then actually delete, don't soft-flag.</p>
+  </div>
+
+  <div class="tier">
+    <span class="label">Tier 2 · Preferences</span>
+    <h4>Persisted, user-tunable, bounded</h4>
+    <p><code>user_preferences</code>. Wake/sleep window, energy default, voice register, theme, motion, density, anchorless default, keystone visibility, time format.</p>
+    <p>These are settings, not history. They have a fixed schema and don't grow. Safe to keep.</p>
+  </div>
+
+  <div class="tier">
+    <span class="label">Tier 3 · Plumbing</span>
+    <h4>Persisted; required for the app to be useful</h4>
+    <p><code>calendar_sources</code> (OAuth tokens + sync cursor), <code>location_travel_profiles</code> ("Uni = 20min by tube"), <code>manual_anchors</code> (recurring), <code>calendar_events</code> (cache).</p>
+    <p>The reusable "I go to uni at this time on Tuesdays" data. Without it the chain generator can't do its job. Keep, but make it deletable from <code>/settings/data</code>.</p>
+    <p><em>Retention:</em> <code>calendar_events</code> rows older than 30 days get deleted (they're a cache). Run as a daily Supabase function or a Vercel cron.</p>
+  </div>
+
+  <div class="tier">
+    <span class="label">Tier 4 · Today's plan</span>
+    <h4>Persisted, but auto-expires</h4>
+    <p><code>daily_plans</code>, <code>time_blocks</code>, <code>exit_times</code>.</p>
+    <p>The plan persists so a refresh doesn't lose it and so a phone-handoff works. But the plan is for today. Add a nightly job: <code>DELETE FROM daily_plans WHERE date &lt; current_date - interval '1 day'</code>. Cascades to <code>time_blocks</code> and <code>exit_times</code> if FKs are set up — verify.</p>
+    <p>Why one day of grace? So "yesterday's plan, for reference" survives the user opening the app at 02:00 on a heavy night.</p>
+    <p><em>Test this.</em> Add <code>src/test/integration/state-retention.test.ts</code> that seeds plans dated 3 days ago, runs the cron handler, asserts they're gone. Without a test the rule is decorative.</p>
+  </div>
+
+  <div class="tier tier--delete">
+    <span class="label">Tier 5 · Delete</span>
+    <h4>Not consistent with the ethos</h4>
+    <ul>
+      <li><strong>Habits, streaks.</strong> <code>habits</code>, <code>habit_entries</code>, <code>src/lib/habits/*</code>, <code>src/components/habits/*</code>, <code>src/pages/habits.astro</code>, <code>src/pages/habits/*</code>, <code>src/pages/api/habits/*</code>.</li>
+      <li><strong>Billing / tokens.</strong> <code>user_tokens</code>, <code>token_transactions</code>, <code>src/lib/billing/*</code>, <code>src/lib/tokens/*</code>, <code>src/pages/billing.astro</code>.</li>
+      <li><strong>Telemetry beyond felt-helpful.</strong> Felt-helpful is the only signal aligned with the ethos ("did the tool carry the load?"); the rest of <code>src/pages/api/analytics/*</code> and <code>src/pages/api/monitoring/*</code> should go.</li>
+    </ul>
+    <p>Two-step deletion: <em>(1)</em> stop writing this week, hide the UI, stub the reads to return empty. <em>(2)</em> drop tables in a Supabase migration after two clean weeks. Don't drop tables the same day you stop writing them — too easy to lose data you'll wish you had to debug a regression.</p>
+  </div>
+
+  <h3>Account-management UI</h3>
+  <p>One place: <code>/settings/account</code>. You flagged this specifically. Put exactly these actions, in this order, and nothing else:</p>
+  <ul>
+    <li>Email — change (re-verify), or just show</li>
+    <li>Password — change</li>
+    <li>Sign out</li>
+    <li>Export my data — JSON dump of preferences + last plan + manual anchors + travel profiles. One button, one file. (Plus a legacy "export habits" if the tables haven't been dropped yet.)</li>
+    <li>Reset today's plan — wipes <code>daily_plans</code> for today only; you'll be re-prompted to generate one</li>
+    <li>Delete account — confirms, actually deletes the row in <code>auth.users</code> and CASCADEs to everything. No "deactivation" middle state.</li>
+  </ul>
+  <p>The implementation of <em>Delete account</em> is the one that actually has to be right. Write the endpoint, run it against your own dev account, confirm the rows are gone. If the schema doesn't cascade cleanly, fix that first — half-deleted users are exactly the "stateless ambition meets Supabase reality" failure you flagged.</p>
+
+  <ul class="check">
+    <li>Tier classification committed to <code>docs/migration/state-tiers.md</code></li>
+    <li>Nightly cleanup function written + tested</li>
+    <li>Delete-account endpoint written + tested against your dev account</li>
+    <li><code>getBillingSnapshot()</code> stubbed to <code>{ isAccessAllowed: true }</code></li>
+    <li>Habit write paths short-circuit; reads return <code>[]</code></li>
+  </ul>
+</section>
+
+<section id="phase6">
+  <h2>08 · Phase 6 — onboarding rewrite</h2>
+  <p>Current onboarding is twelve fields on a dark gradient page (<code>src/pages/onboarding.astro</code>) — exactly the optimization-theatre register you're rejecting. Replace it with the three-card flow from the prototype, plus one optional fourth card.</p>
+
+  <h3>The four cards</h3>
+  <ol>
+    <li>
+      <strong>What does a good day start with for you?</strong>
+      <br/><em>Choices:</em> A place to be · A person · A meal · The light coming up
+      <br/><em>Captures:</em> seeds the implicit zeitgeber and the default keystone type. Stored as <code>user_preferences.first_anchor_kind</code>.
+    </li>
+    <li>
+      <strong>When are you usually awake?</strong>
+      <br/><em>Two times, defaults 07:00 and 23:00.</em> Replaces the four wake/sleep window fields.
+      <br/><em>Captures:</em> <code>wake_window_start</code>, <code>sleep_window_end</code>. The other two get sensible defaults (wake_end = wake_start + 2h, sleep_start = sleep_end − 2h).
+    </li>
+    <li>
+      <strong>When plans go sideways, what do you want?</strong>
+      <br/><em>Choices:</em> Alternatives, calmly · Just permission to stop
+      <br/><em>Captures:</em> <code>infeasible_response</code> + initial value for the anchor-less tweak. The "permission to stop" answer maps to <code>anchorless: 'refuse'</code>.
+    </li>
+    <li>
+      <strong>(Optional) Add one place you go often.</strong>
+      <br/><em>Label + travel minutes.</em> Skippable.
+      <br/><em>Captures:</em> one row in <code>location_travel_profiles</code>.
+    </li>
+  </ol>
+
+  <p>Last card is content, not a form: "The goal is for you not to need this app." No CTA — just a "Begin" button that drops them at <code>/today</code> in the empty state.</p>
+
+  <h3>Backend</h3>
+  <p>Keep <code>/api/auth/complete-signup.ts</code> as-is on the API contract. Just call it with fewer fields. The defaults that <code>plan-builder.ts</code> needs (<code>commitments</code>, <code>starting_difficulty</code>, <code>structure_style</code>, <code>min_sleep_hours</code>) go server-side. The user can change any of them later in Settings — the onboarding is not the only door.</p>
+
+  <ul class="check">
+    <li>Old <code>onboarding.astro</code> renamed to <code>onboarding.legacy.astro</code> first, not deleted, in case the new flow misses a required field for downstream code</li>
+    <li>New flow uses <code>&lt;Page&gt;</code> + <code>&lt;Display&gt;</code> + <code>&lt;Button&gt;</code> primitives, not its own styles</li>
+    <li>Server defaults documented in <code>src/lib/onboarding/defaults.ts</code></li>
+    <li>You walked through it on a clean account once; ended up at <code>/today</code> with a usable preference row</li>
+  </ul>
+</section>
+
+<section id="phase7">
+  <h2>09 · Phase 7 — settings, clinical, the rest</h2>
+
+  <h3>Settings</h3>
+  <p>Port the prototype's <code>screens/settings.jsx</code> as <code>src/pages/settings.astro</code> + <code>src/components/settings/SettingsPageContent.tsx</code>. One long page with sections in this order, each a heading + a few <code>&lt;Setting&gt;</code> rows:</p>
+  <ol>
+    <li><strong>Comfort &amp; Focus</strong> — theme (daylight/lamp), motion (full/off), density (standard/roomy)</li>
+    <li><strong>Voice &amp; Time</strong> — voice register (plain/clinical/warm), time format (clock/chunks)</li>
+    <li><strong>Anchor-less days</strong> — default (ask/suggest/rest)</li>
+    <li><strong>Calendar</strong> — sources, manual anchors, location profiles (absorbs current <code>/calendar</code> + <code>CalendarSourceManager</code>)</li>
+    <li><strong>Data</strong> — export, reset today, clear history, import (absorbs <code>/import</code>)</li>
+    <li><strong>Account</strong> — the six actions listed in Phase 5</li>
+    <li><strong>Clinical reading</strong> — link to <code>/clinical</code></li>
+    <li><strong>Support traverse</strong> — donation link, plain text explanation of the donation-not-subscription stance</li>
+  </ol>
+  <p>Each top-level setting writes to <code>user_preferences</code> via the existing <code>/api/auth/preferences</code> endpoint. The voice and theme tweaks should apply <em>live</em> (the prototype already wires this through a context — port the pattern).</p>
+
+  <h3>Clinical</h3>
+  <p>Port <code>screens/clinical.jsx</code> as <code>src/pages/clinical.astro</code>. This is the surface that does double duty: it's reachable in-app, and you can deep-link to it from the landing page when you're showing NHS people the literature mapping. Each row: feature · mechanism · citation.</p>
+
+  <h3>Plan + anchor-less</h3>
+  <p>Once Today is stable, the Plan generator and anchor-less variants follow the same pattern: build them with primitives, route them as query-string states of <code>/today</code> (<code>?plan=new</code>, <code>?empty=1</code>) or as their own routes — your call. <code>/api/daily-plan/generate</code> doesn't change. The <code>ChainGenerator</code> doesn't change. You're re-skinning the inputs and outputs.</p>
+
+  <ul class="check">
+    <li><code>/settings</code> renders all eight sections with working controls</li>
+    <li><code>/clinical</code> renders the literature map</li>
+    <li>Plan generator works against real <code>/api/daily-plan/generate</code></li>
+    <li>Anchor-less state renders the variant chosen in settings</li>
+  </ul>
+</section>
+
+<section id="phase8">
+  <h2>10 · Phase 8 — cleanup &amp; deletions</h2>
+  <p>The satisfying part. Do this <em>after</em> v2 has been the only path for at least a full working day. Stage in two commits: code removal first, table drops second.</p>
+
+  <h3>Code</h3>
+  <ul>
+    <li>Delete <code>src/styles/messy-theme.css</code></li>
+    <li>Delete <code>src/styles/animations.css</code> (the <code>messy-streak-fire</code> et al)</li>
+    <li>Delete <code>src/lib/habits/</code>, <code>src/components/habits/</code>, <code>src/pages/habits.astro</code>, <code>src/pages/habits/*</code>, <code>src/pages/api/habits/*</code></li>
+    <li>Delete <code>src/lib/billing/</code>, <code>src/lib/tokens/</code>, <code>src/pages/billing.astro</code>, <code>src/pages/api/auth/subscription.ts</code></li>
+    <li>Delete the old <code>MirrorUI.tsx</code> (52KB). Rename <code>MirrorUI.v2.tsx</code> → <code>MirrorUI.tsx</code>. Flatten the feature flag.</li>
+    <li>Delete <code>src/components/daily-plan/ChainView.tsx</code>'s legacy paths (or split the file if both Today and Plan still need it)</li>
+    <li>Delete <code>messy-*</code> entries from <code>tailwind.config.mjs</code></li>
+    <li>Drop unused deps: <code>canvas-confetti</code>, <code>chart.js</code>, <code>react-chartjs-2</code>, <code>recharts</code> (if nothing else uses them — grep first)</li>
+    <li>Remove <code>Inter</code> from the Tailwind <code>sans</code> stack</li>
+  </ul>
+
+  <h3>Tables</h3>
+  <p>One Supabase migration in <code>supabase/migrations/</code>:</p>
+  <pre>-- drop the legacy modules
+drop table if exists token_transactions;
+drop table if exists user_tokens;
+drop table if exists habit_entries;
+drop table if exists habits;
+-- keep this commented for a soak; uncomment only after export tested
+-- drop table if exists waitlist;</pre>
+  <p>Run <code>npm run db:generate-types</code> after, commit the regenerated <code>src/types/supabase.ts</code>.</p>
+
+  <ul class="check">
+    <li>Build is green</li>
+    <li>Tests are green (delete the habit/streak ones; they're testing deleted code)</li>
+    <li>Bundle size noticeably smaller</li>
+    <li>One last parity sweep — every BEFORE screenshot has an AFTER</li>
+  </ul>
+</section>
+
+<section id="week">
+  <h2>11 · The week</h2>
+  <p>For one solo dev, this week. Each day's "done" is well-defined so you can call it and rest.</p>
+
+  <div class="day"><div class="day__d">Mon</div><div class="day__body">
+    <p><strong>Phases 0 + 1 + 2.</strong> Branch, parity screenshots, kill list. Tokens in. Primitives written and visible at <code>/_dev/tv</code> in both themes.</p>
+    <p><em>Done when:</em> you can render the <code>&lt;Block&gt;</code>, <code>&lt;Runway&gt;</code>, <code>&lt;Prompt&gt;</code> primitives on a dev page with real-looking placeholder data, in both themes, and the existing app at <code>/dashboard</code> still works untouched.</p>
+  </div></div>
+
+  <div class="day"><div class="day__d">Tue</div><div class="day__body">
+    <p><strong>Phase 3 — Today / Mirror v2.</strong> Behind the flag. Voice dictionary in <code>src/lib/copy/voice.ts</code>. Wired to real endpoints. Half-day of dogfooding on your own account.</p>
+    <p><em>Done when:</em> with <code>MIRROR_V2=true</code>, <code>/today</code> renders your actual generated plan with no <code>undefined</code> fields, the state/triage/felt-helpful prompts round-trip, and <code>npm test</code> passes.</p>
+  </div></div>
+
+  <div class="day"><div class="day__d">Wed</div><div class="day__body">
+    <p><strong>Phases 4 + 5.</strong> IA collapse, middleware redirects, state tier classification, nightly cleanup function, delete-account endpoint. Account section in Settings.</p>
+    <p><em>Done when:</em> every old URL resolves to a new one; the retention job has a passing test; you successfully delete and recreate your own dev account.</p>
+  </div></div>
+
+  <div class="day"><div class="day__d">Thu</div><div class="day__body">
+    <p><strong>Phases 6 + 7.</strong> Onboarding rewrite, Settings sections, Clinical page, Plan generator re-skin, anchor-less variants wired to the preference.</p>
+    <p><em>Done when:</em> a fresh signup → 4-card onboarding → <code>/today</code> empty state → generate plan → it works.</p>
+  </div></div>
+
+  <div class="day"><div class="day__d">Fri</div><div class="day__body">
+    <p><strong>Flip the flag in prod. Phase 8 part 1 (code removal). Merge to main.</strong> Do <em>not</em> drop tables on Friday — leave that for Monday week 2 after a soak weekend.</p>
+    <p><em>Done when:</em> default users see the new design; <code>messy-theme.css</code> is gone; bundle is lighter; you can close the laptop.</p>
+  </div></div>
+</section>
+
+<section id="risks">
+  <h2>12 · Risk register</h2>
+  <p>The specific worries you named, each with a mitigation that is the responsibility of a phase above.</p>
+
+  <dl class="kv">
+    <dt>Confusing nav</dt>
+    <dd><strong>Mitigation:</strong> Phase 4. One Settings hub. Four items in primary nav. Decision rule when in doubt: if a setting could plausibly belong in two places, it lives in Settings only, and any contextual entry points are <em>links</em> into Settings — never duplicates.</dd>
+
+    <dt>Onboarding maze</dt>
+    <dd><strong>Mitigation:</strong> Phase 6. Four cards, fourth optional. Everything else has a default and is editable in Settings. The onboarding's job is to get the user to the first usable day, not to interview them.</dd>
+
+    <dt>Account amnesia</dt>
+    <dd><strong>Mitigation:</strong> Phase 5. One screen, six actions. The hard one — delete-account — gets written first and tested against your real account, because the schema's cascade behaviour is the actual risk, not the UI.</dd>
+
+    <dt>Stateless on paper, leaky in fact</dt>
+    <dd><strong>Mitigation:</strong> Phase 5 tiers + the retention test. Without the test, the rule is decorative. <em>Write the test even if you have to ship the cron job stubbed.</em></dd>
+
+    <dt>Static beauty, broken wiring</dt>
+    <dd><strong>Mitigation:</strong> Phase 3's "real-data smoke pass" — every v2 screen is loaded against a real Supabase plan and screenshotted into <code>docs/parity/AFTER/</code> before it's considered done. Eyeball for <code>undefined</code>, <code>NaN</code>, empty strings, "—".</dd>
+
+    <dt>Old modules drift back in</dt>
+    <dd><strong>Mitigation:</strong> Phase 0's kill list lives in the repo. Phase 8 deletions are scheduled, not optional. Until then, the old modules are <em>flag-gated off in nav</em> so a stray import doesn't re-surface them.</dd>
+
+    <dt>Friday rush breaks production</dt>
+    <dd><strong>Mitigation:</strong> Friday's flag flip is the only production change. Code deletions land the same day but the table drops wait until Monday week 2. If the weekend reveals an issue, you can flip the flag back and the old code is still there.</dd>
+  </dl>
+</section>
+
+<section id="snippets">
+  <h2>13 · Appendix — snippets</h2>
+
+  <h3>Voice dictionary skeleton</h3>
+  <pre>// src/lib/copy/voice.ts
+export type Register = 'plain' | 'clinical' | 'warm';
+
+export const copy = {
+  stateDeclaration: {
+    title: {
+      plain:    "Where is your energy at right now?",
+      clinical: "Self-report: current activation state.",
+      warm:     "How's your energy, honestly?",
+    },
+    caption: {
+      plain:    "There is no wrong answer.",
+      clinical: "Used to calibrate today's chain.",
+      warm:     "No wrong answer here.",
+    },
+    options: {
+      clear:  { plain:"Clear and ready to act.",   clinical:"High activation.",   warm:"Clear-headed." },
+      foggy:  { plain:"A bit foggy — gentle ramp.", clinical:"Moderate activation.", warm:"A bit foggy." },
+      empty:  { plain:"Running on empty.",          clinical:"Low activation.",     warm:"Empty." },
+    },
+  },
+  // ... triage, feltHelpful, realityCheck
+} as const;
+
+// src/lib/copy/useVoice.ts
+import { useAuth } from '../auth/context';
+export function useVoice(): Register {
+  const { preferences } = useAuth();
+  return (preferences?.voice ?? 'plain') as Register;
+}</pre>
+
+  <h3>Feature flag for MirrorV2</h3>
+  <pre>// src/lib/feature-flags.ts (add)
+export const flags = {
+  MIRROR_V2: import.meta.env.PUBLIC_MIRROR_V2 === 'true'
+          || import.meta.env.DEV,
+  // ...existing
+};
+
+// src/components/daily-plan/MirrorUIWithErrorBoundary.tsx
+import { flags } from '@/lib/feature-flags';
+import MirrorUIV1 from './MirrorUI';
+import MirrorUIV2 from './MirrorUI.v2';
+const Mirror = flags.MIRROR_V2 ? MirrorUIV2 : MirrorUIV1;
+// ...wrap Mirror in your existing ErrorBoundary</pre>
+
+  <h3>Middleware redirects (add inside <code>onRequest</code>)</h3>
+  <pre>const REDIRECTS: Record&lt;string, string&gt; = {
+  "/dashboard":   "/today",
+  "/daily-plan":  "/today",
+  "/habits":      "/settings/data",
+  "/calendar":    "/settings/calendar",
+  "/profile":     "/settings/account",
+  "/billing":     "/settings/support",
+  "/import":      "/settings/data",
+};
+if (REDIRECTS[pathname]) return redirect(REDIRECTS[pathname], 301);
+if (pathname.startsWith("/habits/"))     return redirect("/settings/data", 301);
+if (pathname.startsWith("/daily-plan/")) return redirect("/today", 301);</pre>
+
+  <h3>Billing stub</h3>
+  <pre>// src/lib/billing/subscription.ts
+export function getBillingSnapshot(_preferences: unknown) {
+  return { isAccessAllowed: true, trialDaysRemaining: null, status: 'donation' as const };
+}</pre>
+
+  <h3>Nightly retention (Supabase function or Vercel cron)</h3>
+  <pre>-- supabase/migrations/<timestamp>_daily_plan_retention.sql
+create or replace function purge_old_plans() returns void as $$
+begin
+  delete from daily_plans where date &lt; current_date - interval '1 day';
+  delete from calendar_events where occurred_at &lt; now() - interval '30 days';
+end;
+$$ language plpgsql security definer;</pre>
+
+  <h3>Delete-account endpoint sketch</h3>
+  <pre>// src/pages/api/auth/delete-account.ts
+import type { APIRoute } from 'astro';
+import { createServerAuth } from '@/lib/auth/simple-multi-user';
+
+export const POST: APIRoute = async ({ cookies }) =&gt; {
+  const serverAuth = createServerAuth(cookies);
+  const user = await serverAuth.requireAuth();
+  // RLS-scoped client — cascades handle most of this, but be explicit
+  await serverAuth.supabase.from('daily_plans').delete().eq('user_id', user.id);
+  await serverAuth.supabase.from('manual_anchors').delete().eq('user_id', user.id);
+  await serverAuth.supabase.from('location_travel_profiles').delete().eq('user_id', user.id);
+  await serverAuth.supabase.from('calendar_sources').delete().eq('user_id', user.id);
+  await serverAuth.supabase.from('user_preferences').delete().eq('user_id', user.id);
+  await serverAuth.supabase.from('profiles').delete().eq('id', user.id);
+  // finally, the auth user — requires admin client
+  const { error } = await serverAuth.adminClient.auth.admin.deleteUser(user.id);
+  if (error) return new Response(error.message, { status: 500 });
+  return new Response(null, { status: 204 });
+};</pre>
+
+  <h3>The four onboarding cards (component sketch)</h3>
+  <pre>// src/components/onboarding/OnboardingFlow.tsx
+const cards = [
+  { id: 'anchor_kind', q: 'What does a good day start with for you?',
+    opts: ['A place to be','A person','A meal','The light coming up'] },
+  { id: 'wake_sleep',  q: 'When are you usually awake?', kind: 'time-range' },
+  { id: 'sideways',    q: 'When plans go sideways, what do you want?',
+    opts: ['Alternatives, calmly','Just permission to stop'] },
+  { id: 'place',       q: 'Add one place you go often.', optional: true,
+    fields: ['label','minutes'] },
+];</pre>
+
+  <p class="foot">The point of this document is for you to delete it.</p>
+</section>
+
+</main>
+</body>
+</html>
