@@ -1,13 +1,11 @@
-const CACHE_NAME = "meshos-cache-v2";
+const CACHE_NAME = "traverse-cache-v3";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/",
-  "/dashboard",
-  "/daily-plan",
-  "/habits",
+  "/today",
+  "/plan",
+  "/clinical",
   "/settings",
-  "/profile",
-  "/billing",
   "/manifest.json",
   "/favicon.svg",
   "/icons/favicon-white.png",

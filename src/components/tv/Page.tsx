@@ -1,4 +1,7 @@
 import React from 'react';
+import { Footer } from './Footer';
+import { Sidebar } from './Sidebar';
+import type { RouteKey } from './nav';
 
 interface PageProps {
   children: React.ReactNode;
@@ -6,9 +9,11 @@ interface PageProps {
   motion?: boolean;
   theme?: 'daylight' | 'lamp';
   density?: 'standard' | 'roomy';
+  active?: RouteKey;
+  wide?: boolean;
 }
 
-export function Page({ children, header, motion = true, theme, density }: PageProps) {
+export function Page({ children, header, motion = true, theme, density, active, wide }: PageProps) {
   const style: React.CSSProperties = density === 'roomy' ? { ['--density' as string]: '1.15' } : {};
   return (
     <div
@@ -17,10 +22,14 @@ export function Page({ children, header, motion = true, theme, density }: PagePr
       data-motion={motion ? undefined : 'off'}
       style={style}
     >
-      {header && header}
-      <main className={`tv-page${motion ? ' tv-fade' : ''}`}>
-        {children}
-      </main>
+      <Sidebar active={active} />
+      <div className="tv-content">
+        {header && header}
+        <main className={`tv-page${motion ? ' tv-fade' : ''}`} data-wide={wide ? 'true' : undefined}>
+          {children}
+        </main>
+      </div>
+      <Footer active={active} />
     </div>
   );
 }

@@ -153,6 +153,12 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       "onboarding_presets",
       "max_late_minutes_default",
       "strict_late_default",
+      "motion",
+      "density",
+      "voice",
+      "timeFormat",
+      "anchorless",
+      "phase2_eligible_at",
     ];
 
     const sanitizedUpdates = Object.keys(updates)

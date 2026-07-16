@@ -3,9 +3,24 @@ import { createServerAuth } from "./lib/auth/simple-multi-user";
 import { RouteClassifier } from "./lib/utils/route-classifier";
 import { getBillingSnapshot } from "./lib/billing/subscription";
 
+const REDIRECTS: Record<string, string> = {
+  "/dashboard":  "/today",
+  "/daily-plan": "/plan",
+  "/habits":     "/settings",
+  "/calendar":   "/settings/calendar",
+  "/profile":    "/settings",
+  "/billing":    "/settings",
+  "/import":     "/settings",
+};
+
 export const onRequest = defineMiddleware(
   async ({ url, cookies, redirect }, next) => {
     const { pathname } = url;
+
+    // Phase 4 IA collapse — redirect old routes to new ones
+    if (REDIRECTS[pathname]) return redirect(REDIRECTS[pathname], 301);
+    if (pathname.startsWith("/habits/"))     return redirect("/settings", 301);
+    if (pathname.startsWith("/daily-plan/")) return redirect("/plan", 301);
 
     // Classify the route to determine how to handle it
     const classification = RouteClassifier.classifyRoute(pathname);
@@ -47,11 +62,11 @@ export const onRequest = defineMiddleware(
         console.log(`🏠 Unauthenticated user on landing page`);
         return next();
       } else {
-        // Authenticated user on landing page - redirect to dashboard
+        // Authenticated user on landing page - redirect to today
         console.log(
-          `🔄 Authenticated user on landing, redirecting to dashboard`,
+          `🔄 Authenticated user on landing, redirecting to today`,
         );
-        return redirect("/dashboard");
+        return redirect("/today");
       }
     }
 
@@ -85,11 +100,10 @@ export const onRequest = defineMiddleware(
           return redirect("/onboarding");
         }
 
-        // If onboarding is complete and user is on onboarding page, redirect to dashboard
-        if (hasCompletedOnboarding && pathname === "/onboarding") {
-          console.log(`🏠 Redirecting to dashboard from onboarding`);
-          return redirect("/dashboard");
-        }
+        // Note: /onboarding itself decides whether there's a pending phase-2
+        // preset flow to show (see src/pages/onboarding.astro) — middleware
+        // must not blanket-redirect it away once phase 1 is complete, or the
+        // phase-2 preset surface (Phase 11) would be unreachable.
 
         const billing = getBillingSnapshot(preferences);
         const billingExemptRoutes = new Set([

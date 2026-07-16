@@ -1,0 +1,9 @@
+---
+// src/pages/login.astro — sign in / sign up
+import Layout from '../layouts/Layout.astro';
+import { AuthScreen } from '../components/auth/AuthScreen.tsx';
+---
+
+<Layout title="traverse — sign in">
+  <AuthScreen client:load redirectTo="/today" />
+</Layout>

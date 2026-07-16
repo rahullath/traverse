@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import SettingsPageContent from '../components/settings/SettingsPageContent';
+import TodayPageContent from '../components/today/TodayPageContent';
 import { createServerAuth } from '../lib/auth/simple-multi-user';
 
 const serverAuth = createServerAuth(Astro.cookies);
@@ -10,31 +10,21 @@ if (!user) return Astro.redirect('/login');
 const preferences = await serverAuth.getUserPreferences(user.id);
 const prefs = (preferences ?? {}) as Record<string, unknown>;
 
+const voice = (['plain', 'clinical', 'warm'] as const).includes(prefs.voice as any)
+  ? (prefs.voice as 'plain' | 'clinical' | 'warm')
+  : 'plain';
+
+// Map old dark themes to lamp; everything else becomes daylight (the default)
 const rawTheme = prefs.theme as string | undefined;
 const theme = (rawTheme === 'dark' || rawTheme === 'midnight' || rawTheme === 'lamp')
   ? 'lamp' as const
   : 'daylight' as const;
 
-const motion = prefs.motion === 'off' ? 'off' as const : 'full' as const;
 const density = prefs.density === 'roomy' ? 'roomy' as const : 'standard' as const;
-const voice = (['plain', 'clinical', 'warm'] as const).includes(prefs.voice as any)
-  ? (prefs.voice as 'plain' | 'clinical' | 'warm')
-  : 'plain';
+const motion = prefs.motion !== 'off';
 const timeFormat = prefs.timeFormat === 'chunks' ? 'chunks' as const : 'clock' as const;
-const anchorless = (['choice', 'suggest', 'refuse'] as const).includes(prefs.anchorless as any)
-  ? (prefs.anchorless as 'choice' | 'suggest' | 'refuse')
-  : 'choice';
 ---
 
-<Layout title="traverse — settings">
-  <SettingsPageContent
-    client:load
-    email={user.email ?? ''}
-    theme={theme}
-    motion={motion}
-    density={density}
-    voice={voice}
-    timeFormat={timeFormat}
-    anchorless={anchorless}
-  />
+<Layout title="traverse — today">
+  <TodayPageContent client:load voice={voice} theme={theme} density={density} motion={motion} timeFormat={timeFormat} />
 </Layout>

@@ -1,7 +1,13 @@
 /**
  * Forms Dark Theme Fix
- * Ensures all form elements have proper colors for dark theme
+ * Ensures all form elements have proper colors for dark theme.
+ *
+ * Scoped to stop at any .tv-app boundary — the paper-and-ink redesign
+ * (Today/Plan/Onboarding/Settings/Clinical/Login) owns its own input,
+ * button, label, and dialog colors via tokens.css, and these blanket
+ * !important rules were clobbering them (forced white-on-white/black-on-black).
  */
+@scope (body) to (.tv-app) {
 
 /* Fix for all form inputs, selects, and textareas */
 input[type="text"],
@@ -123,4 +129,6 @@ button {
   background: rgb(var(--surface)) !important;
   color: rgb(var(--text-primary)) !important;
   border: 1px solid rgb(var(--border)) !important;
+}
+
 }

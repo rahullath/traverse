@@ -14,7 +14,12 @@ export default defineConfig({
     define: {
       global: "globalThis",
     },
-
+    resolve: {
+      dedupe: ["react", "react-dom", "react-dom/server"],
+    },
+    optimizeDeps: {
+      include: ["react", "react-dom"],
+    },
     server: {
       fs: {
         strict: false,

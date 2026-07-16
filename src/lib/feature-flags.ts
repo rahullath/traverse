@@ -19,7 +19,7 @@ export const FEATURE_FLAGS = {
 // Default flag values (can be overridden by environment or user preferences)
 const DEFAULT_FLAGS: Record<string, boolean> = {
   // V2 flags - start disabled, enable gradually
-  [FEATURE_FLAGS.MIRROR_V2_ENABLED]: false,
+  [FEATURE_FLAGS.MIRROR_V2_ENABLED]: true,
   [FEATURE_FLAGS.MIRROR_V2_NEUTRAL_DISPLAY]: false,
   [FEATURE_FLAGS.MIRROR_V2_FLEXIBLE_START]: false,
   [FEATURE_FLAGS.MIRROR_V2_OPTIONAL_TRACKING]: false,

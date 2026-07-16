@@ -8,6 +8,8 @@
     "/api/daily-plan",
     "/api/auth/preferences",
     "/api/auth/profile",
+    "/api/location-travel-profiles",
+    "/api/calendar/sources",
   ];
 
   function shouldQueue(url, method) {

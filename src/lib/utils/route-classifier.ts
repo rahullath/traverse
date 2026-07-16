@@ -48,6 +48,7 @@ export class RouteClassifier {
     "/reset-password",
     "/auth-status",
     "/about",
+    "/clinical",
   ];
 
   /**
