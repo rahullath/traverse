@@ -4,6 +4,11 @@
  */
 
 import type { APIRoute } from "astro";
+import { normalizeICalUrl } from "../../../lib/calendar/ical-url";
+
+// Never return `credentials` (OAuth access/refresh tokens) to the browser.
+const PUBLIC_SOURCE_COLUMNS =
+  "id,user_id,name,type,url,sync_frequency,color,priority,is_active,last_sync,created_at";
 import { createServerAuth } from "../../../lib/auth/simple-multi-user";
 import type {
   CreateCalendarSourceRequest,
@@ -28,7 +33,7 @@ export const GET: APIRoute = async ({ cookies }) => {
     // Use the authenticated server client to get calendar sources
     const { data: sources, error } = await serverAuth.supabase
       .from("calendar_sources")
-      .select("*")
+      .select(PUBLIC_SOURCE_COLUMNS)
       .eq("user_id", user.id)
       .order("priority", { ascending: true });
 
@@ -85,17 +90,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
-    // Validate iCal URL if type is ical
-    if (sourceData.type === "ical" && !sourceData.url) {
-      return new Response(
-        JSON.stringify({
-          error: "URL is required for iCal sources",
-        }),
-        {
+    // Validate and normalise iCal URL if type is ical
+    if (sourceData.type === "ical") {
+      const checked = normalizeICalUrl(sourceData.url || "");
+      if (!checked.ok) {
+        return new Response(JSON.stringify({ error: checked.reason }), {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        },
-      );
+        });
+      }
+      sourceData.url = checked.url;
     }
 
     // Use the authenticated server client to create the calendar source
@@ -111,7 +115,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         sync_frequency: sourceData.sync_frequency || 60,
         is_active: true,
       })
-      .select()
+      .select(PUBLIC_SOURCE_COLUMNS)
       .single();
 
     if (error) {
@@ -168,7 +172,7 @@ export const PUT: APIRoute = async ({ request, url, cookies }) => {
       .update(updates)
       .eq("id", sourceId)
       .eq("user_id", user.id)
-      .select()
+      .select(PUBLIC_SOURCE_COLUMNS)
       .single();
 
     if (error) {

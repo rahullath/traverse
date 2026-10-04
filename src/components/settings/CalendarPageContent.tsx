@@ -20,12 +20,18 @@ const PROVIDERS: Array<{ type: 'google' | 'outlook'; name: string }> = [
   { type: 'outlook', name: 'Microsoft / Outlook' },
 ];
 
+const inputStyle: React.CSSProperties = { border: '1px solid var(--rule-strong)', padding: '10px 12px', background: 'transparent', color: 'var(--ink)', fontFamily: 'var(--serif)', fontSize: 15, width: '100%', boxSizing: 'border-box', marginTop: 8 };
+
 export default function CalendarPageContent({ theme, density, motion = true }: Props) {
   const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [online, setOnline] = useState(true);
   const [banner, setBanner] = useState<string | null>(null);
+  const [icalName, setIcalName] = useState('');
+  const [icalUrl, setIcalUrl] = useState('');
+  const [addingIcal, setAddingIcal] = useState(false);
+  const [syncing, setSyncing] = useState<string | null>(null);
 
   useEffect(() => {
     setOnline(navigator.onLine);
@@ -37,19 +43,61 @@ export default function CalendarPageContent({ theme, density, motion = true }: P
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
     const error = params.get('error');
-    if (success) setBanner(`Connected — ${success.replace(/_/g, ' ')}.`);
+    if (success) setBanner(`Connected — ${success.replace(/_/g, ' ')}.${params.get('warning') ? ' The first sync failed; try "Sync now".' : ''}`);
     if (error) setBanner(`Connection failed — ${error.replace(/_/g, ' ')}.`);
 
-    fetch('/api/calendar/sources')
-      .then(r => r.ok ? r.json() : { sources: [] })
-      .then(d => setSources(d.sources ?? []))
-      .finally(() => setLoading(false));
+    loadSources().finally(() => setLoading(false));
 
     return () => {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
     };
   }, []);
+
+  const loadSources = () =>
+    fetch('/api/calendar/sources')
+      .then(r => r.ok ? r.json() : { sources: [] })
+      .then(d => setSources(d.sources ?? []))
+      .catch(() => setBanner('Could not load your calendars. Check the connection and reload.'));
+
+  const syncSource = async (source: Source) => {
+    setSyncing(source.id);
+    try {
+      const res = await fetch(`/api/calendar/sync?source_id=${source.id}`, { method: 'POST' });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || body.queued) throw new Error(body.result?.errors?.[0] || body.error || 'sync failed');
+      const r = body.result ?? {};
+      setBanner(`${source.name} synced — ${r.events_added ?? 0} new, ${r.events_updated ?? 0} updated.`);
+      await loadSources();
+    } catch (e) {
+      setBanner(`Couldn't sync ${source.name}: ${e instanceof Error ? e.message : 'try again'}.`);
+    } finally {
+      setSyncing(null);
+    }
+  };
+
+  const addIcal = async () => {
+    if (!icalUrl.trim()) { setBanner('Paste the calendar link first.'); return; }
+    setAddingIcal(true);
+    try {
+      const res = await fetch('/api/calendar/sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: icalName.trim() || 'Calendar link', type: 'ical', url: icalUrl.trim(), color: '#3e5b7e', sync_frequency: 60 }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || body.queued) throw new Error(body.error || 'Could not add that link.');
+      setIcalName(''); setIcalUrl('');
+      setSources(s => [...s, body.source]);
+      await syncSource(body.source);
+    } catch (e) {
+      setBanner(e instanceof Error ? e.message : 'Could not add that link.');
+    } finally {
+      setAddingIcal(false);
+    }
+  };
+
+  const icalSources = sources.filter(s => s.type === 'ical');
 
   const connectedFor = (type: string) => sources.find(s => s.type === type && s.is_active) ?? null;
 
@@ -82,9 +130,13 @@ export default function CalendarPageContent({ theme, density, motion = true }: P
   };
 
   const disconnect = async (source: Source) => {
+    const res = await fetch(`/api/calendar/sources?id=${source.id}`, { method: 'DELETE' }).catch(() => null);
+    if (!res || !res.ok) { setBanner(`Couldn't remove ${source.name}. Try again.`); return; }
     setSources(s => s.filter(x => x.id !== source.id));
-    await fetch(`/api/calendar/sources?id=${source.id}`, { method: 'DELETE' }).catch(() => {});
   };
+
+  const syncedMeta = (source: Source) =>
+    `connected${source.last_sync ? ` · synced ${new Date(source.last_sync).toLocaleString()}` : ' · not synced yet'}`;
 
   const anyConnected = sources.some(s => s.is_active);
 
@@ -116,11 +168,14 @@ export default function CalendarPageContent({ theme, density, motion = true }: P
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <div className="tv-connect-row__name">{p.name}</div>
                   <div className="tv-connect-row__meta">
-                    {source
-                      ? `connected${source.last_sync ? ` · synced ${new Date(source.last_sync).toLocaleString()}` : ''}`
-                      : 'not connected'}
+                    {source ? syncedMeta(source) : 'not connected'}
                   </div>
                 </div>
+                {source && (
+                  <Button variant="quiet" className="tv-inline-btn" disabled={!online || syncing === source.id} onClick={() => syncSource(source)}>
+                    {syncing === source.id ? 'syncing…' : 'Sync now'}
+                  </Button>
+                )}
                 <Button
                   variant={source ? 'quiet' : 'primary'}
                   className="tv-inline-btn"
@@ -132,6 +187,50 @@ export default function CalendarPageContent({ theme, density, motion = true }: P
               </article>
             );
           })}
+        </section>
+      )}
+
+      {!loading && (
+        <section>
+          <div className="tv-label" style={{ paddingTop: 16, paddingBottom: 4 }}>by link · ical / ics</div>
+          {icalSources.map(source => (
+            <article key={source.id} className="tv-connect-row">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <div className="tv-connect-row__name">{source.name}</div>
+                <div className="tv-connect-row__meta">{syncedMeta(source)}</div>
+              </div>
+              <Button variant="quiet" className="tv-inline-btn" disabled={!online || syncing === source.id} onClick={() => syncSource(source)}>
+                {syncing === source.id ? 'syncing…' : 'Sync now'}
+              </Button>
+              <Button variant="quiet" className="tv-inline-btn" onClick={() => disconnect(source)}>Remove</Button>
+            </article>
+          ))}
+          <Card>
+            <p className="tv-prose" style={{ margin: 0, fontSize: 15 }}>
+              Works with any calendar that gives you a subscribe link — Google ("Secret address in iCal format"), Outlook ("Publish calendar" → ICS), Apple iCloud ("Public calendar"), or a university timetable feed.
+            </p>
+            <input
+              className="tv-ui"
+              aria-label="calendar name"
+              placeholder="Name — e.g. Uni timetable"
+              value={icalName}
+              onChange={e => setIcalName(e.target.value)}
+              style={inputStyle}
+            />
+            <input
+              className="tv-ui"
+              aria-label="calendar link"
+              placeholder="https://… or webcal://…"
+              value={icalUrl}
+              onChange={e => setIcalUrl(e.target.value)}
+              style={{ ...inputStyle, fontFamily: 'var(--mono)', fontSize: 13 }}
+            />
+            <div className="tv-actions">
+              <Button variant="primary" hint={addingIcal ? '…' : 'add + sync'} disabled={!online || addingIcal} onClick={addIcal}>
+                Add calendar link
+              </Button>
+            </div>
+          </Card>
         </section>
       )}
 

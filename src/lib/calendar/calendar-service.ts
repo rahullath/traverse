@@ -23,6 +23,16 @@ import type {
 import type { TablesInsert, TablesUpdate } from "types/supabase";
 
 export class CalendarService {
+  // Server code must pass a user-scoped client (serverAuth.supabase): the
+  // default browser client has no session server-side, so RLS hides
+  // everything and writes silently no-op.
+  constructor(private db: any = supabase) {}
+
+  /** A service bound to the given (user-scoped) Supabase client. */
+  forClient(db: any): CalendarService {
+    return new CalendarService(db);
+  }
+
   /**
    * Get all calendar sources for a user
    */
@@ -30,7 +40,7 @@ export class CalendarService {
     userId: string,
     supabaseClient?: any,
   ): Promise<CalendarSource[]> {
-    const client = supabaseClient || supabase;
+    const client = supabaseClient || this.db;
     const { data, error } = await client
       .from("calendar_sources")
       .select("*")
@@ -52,7 +62,7 @@ export class CalendarService {
     sourceData: CreateCalendarSourceRequest,
     supabaseClient?: any,
   ): Promise<CalendarSource> {
-    const client = supabaseClient || supabase;
+    const client = supabaseClient || this.db;
     const { data, error } = await client
       .from("calendar_sources")
       .insert({
@@ -82,7 +92,7 @@ export class CalendarService {
     sourceId: string,
     updates: UpdateCalendarSourceRequest,
   ): Promise<CalendarSource> {
-    const { data, error } = await supabase
+    const { data, error } = await this.db
       .from("calendar_sources")
       .update(updates as TablesUpdate<"calendar_sources">)
       .eq("id", sourceId)
@@ -101,10 +111,10 @@ export class CalendarService {
    */
   async deleteCalendarSource(sourceId: string): Promise<void> {
     // Delete events first
-    await supabase.from("calendar_events").delete().eq("source_id", sourceId);
+    await this.db.from("calendar_events").delete().eq("source_id", sourceId);
 
     // Delete source
-    const { error } = await supabase
+    const { error } = await this.db
       .from("calendar_sources")
       .delete()
       .eq("id", sourceId);
@@ -128,7 +138,7 @@ export class CalendarService {
   ): Promise<void> {
     const expiresAt = Date.now() + credentials.expires_in * 1000;
 
-    const { error } = await supabase
+    const { error } = await this.db
       .from("calendar_sources")
       .update({
         credentials: {
@@ -210,7 +220,7 @@ export class CalendarService {
       }
 
       // Get existing events for this source
-      const { data: existingEvents } = await supabase
+      const { data: existingEvents } = await this.db
         .from("calendar_events")
         .select("*")
         .eq("source_id", source.id);
@@ -239,7 +249,7 @@ export class CalendarService {
               user_id: newEvent.user_id,
               source_id: newEvent.source_id,
             };
-            await supabase
+            await this.db
               .from("calendar_events")
               .update(updatePayload)
               .eq("id", existingEvent.id);
@@ -261,14 +271,14 @@ export class CalendarService {
             importance: newEvent.importance,
             external_id: newEvent.external_id,
           };
-          await supabase.from("calendar_events").insert(insertPayload);
+          await this.db.from("calendar_events").insert(insertPayload);
           result.events_added++;
         }
       }
 
       // Delete events that no longer exist in source
       for (const [, eventToDelete] of existingEventMap) {
-        await supabase
+        await this.db
           .from("calendar_events")
           .delete()
           .eq("id", eventToDelete.id);
@@ -276,7 +286,7 @@ export class CalendarService {
       }
 
       // Update last sync time
-      await supabase
+      await this.db
         .from("calendar_sources")
         .update({
           last_sync: result.last_sync?.toISOString(),
@@ -432,7 +442,7 @@ export class CalendarService {
     } = {},
     supabaseClient?: any,
   ): Promise<CalendarEvent[]> {
-    const client = supabaseClient || supabase;
+    const client = supabaseClient || this.db;
     let query = client
       .from("calendar_events")
       .select(
@@ -716,7 +726,7 @@ export class CalendarService {
     request: ScheduleTaskRequest,
     supabaseClient?: any,
   ): Promise<ScheduledTask> {
-    const client = supabaseClient || supabase;
+    const client = supabaseClient || this.db;
     const {
       task_id,
       user_id,

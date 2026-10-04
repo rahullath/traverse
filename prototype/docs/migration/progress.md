@@ -154,3 +154,22 @@ prioritized version of this list):
 - **Install banner** (parity-gaps #5) has a "Not now" with a 30-day localStorage cooldown.
 - **Tests:** 4 stale v1 component assertions updated to current markup; new `mutate` unit tests.
   `npm test` 273/273, `npm run build` clean.
+
+### Later the same day — items 4–7
+
+- **Plan (#4):** wake/sleep default from onboarding phase-1 answers and are editable on the result
+  step ("adjust · day bounds & anchor type" → Rebuild). Anchor type suggested from title, editable.
+  Custom anchors have a duration picker.
+- **Today (#5):** all six declarable states (mid-chain has a step picker); reality check restored
+  ("What can I still fit?"); standalone "Recalculate from now". Fixed triage sending the block id
+  instead of `activityId` (it always 404'd, silently).
+- **Account (#6):** `delete_my_account()` SQL function (migration `20261004000000`) +
+  `POST /api/account/delete` + typed-confirm UI in Settings. Sign-out form now redirects to /login.
+  **The migration must be applied to the Supabase project before this works in prod.**
+- **Calendar (#7):** iCal/ICS link import in Settings → Calendar (webcal normalised, private-network
+  URLs rejected), per-source "Sync now", Plan triggers a background sync on open. Server-side
+  `CalendarService` now uses the user-scoped client (it was using the browser client with no
+  session, so RLS blocked OAuth token storage and sync). `/api/calendar/sync` now syncs Google/Outlook
+  too, not just iCal. OAuth callbacks take the user from the session (not the unsigned `state`) and
+  redirect straight to /settings/calendar. `GET /api/calendar/sources` no longer returns OAuth tokens.
+  Google/Outlook OAuth still needs real client credentials + (for Google) app verification to test.

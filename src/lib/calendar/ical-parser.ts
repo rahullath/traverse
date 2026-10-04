@@ -4,6 +4,7 @@
  */
 
 import type { CalendarEvent, CalendarSource } from "../../types/calendar";
+import { normalizeICalUrl } from "./ical-url";
 
 interface ICalEvent {
   uid: string;
@@ -29,11 +30,14 @@ export class ICalParser {
   /**
    * Parse iCal feed from URL
    */
-  async parseFromUrl(url: string): Promise<ParsedICalData> {
+  async parseFromUrl(rawUrl: string): Promise<ParsedICalData> {
+    const checked = normalizeICalUrl(rawUrl);
+    if (!checked.ok) throw new Error(checked.reason);
+    const url = checked.url;
     try {
       const response = await fetch(url, {
         headers: {
-          "User-Agent": "MessyOS Calendar Integration/1.0",
+          "User-Agent": "traverse Calendar Integration/1.0",
           Accept: "text/calendar, text/plain, */*",
         },
       });

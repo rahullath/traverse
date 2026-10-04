@@ -129,9 +129,19 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
   useEffect(() => {
     const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
-    fetch(`/api/calendar/events?start_date=${startOfDay.toISOString()}&end_date=${endOfDay.toISOString()}`)
-      .then(r => r.ok ? r.json() : { events: [] })
-      .then(d => setEvents(d.events ?? []))
+    const loadEvents = () =>
+      fetch(`/api/calendar/events?start_date=${startOfDay.toISOString()}&end_date=${endOfDay.toISOString()}`)
+        .then(r => r.ok ? r.json() : { events: [] })
+        .then(d => {
+          const now = Date.now();
+          // Only events still ahead of us can be anchors.
+          setEvents(((d.events ?? []) as CalendarEventOption[]).filter(ev => +new Date(ev.start_time) > now));
+        })
+        .catch(() => {});
+    loadEvents();
+    // Pull fresh events from linked calendars in the background, then refresh.
+    fetch('/api/calendar/sync', { method: 'POST' })
+      .then(r => { if (r.ok) loadEvents(); })
       .catch(() => {});
     fetch('/api/location-travel-profiles')
       .then(r => r.ok ? r.json() : { profiles: [] })
