@@ -276,18 +276,27 @@ ALTER TABLE spending_patterns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
 
 -- Public read access for currencies and categories
+DROP POLICY IF EXISTS "Anyone can view currencies" ON currencies;
 CREATE POLICY "Anyone can view currencies" ON currencies FOR SELECT USING (is_active = true);
+DROP POLICY IF EXISTS "Anyone can view exchange rates" ON exchange_rates;
 CREATE POLICY "Anyone can view exchange rates" ON exchange_rates FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Anyone can view expense categories" ON expense_categories;
 CREATE POLICY "Anyone can view expense categories" ON expense_categories FOR SELECT USING (is_active = true);
 
 -- User-specific policies
+DROP POLICY IF EXISTS "Users can manage own expense settings" ON user_expense_settings;
 CREATE POLICY "Users can manage own expense settings" ON user_expense_settings FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own bank accounts" ON bank_accounts;
 CREATE POLICY "Users can manage own bank accounts" ON bank_accounts FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own expenses" ON expenses;
 CREATE POLICY "Users can manage own expenses" ON expenses FOR ALL USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can view spending patterns" ON spending_patterns;
 CREATE POLICY "Users can view spending patterns" ON spending_patterns FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can manage own budgets" ON budgets;
 CREATE POLICY "Users can manage own budgets" ON budgets FOR ALL USING (auth.uid() = user_id);
 
 -- Merchant intelligence - read for all, write for system
+DROP POLICY IF EXISTS "Anyone can view merchant intelligence" ON merchant_intelligence;
 CREATE POLICY "Anyone can view merchant intelligence" ON merchant_intelligence FOR SELECT USING (true);
 
 -- Step 12: Insert default data
@@ -528,6 +537,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_budget_progress_trigger ON expenses;
 CREATE TRIGGER update_budget_progress_trigger
   AFTER INSERT OR UPDATE OR DELETE ON expenses
   FOR EACH ROW
@@ -565,6 +575,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_merchant_intelligence_trigger ON expenses;
 CREATE TRIGGER update_merchant_intelligence_trigger
   AFTER INSERT ON expenses
   FOR EACH ROW

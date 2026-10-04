@@ -26,6 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_mirror_telemetry_user_event
 ALTER TABLE mirror_telemetry_events ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Users can only insert their own telemetry events
+DROP POLICY IF EXISTS "Users can insert their own telemetry events" ON mirror_telemetry_events;
 CREATE POLICY "Users can insert their own telemetry events"
   ON mirror_telemetry_events
   FOR INSERT
@@ -33,6 +34,7 @@ CREATE POLICY "Users can insert their own telemetry events"
   WITH CHECK (auth.uid() = user_id);
 
 -- RLS Policy: Users can only read their own telemetry events
+DROP POLICY IF EXISTS "Users can read their own telemetry events" ON mirror_telemetry_events;
 CREATE POLICY "Users can read their own telemetry events"
   ON mirror_telemetry_events
   FOR SELECT

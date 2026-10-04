@@ -17,18 +17,21 @@ DROP POLICY IF EXISTS "Users can select their own daily plans" ON public.daily_p
 DROP POLICY IF EXISTS "Users can update their own daily plans" ON public.daily_plans;
 DROP POLICY IF EXISTS "Users can delete their own daily plans" ON public.daily_plans;
 
+DROP POLICY IF EXISTS "Users can insert their own daily plans" ON public.daily_plans;
 CREATE POLICY "Users can insert their own daily plans"
 ON public.daily_plans
 FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can select their own daily plans" ON public.daily_plans;
 CREATE POLICY "Users can select their own daily plans"
 ON public.daily_plans
 FOR SELECT
 TO authenticated
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own daily plans" ON public.daily_plans;
 CREATE POLICY "Users can update their own daily plans"
 ON public.daily_plans
 FOR UPDATE
@@ -36,6 +39,7 @@ TO authenticated
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own daily plans" ON public.daily_plans;
 CREATE POLICY "Users can delete their own daily plans"
 ON public.daily_plans
 FOR DELETE
@@ -50,6 +54,7 @@ DROP POLICY IF EXISTS "Users can select time blocks for their plans" ON public.t
 DROP POLICY IF EXISTS "Users can update time blocks for their plans" ON public.time_blocks;
 DROP POLICY IF EXISTS "Users can delete time blocks for their plans" ON public.time_blocks;
 
+DROP POLICY IF EXISTS "Users can insert time blocks for their plans" ON public.time_blocks;
 CREATE POLICY "Users can insert time blocks for their plans"
 ON public.time_blocks
 FOR INSERT
@@ -63,6 +68,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Users can select time blocks for their plans" ON public.time_blocks;
 CREATE POLICY "Users can select time blocks for their plans"
 ON public.time_blocks
 FOR SELECT
@@ -76,6 +82,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can update time blocks for their plans" ON public.time_blocks;
 CREATE POLICY "Users can update time blocks for their plans"
 ON public.time_blocks
 FOR UPDATE
@@ -97,6 +104,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Users can delete time blocks for their plans" ON public.time_blocks;
 CREATE POLICY "Users can delete time blocks for their plans"
 ON public.time_blocks
 FOR DELETE
@@ -118,6 +126,7 @@ DROP POLICY IF EXISTS "Users can select exit times for their plans" ON public.ex
 DROP POLICY IF EXISTS "Users can delete exit times for their plans" ON public.exit_times;
 DROP POLICY IF EXISTS "Users can update exit times for their plans" ON public.exit_times;
 
+DROP POLICY IF EXISTS "Users can insert exit times for their plans" ON public.exit_times;
 CREATE POLICY "Users can insert exit times for their plans"
 ON public.exit_times
 FOR INSERT
@@ -131,6 +140,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Users can select exit times for their plans" ON public.exit_times;
 CREATE POLICY "Users can select exit times for their plans"
 ON public.exit_times
 FOR SELECT
@@ -144,6 +154,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can delete exit times for their plans" ON public.exit_times;
 CREATE POLICY "Users can delete exit times for their plans"
 ON public.exit_times
 FOR DELETE

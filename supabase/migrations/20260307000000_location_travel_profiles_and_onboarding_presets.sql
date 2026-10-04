@@ -9,6 +9,7 @@ ADD COLUMN IF NOT EXISTS max_late_minutes integer NOT NULL DEFAULT 0;
 
 ALTER TABLE public.manual_anchors
 DROP CONSTRAINT IF EXISTS manual_anchors_max_late_minutes_check;
+ALTER TABLE public.manual_anchors DROP CONSTRAINT IF EXISTS manual_anchors_max_late_minutes_check;
 
 ALTER TABLE public.manual_anchors
 ADD CONSTRAINT manual_anchors_max_late_minutes_check
@@ -40,6 +41,7 @@ ALTER TABLE public.location_travel_profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view own location travel profiles"
   ON public.location_travel_profiles;
+DROP POLICY IF EXISTS "Users can view own location travel profiles" ON public.location_travel_profiles;
 CREATE POLICY "Users can view own location travel profiles"
 ON public.location_travel_profiles
 FOR SELECT
@@ -48,6 +50,7 @@ USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can insert own location travel profiles"
   ON public.location_travel_profiles;
+DROP POLICY IF EXISTS "Users can insert own location travel profiles" ON public.location_travel_profiles;
 CREATE POLICY "Users can insert own location travel profiles"
 ON public.location_travel_profiles
 FOR INSERT
@@ -56,6 +59,7 @@ WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can update own location travel profiles"
   ON public.location_travel_profiles;
+DROP POLICY IF EXISTS "Users can update own location travel profiles" ON public.location_travel_profiles;
 CREATE POLICY "Users can update own location travel profiles"
 ON public.location_travel_profiles
 FOR UPDATE
@@ -65,6 +69,7 @@ WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can delete own location travel profiles"
   ON public.location_travel_profiles;
+DROP POLICY IF EXISTS "Users can delete own location travel profiles" ON public.location_travel_profiles;
 CREATE POLICY "Users can delete own location travel profiles"
 ON public.location_travel_profiles
 FOR DELETE
@@ -97,6 +102,7 @@ ALTER TABLE public.onboarding_presets ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can view own onboarding presets"
   ON public.onboarding_presets;
+DROP POLICY IF EXISTS "Users can view own onboarding presets" ON public.onboarding_presets;
 CREATE POLICY "Users can view own onboarding presets"
 ON public.onboarding_presets
 FOR SELECT
@@ -105,6 +111,7 @@ USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can insert own onboarding presets"
   ON public.onboarding_presets;
+DROP POLICY IF EXISTS "Users can insert own onboarding presets" ON public.onboarding_presets;
 CREATE POLICY "Users can insert own onboarding presets"
 ON public.onboarding_presets
 FOR INSERT
@@ -113,6 +120,7 @@ WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can update own onboarding presets"
   ON public.onboarding_presets;
+DROP POLICY IF EXISTS "Users can update own onboarding presets" ON public.onboarding_presets;
 CREATE POLICY "Users can update own onboarding presets"
 ON public.onboarding_presets
 FOR UPDATE
@@ -122,6 +130,7 @@ WITH CHECK (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can delete own onboarding presets"
   ON public.onboarding_presets;
+DROP POLICY IF EXISTS "Users can delete own onboarding presets" ON public.onboarding_presets;
 CREATE POLICY "Users can delete own onboarding presets"
 ON public.onboarding_presets
 FOR DELETE

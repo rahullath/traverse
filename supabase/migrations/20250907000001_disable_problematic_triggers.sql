@@ -3,6 +3,7 @@
 
 -- Drop the problematic triggers
 DROP TRIGGER IF EXISTS update_life_score_trigger ON habit_entries;
+DROP TRIGGER IF EXISTS update_life_score_on_habit_entry ON habit_entries; -- actual name from 20250904140000
 DROP TRIGGER IF EXISTS update_life_score_tasks_trigger ON tasks;
 
 -- Drop the problematic functions (they'll be recreated later with fixed schema)

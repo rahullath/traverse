@@ -157,23 +157,29 @@ ALTER TABLE food_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE nutrition_goals ENABLE ROW LEVEL SECURITY;
 
 -- Foods table - readable by all authenticated users, writable by admins only
+DROP POLICY IF EXISTS "Anyone can view foods" ON foods;
 CREATE POLICY "Anyone can view foods" ON foods
   FOR SELECT TO authenticated USING (true);
 
 -- Recipes table - users can CRUD their own recipes, view public recipes
+DROP POLICY IF EXISTS "Users can view own and public recipes" ON recipes;
 CREATE POLICY "Users can view own and public recipes" ON recipes
   FOR SELECT TO authenticated USING (user_id = auth.uid() OR is_public = true);
 
+DROP POLICY IF EXISTS "Users can create own recipes" ON recipes;
 CREATE POLICY "Users can create own recipes" ON recipes
   FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update own recipes" ON recipes;
 CREATE POLICY "Users can update own recipes" ON recipes
   FOR UPDATE TO authenticated USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can delete own recipes" ON recipes;
 CREATE POLICY "Users can delete own recipes" ON recipes
   FOR DELETE TO authenticated USING (user_id = auth.uid());
 
 -- Recipe ingredients - inherit recipe permissions
+DROP POLICY IF EXISTS "Users can view recipe ingredients" ON recipe_ingredients;
 CREATE POLICY "Users can view recipe ingredients" ON recipe_ingredients
   FOR SELECT TO authenticated USING (
     recipe_id IN (
@@ -182,6 +188,7 @@ CREATE POLICY "Users can view recipe ingredients" ON recipe_ingredients
     )
   );
 
+DROP POLICY IF EXISTS "Users can manage own recipe ingredients" ON recipe_ingredients;
 CREATE POLICY "Users can manage own recipe ingredients" ON recipe_ingredients
   FOR ALL TO authenticated USING (
     recipe_id IN (
@@ -191,19 +198,24 @@ CREATE POLICY "Users can manage own recipe ingredients" ON recipe_ingredients
   );
 
 -- Food logs - users can only access their own logs
+DROP POLICY IF EXISTS "Users can view own food logs" ON food_logs;
 CREATE POLICY "Users can view own food logs" ON food_logs
   FOR SELECT TO authenticated USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can create own food logs" ON food_logs;
 CREATE POLICY "Users can create own food logs" ON food_logs
   FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update own food logs" ON food_logs;
 CREATE POLICY "Users can update own food logs" ON food_logs
   FOR UPDATE TO authenticated USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can delete own food logs" ON food_logs;
 CREATE POLICY "Users can delete own food logs" ON food_logs
   FOR DELETE TO authenticated USING (user_id = auth.uid());
 
 -- Nutrition goals - users can only access their own goals
+DROP POLICY IF EXISTS "Users can manage own nutrition goals" ON nutrition_goals;
 CREATE POLICY "Users can manage own nutrition goals" ON nutrition_goals
   FOR ALL TO authenticated USING (user_id = auth.uid());
 

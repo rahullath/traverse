@@ -173,18 +173,18 @@ CREATE TABLE uk_student_preferences (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_uk_inventory_user_id ON uk_student_inventory(user_id);
-CREATE INDEX idx_uk_inventory_expiry ON uk_student_inventory(expiry_date) WHERE expiry_date IS NOT NULL;
-CREATE INDEX idx_uk_meal_plans_user_week ON uk_student_meal_plans(user_id, week_start_date);
-CREATE INDEX idx_uk_travel_routes_user ON uk_student_travel_routes(user_id);
-CREATE INDEX idx_uk_travel_routes_locations ON uk_student_travel_routes(from_location, to_location);
-CREATE INDEX idx_uk_expenses_user_date ON uk_student_expenses(user_id, transaction_date);
-CREATE INDEX idx_uk_expenses_category ON uk_student_expenses(category);
-CREATE INDEX idx_uk_academic_events_user_time ON uk_student_academic_events(user_id, start_time);
-CREATE INDEX idx_uk_routines_user_type ON uk_student_routines(user_id, routine_type);
-CREATE INDEX idx_uk_locations_type ON uk_student_locations(type);
-CREATE INDEX idx_uk_budgets_user_category ON uk_student_budgets(user_id, category);
-CREATE INDEX idx_uk_recipes_tags ON uk_student_recipes USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_uk_inventory_user_id ON uk_student_inventory(user_id);
+CREATE INDEX IF NOT EXISTS idx_uk_inventory_expiry ON uk_student_inventory(expiry_date) WHERE expiry_date IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_uk_meal_plans_user_week ON uk_student_meal_plans(user_id, week_start_date);
+CREATE INDEX IF NOT EXISTS idx_uk_travel_routes_user ON uk_student_travel_routes(user_id);
+CREATE INDEX IF NOT EXISTS idx_uk_travel_routes_locations ON uk_student_travel_routes(from_location, to_location);
+CREATE INDEX IF NOT EXISTS idx_uk_expenses_user_date ON uk_student_expenses(user_id, transaction_date);
+CREATE INDEX IF NOT EXISTS idx_uk_expenses_category ON uk_student_expenses(category);
+CREATE INDEX IF NOT EXISTS idx_uk_academic_events_user_time ON uk_student_academic_events(user_id, start_time);
+CREATE INDEX IF NOT EXISTS idx_uk_routines_user_type ON uk_student_routines(user_id, routine_type);
+CREATE INDEX IF NOT EXISTS idx_uk_locations_type ON uk_student_locations(type);
+CREATE INDEX IF NOT EXISTS idx_uk_budgets_user_category ON uk_student_budgets(user_id, category);
+CREATE INDEX IF NOT EXISTS idx_uk_recipes_tags ON uk_student_recipes USING GIN(tags);
 
 -- Row Level Security (RLS) policies
 ALTER TABLE uk_student_inventory ENABLE ROW LEVEL SECURITY;
@@ -197,55 +197,93 @@ ALTER TABLE uk_student_budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE uk_student_preferences ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies - Users can only access their own data
+DROP POLICY IF EXISTS "Users can view own inventory" ON uk_student_inventory;
 CREATE POLICY "Users can view own inventory" ON uk_student_inventory FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own inventory" ON uk_student_inventory;
 CREATE POLICY "Users can insert own inventory" ON uk_student_inventory FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own inventory" ON uk_student_inventory;
 CREATE POLICY "Users can update own inventory" ON uk_student_inventory FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own inventory" ON uk_student_inventory;
 CREATE POLICY "Users can delete own inventory" ON uk_student_inventory FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own meal plans" ON uk_student_meal_plans;
 CREATE POLICY "Users can view own meal plans" ON uk_student_meal_plans FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own meal plans" ON uk_student_meal_plans;
 CREATE POLICY "Users can insert own meal plans" ON uk_student_meal_plans FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own meal plans" ON uk_student_meal_plans;
 CREATE POLICY "Users can update own meal plans" ON uk_student_meal_plans FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own meal plans" ON uk_student_meal_plans;
 CREATE POLICY "Users can delete own meal plans" ON uk_student_meal_plans FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own travel routes" ON uk_student_travel_routes;
 CREATE POLICY "Users can view own travel routes" ON uk_student_travel_routes FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own travel routes" ON uk_student_travel_routes;
 CREATE POLICY "Users can insert own travel routes" ON uk_student_travel_routes FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own travel routes" ON uk_student_travel_routes;
 CREATE POLICY "Users can update own travel routes" ON uk_student_travel_routes FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own travel routes" ON uk_student_travel_routes;
 CREATE POLICY "Users can delete own travel routes" ON uk_student_travel_routes FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own expenses" ON uk_student_expenses;
 CREATE POLICY "Users can view own expenses" ON uk_student_expenses FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own expenses" ON uk_student_expenses;
 CREATE POLICY "Users can insert own expenses" ON uk_student_expenses FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own expenses" ON uk_student_expenses;
 CREATE POLICY "Users can update own expenses" ON uk_student_expenses FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own expenses" ON uk_student_expenses;
 CREATE POLICY "Users can delete own expenses" ON uk_student_expenses FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own academic events" ON uk_student_academic_events;
 CREATE POLICY "Users can view own academic events" ON uk_student_academic_events FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own academic events" ON uk_student_academic_events;
 CREATE POLICY "Users can insert own academic events" ON uk_student_academic_events FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own academic events" ON uk_student_academic_events;
 CREATE POLICY "Users can update own academic events" ON uk_student_academic_events FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own academic events" ON uk_student_academic_events;
 CREATE POLICY "Users can delete own academic events" ON uk_student_academic_events FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own routines" ON uk_student_routines;
 CREATE POLICY "Users can view own routines" ON uk_student_routines FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own routines" ON uk_student_routines;
 CREATE POLICY "Users can insert own routines" ON uk_student_routines FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own routines" ON uk_student_routines;
 CREATE POLICY "Users can update own routines" ON uk_student_routines FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own routines" ON uk_student_routines;
 CREATE POLICY "Users can delete own routines" ON uk_student_routines FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own budgets" ON uk_student_budgets;
 CREATE POLICY "Users can view own budgets" ON uk_student_budgets FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own budgets" ON uk_student_budgets;
 CREATE POLICY "Users can insert own budgets" ON uk_student_budgets FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own budgets" ON uk_student_budgets;
 CREATE POLICY "Users can update own budgets" ON uk_student_budgets FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own budgets" ON uk_student_budgets;
 CREATE POLICY "Users can delete own budgets" ON uk_student_budgets FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own preferences" ON uk_student_preferences;
 CREATE POLICY "Users can view own preferences" ON uk_student_preferences FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own preferences" ON uk_student_preferences;
 CREATE POLICY "Users can insert own preferences" ON uk_student_preferences FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can update own preferences" ON uk_student_preferences;
 CREATE POLICY "Users can update own preferences" ON uk_student_preferences FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own preferences" ON uk_student_preferences;
 CREATE POLICY "Users can delete own preferences" ON uk_student_preferences FOR DELETE USING (auth.uid() = user_id);
 
 -- Public access for locations and recipes
 ALTER TABLE uk_student_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE uk_student_recipes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view locations" ON uk_student_locations;
 CREATE POLICY "Anyone can view locations" ON uk_student_locations FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Anyone can view public recipes" ON uk_student_recipes;
 CREATE POLICY "Anyone can view public recipes" ON uk_student_recipes FOR SELECT USING (is_public = true);
+DROP POLICY IF EXISTS "Users can view own recipes" ON uk_student_recipes;
 CREATE POLICY "Users can view own recipes" ON uk_student_recipes FOR SELECT USING (auth.uid() = created_by);
+DROP POLICY IF EXISTS "Users can insert own recipes" ON uk_student_recipes;
 CREATE POLICY "Users can insert own recipes" ON uk_student_recipes FOR INSERT WITH CHECK (auth.uid() = created_by);
+DROP POLICY IF EXISTS "Users can update own recipes" ON uk_student_recipes;
 CREATE POLICY "Users can update own recipes" ON uk_student_recipes FOR UPDATE USING (auth.uid() = created_by);
+DROP POLICY IF EXISTS "Users can delete own recipes" ON uk_student_recipes;
 CREATE POLICY "Users can delete own recipes" ON uk_student_recipes FOR DELETE USING (auth.uid() = created_by);
 
 -- Triggers for updated_at timestamps
@@ -257,13 +295,23 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_uk_student_inventory_updated_at ON uk_student_inventory;
 CREATE TRIGGER update_uk_student_inventory_updated_at BEFORE UPDATE ON uk_student_inventory FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_meal_plans_updated_at ON uk_student_meal_plans;
 CREATE TRIGGER update_uk_student_meal_plans_updated_at BEFORE UPDATE ON uk_student_meal_plans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_travel_routes_updated_at ON uk_student_travel_routes;
 CREATE TRIGGER update_uk_student_travel_routes_updated_at BEFORE UPDATE ON uk_student_travel_routes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_expenses_updated_at ON uk_student_expenses;
 CREATE TRIGGER update_uk_student_expenses_updated_at BEFORE UPDATE ON uk_student_expenses FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_academic_events_updated_at ON uk_student_academic_events;
 CREATE TRIGGER update_uk_student_academic_events_updated_at BEFORE UPDATE ON uk_student_academic_events FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_routines_updated_at ON uk_student_routines;
 CREATE TRIGGER update_uk_student_routines_updated_at BEFORE UPDATE ON uk_student_routines FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_budgets_updated_at ON uk_student_budgets;
 CREATE TRIGGER update_uk_student_budgets_updated_at BEFORE UPDATE ON uk_student_budgets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_preferences_updated_at ON uk_student_preferences;
 CREATE TRIGGER update_uk_student_preferences_updated_at BEFORE UPDATE ON uk_student_preferences FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_locations_updated_at ON uk_student_locations;
 CREATE TRIGGER update_uk_student_locations_updated_at BEFORE UPDATE ON uk_student_locations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_uk_student_recipes_updated_at ON uk_student_recipes;
 CREATE TRIGGER update_uk_student_recipes_updated_at BEFORE UPDATE ON uk_student_recipes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

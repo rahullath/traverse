@@ -2,13 +2,16 @@
 -- This migration adds improvements to the existing daily plan schema
 
 -- 1. Add time validation constraints
+ALTER TABLE daily_plans DROP CONSTRAINT IF EXISTS daily_plans_valid_time;
 ALTER TABLE daily_plans 
 ADD CONSTRAINT daily_plans_valid_time CHECK (sleep_time > wake_time);
+ALTER TABLE time_blocks DROP CONSTRAINT IF EXISTS time_blocks_valid_time;
 
 ALTER TABLE time_blocks 
 ADD CONSTRAINT time_blocks_valid_time CHECK (end_time > start_time);
 
 -- 2. Add CHECK constraint for travel_method
+ALTER TABLE exit_times DROP CONSTRAINT IF EXISTS exit_times_valid_travel_method;
 ALTER TABLE exit_times 
 ADD CONSTRAINT exit_times_valid_travel_method CHECK (travel_method IN ('bike', 'train', 'walk', 'bus'));
 

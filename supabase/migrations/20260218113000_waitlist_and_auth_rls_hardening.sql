@@ -45,38 +45,23 @@ USING (lower(email) = lower(auth.email()))
 WITH CHECK (lower(email) = lower(auth.email()));
 
 -- ---------------------------
--- wake_events: enable strict per-user RLS
+-- wake_events: enable strict per-user RLS (only if the table exists — no
+-- migration creates it and the app doesn't read it yet)
 -- ---------------------------
-ALTER TABLE IF EXISTS public.wake_events ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users can view own wake events" ON public.wake_events;
-CREATE POLICY "Users can view own wake events"
-ON public.wake_events
-FOR SELECT
-TO authenticated
-USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can insert own wake events" ON public.wake_events;
-CREATE POLICY "Users can insert own wake events"
-ON public.wake_events
-FOR INSERT
-TO authenticated
-WITH CHECK (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can update own wake events" ON public.wake_events;
-CREATE POLICY "Users can update own wake events"
-ON public.wake_events
-FOR UPDATE
-TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can delete own wake events" ON public.wake_events;
-CREATE POLICY "Users can delete own wake events"
-ON public.wake_events
-FOR DELETE
-TO authenticated
-USING (auth.uid() = user_id);
+DO $$
+BEGIN
+  IF to_regclass('public.wake_events') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE public.wake_events ENABLE ROW LEVEL SECURITY';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can view own wake events" ON public.wake_events';
+    EXECUTE 'CREATE POLICY "Users can view own wake events" ON public.wake_events FOR SELECT TO authenticated USING (auth.uid() = user_id)';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can insert own wake events" ON public.wake_events';
+    EXECUTE 'CREATE POLICY "Users can insert own wake events" ON public.wake_events FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id)';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can update own wake events" ON public.wake_events';
+    EXECUTE 'CREATE POLICY "Users can update own wake events" ON public.wake_events FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)';
+    EXECUTE 'DROP POLICY IF EXISTS "Users can delete own wake events" ON public.wake_events';
+    EXECUTE 'CREATE POLICY "Users can delete own wake events" ON public.wake_events FOR DELETE TO authenticated USING (auth.uid() = user_id)';
+  END IF;
+END $$;
 
 -- ---------------------------
 -- habits + habit_entries: remove nullable-owner access

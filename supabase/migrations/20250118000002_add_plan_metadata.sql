@@ -13,11 +13,12 @@ SET plan_start = wake_time
 WHERE plan_start = generated_at; -- Only update rows where plan_start is still the default
 
 -- Add constraint to ensure plan_start is between wake_time and sleep_time
+ALTER TABLE daily_plans DROP CONSTRAINT IF EXISTS daily_plans_valid_plan_start;
 ALTER TABLE daily_plans
 ADD CONSTRAINT daily_plans_valid_plan_start CHECK (plan_start >= wake_time AND plan_start <= sleep_time);
 
--- Create index for querying by plan_start
-CREATE INDEX idx_daily_plans_plan_start ON daily_plans(plan_start);
+-- CREATE INDEX IF NOT EXISTS for querying by plan_start
+CREATE INDEX IF NOT EXISTS idx_daily_plans_plan_start ON daily_plans(plan_start);
 
 -- Comment the new columns
 COMMENT ON COLUMN daily_plans.generated_at IS 'Timestamp when the plan was generated';
