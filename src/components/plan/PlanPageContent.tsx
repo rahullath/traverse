@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Page, Button, Card, TimingStrip, ErrorFallback } from '@/components/tv';
+import { Page, Button, Card, TimingStrip, ErrorFallback, Seg } from '@/components/tv';
+import { suggestAnchorType } from '@/lib/anchors/suggest-type';
+import type { AnchorType } from '@/lib/anchors/types';
 import { ErrorBoundary } from '@/components/daily-plan/ErrorBoundary';
 import type { Register } from '@/lib/copy/voice';
 import { formatTime, type TimeFormat } from '@/lib/copy/time';
@@ -15,6 +17,10 @@ export interface Props {
   motion?: boolean;
   timeFormat?: TimeFormat;
   anchorless: Anchorless;
+  /** HH:MM from onboarding (`wake_window_start`), if set. */
+  wakeDefault?: string;
+  /** HH:MM from onboarding (`sleep_window_end`), if set. */
+  sleepDefault?: string;
 }
 
 interface CalendarEventOption {
@@ -36,7 +42,20 @@ interface AnchorChoice {
   title: string;
   startISO: string;
   endISO: string;
+  type: AnchorType;
 }
+
+const ANCHOR_TYPES: { value: AnchorType; label: string }[] = [
+  { value: 'class', label: 'Class' },
+  { value: 'seminar', label: 'Seminar' },
+  { value: 'workshop', label: 'Workshop' },
+  { value: 'appointment', label: 'Appt' },
+  { value: 'other', label: 'Other' },
+];
+
+const DURATIONS = [30, 60, 90, 120, 180];
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 interface TravelChoice {
   label: string;
@@ -46,9 +65,9 @@ interface TravelChoice {
   sameLocation: boolean;
 }
 
-function calculateDefaultWakeTime(): string {
+function calculateDefaultWakeTime(preferred?: string): string {
   const now = new Date();
-  if (now.getHours() < 12) return '07:00';
+  if (now.getHours() < 12) return preferred && HHMM.test(preferred) ? preferred : '07:00';
   const roundedMinute = Math.floor(now.getMinutes() / 15) * 15;
   return `${String(now.getHours()).padStart(2, '0')}:${String(roundedMinute).padStart(2, '0')}`;
 }
@@ -82,7 +101,7 @@ export default function PlanPage(props: Props) {
   );
 }
 
-function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'clock', anchorless }: Props) {
+function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'clock', anchorless, wakeDefault, sleepDefault }: Props) {
   const [mode, setMode] = useState<'wizard' | 'empty'>('wizard');
   const [step, setStep] = useState(0);
   const [anchor, setAnchor] = useState<AnchorChoice | null>(null);
@@ -94,6 +113,10 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
 
   const [customTitle, setCustomTitle] = useState('');
   const [customTime, setCustomTime] = useState('11:00');
+  const [customDuration, setCustomDuration] = useState(60);
+
+  const [wake, setWake] = useState(() => calculateDefaultWakeTime(wakeDefault));
+  const [sleep, setSleep] = useState(() => (sleepDefault && HHMM.test(sleepDefault) ? sleepDefault : '23:00'));
 
   const [addingProfile, setAddingProfile] = useState(false);
   const [draftLabel, setDraftLabel] = useState('');
@@ -145,8 +168,8 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
     setGenerating(true);
     setGenError(null);
     try {
-      const wakeTime = todayAt(calculateDefaultWakeTime());
-      let sleepTime = todayAt('23:00');
+      const wakeTime = todayAt(HHMM.test(wake) ? wake : calculateDefaultWakeTime(wakeDefault));
+      let sleepTime = todayAt(HHMM.test(sleep) ? sleep : '23:00');
       if (sleepTime <= wakeTime) sleepTime = new Date(sleepTime.getTime() + 24 * 60 * 60000);
 
       const energyState: EnergyState = energy ?? 'medium';
@@ -160,7 +183,7 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
         max_late_minutes: travel?.maxLateMinutes ?? 0,
         location_travel_minutes: travel?.sameLocation ? 0 : (travel?.totalMinutes ?? 0),
         departure_slots: travel?.departureSlots ?? [],
-        anchor_type: 'other',
+        anchor_type: anchor.type,
         must_attend: true,
         notes: null,
       } : undefined;
@@ -223,7 +246,7 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
         >
           {events.map(ev => (
             <button key={ev.id} className="tv-btn" onClick={() => {
-              setAnchor({ title: ev.title, startISO: ev.start_time, endISO: ev.end_time });
+              setAnchor({ title: ev.title, startISO: ev.start_time, endISO: ev.end_time, type: suggestAnchorType(ev.title) });
               next();
             }}>
               <span style={{ fontFamily: 'var(--serif)', fontSize: 16 }}>{ev.title} · {formatTime(ev.start_time, timeFormat)}</span>
@@ -247,13 +270,22 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
                 onChange={e => setCustomTime(e.target.value)}
                 style={{ border: '1px solid var(--rule-strong)', padding: '6px 8px', background: 'transparent', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: 13 }}
               />
+              <span className="tv-ui-s">for</span>
+              <select
+                aria-label="anchor duration"
+                value={customDuration}
+                onChange={e => setCustomDuration(Number(e.target.value))}
+                style={{ border: '1px solid var(--rule-strong)', padding: '6px 8px', background: 'transparent', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: 13 }}
+              >
+                {DURATIONS.map(d => <option key={d} value={d}>{d < 60 ? `${d} min` : `${d / 60}${d % 60 ? '.5' : ''} h`}</option>)}
+              </select>
             </div>
             <div className="tv-actions">
               <Button variant="primary" hint="→" onClick={() => {
                 if (!customTitle.trim()) return;
                 const start = todayAt(customTime);
-                const end = new Date(start.getTime() + 60 * 60000);
-                setAnchor({ title: customTitle.trim(), startISO: start.toISOString(), endISO: end.toISOString() });
+                const end = new Date(start.getTime() + customDuration * 60000);
+                setAnchor({ title: customTitle.trim(), startISO: start.toISOString(), endISO: end.toISOString(), type: suggestAnchorType(customTitle) });
                 next();
               }}>
                 Use this anchor
@@ -364,6 +396,11 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
       {step === 4 && (
         <PlanResult
           anchor={anchor}
+          wake={wake}
+          sleep={sleep}
+          onWake={setWake}
+          onSleep={setSleep}
+          onAnchorType={(t) => setAnchor(a => (a ? { ...a, type: t } : a))}
           plan={plan}
           generating={generating}
           error={genError}
@@ -386,6 +423,8 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
+const timeInputStyle: React.CSSProperties = { border: '1px solid var(--rule-strong)', padding: '6px 8px', background: 'transparent', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: 13 };
+
 function PlanStep({ label, title, caption, children }: {
   label: string; title: string; caption: string; children: React.ReactNode;
 }) {
@@ -399,8 +438,13 @@ function PlanStep({ label, title, caption, children }: {
   );
 }
 
-function PlanResult({ anchor, plan, generating, error, timeFormat, onRetry, onOpen, onBack }: {
+function PlanResult({ anchor, wake, sleep, onWake, onSleep, onAnchorType, plan, generating, error, timeFormat, onRetry, onOpen, onBack }: {
   anchor: AnchorChoice | null;
+  wake: string;
+  sleep: string;
+  onWake: (v: string) => void;
+  onSleep: (v: string) => void;
+  onAnchorType: (t: AnchorType) => void;
   plan: DailyPlan | null;
   generating: boolean;
   error: string | null;
@@ -472,6 +516,25 @@ function PlanResult({ anchor, plan, generating, error, timeFormat, onRetry, onOp
           <em>When the first step happens, the rest follows from that one if-then.</em>
         </p>
       </Card>
+
+      <details className="tv-card">
+        <summary className="tv-label" style={{ cursor: 'pointer' }}>adjust · day bounds &amp; anchor type</summary>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginTop: 8 }}>
+          <span className="tv-ui-s">woke</span>
+          <input type="time" aria-label="wake time" value={wake} onChange={e => onWake(e.target.value)} style={timeInputStyle} />
+          <span className="tv-ui-s">sleep</span>
+          <input type="time" aria-label="sleep time" value={sleep} onChange={e => onSleep(e.target.value)} style={timeInputStyle} />
+        </div>
+        {anchor && (
+          <div style={{ marginTop: 10 }}>
+            <div className="tv-ui-s" style={{ marginBottom: 4 }}>{anchor.title} is a…</div>
+            <Seg value={anchor.type} options={ANCHOR_TYPES} onChange={(v) => onAnchorType(v as AnchorType)} />
+          </div>
+        )}
+        <div className="tv-actions">
+          <Button hint="rebuild" onClick={onRetry}>Rebuild the chain</Button>
+        </div>
+      </details>
 
       <div className="tv-actions">
         <Button variant="primary" hint="→ live" onClick={onOpen}>Open this in Today</Button>

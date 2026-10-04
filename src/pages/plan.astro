@@ -25,8 +25,13 @@ const timeFormat = prefs.timeFormat === 'chunks' ? 'chunks' as const : 'clock' a
 const anchorless = (['choice', 'suggest', 'refuse'] as const).includes(prefs.anchorless as any)
   ? (prefs.anchorless as 'choice' | 'suggest' | 'refuse')
   : 'choice';
+// Onboarding phase 1 stores wake/sleep under onboarding_presets.phase_1.answers.
+const phase1 = ((prefs.onboarding_presets as any)?.phase_1?.answers ?? {}) as Record<string, unknown>;
+const pick = (k: string) => (typeof phase1[k] === 'string' ? phase1[k] as string : typeof prefs[k] === 'string' ? prefs[k] as string : undefined);
+const wakeDefault = pick('wake_window_start');
+const sleepDefault = pick('sleep_window_end');
 ---
 
 <Layout title="traverse — build a chain">
-  <PlanPageContent client:load voice={voice} theme={theme} density={density} motion={motion} timeFormat={timeFormat} anchorless={anchorless} />
+  <PlanPageContent client:load voice={voice} theme={theme} density={density} motion={motion} timeFormat={timeFormat} anchorless={anchorless} wakeDefault={wakeDefault} sleepDefault={sleepDefault} />
 </Layout>
