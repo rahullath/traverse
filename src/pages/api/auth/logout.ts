@@ -1,7 +1,10 @@
 import type { APIRoute } from "astro";
 import { createServerAuth } from "../../../lib/auth/simple-multi-user";
 
-export const POST: APIRoute = async ({ cookies, redirect }) => {
+export const POST: APIRoute = async ({ cookies, redirect, request }) => {
+  // Plain HTML form posts (Settings → Sign out) expect a page, not JSON.
+  const wantsPage = !(request.headers.get("accept") || "").includes("application/json") &&
+    (request.headers.get("content-type") || "").includes("form");
   try {
     const serverAuth = createServerAuth(cookies);
 
@@ -27,6 +30,8 @@ export const POST: APIRoute = async ({ cookies, redirect }) => {
     }
 
     console.log("🚪 User logged out and cookies cleared");
+
+    if (wantsPage) return redirect("/login", 303);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { "Content-Type": "application/json" },

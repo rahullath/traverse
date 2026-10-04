@@ -35,6 +35,7 @@ export default function SettingsPageContent({ email, theme: initTheme, motion: i
   const [voice, setVoice] = useState<Voice>(initVoice);
   const [timeFormat, setTimeFormat] = useState<TimeFormat>(initTimeFormat);
   const [anchorless, setAnchorless] = useState<Anchorless>(initAnchorless);
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <Page theme={theme} density={density} motion={motion === 'full'} active="settings">
@@ -120,8 +121,12 @@ export default function SettingsPageContent({ email, theme: initTheme, motion: i
         <Setting name="Export my data" hint="Your raw preferences record, as stored."
           control={<Button variant="quiet" className="tv-inline-btn" onClick={() => { window.location.href = '/api/auth/preferences'; }}>Export</Button>} />
 
-        <Setting name="Delete account" hint="Removes everything. This isn't wired to a live action yet — reach out if you need this now."
-          control={<span className="tv-ui-s" style={{ fontStyle: 'italic', color: 'var(--ink-mute)' }}>contact to request</span>} />
+        <Setting name="Delete account" hint="Removes your account and everything stored with it. Permanent — there is no undo."
+          control={!deleting
+            ? <Button variant="quiet" className="tv-inline-btn" onClick={() => setDeleting(true)}>Delete…</Button>
+            : <span className="tv-ui-s">below ↓</span>} />
+
+        {deleting && <DeleteAccount onCancel={() => setDeleting(false)} />}
       </section>
 
       <Card variant="quote" style={{ marginTop: 16 }}>
@@ -150,5 +155,52 @@ export default function SettingsPageContent({ email, theme: initTheme, motion: i
         <Button variant="ghost" onClick={() => { window.location.href = '/today'; }}>← back to today</Button>
       </div>
     </Page>
+  );
+}
+
+function DeleteAccount({ onCancel }: { onCancel: () => void }) {
+  const [typed, setTyped] = useState('');
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const confirmDelete = async () => {
+    setWorking(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ confirm: 'delete' }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || body.queued) throw new Error(body.message || "Couldn't delete the account. Nothing was removed.");
+      window.location.href = '/login';
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't delete the account. Nothing was removed.");
+      setWorking(false);
+    }
+  };
+
+  return (
+    <Card variant="quote" style={{ marginTop: 8 }}>
+      <div className="tv-label">delete account · permanent</div>
+      <p className="tv-prose" style={{ margin: 0 }}>
+        This deletes your plans, anchors, travel profiles, preferences and sign-in. Export first if you want a copy. Type <strong>delete</strong> to confirm.
+      </p>
+      <input
+        aria-label="type delete to confirm"
+        value={typed}
+        onChange={e => setTyped(e.target.value)}
+        autoComplete="off"
+        style={{ border: '1px solid var(--rule-strong)', padding: '8px 10px', background: 'transparent', color: 'var(--ink)', fontFamily: 'var(--mono)', fontSize: 14, marginTop: 8 }}
+      />
+      {error && <p className="tv-prose" role="alert" style={{ margin: '8px 0 0' }}>{error}</p>}
+      <div className="tv-actions">
+        <Button variant="primary" hint={working ? '…' : 'permanent'} onClick={() => { if (typed.trim().toLowerCase() === 'delete' && !working) confirmDelete(); }}>
+          Delete my account
+        </Button>
+        <Button variant="ghost" onClick={onCancel}>Keep my account</Button>
+      </div>
+    </Card>
   );
 }
