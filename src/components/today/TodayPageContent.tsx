@@ -10,7 +10,16 @@ import { pwaService } from '@/lib/pwa/service-worker';
 import { mutate } from '@/lib/net/mutate';
 import { ErrorBoundary } from '@/components/daily-plan/ErrorBoundary';
 
-type Mode = 'loading' | 'no-plan' | 'error' | 'declare' | 'timeline' | 'triage' | 'helpful';
+type Mode = 'loading' | 'no-plan' | 'error' | 'declare' | 'timeline' | 'triage' | 'helpful' | 'reality';
+
+interface RealityResult {
+  possible_steps: { id: string; activity_name: string; duration: number }[];
+  skipped_steps: { id: string; activity_name: string; duration: number }[];
+  alternatives: { id: string; label: string; description: string; estimated_duration: number }[];
+  runway: number;
+  required_duration: number;
+  passed?: boolean;
+}
 
 export interface Props {
   voice: Register;
@@ -28,11 +37,20 @@ function fmtDate(d: Date): string {
   return `${dow} · ${day}`;
 }
 
-function anchorLabel(blocks: TimeBlock[], now: Date): string {
-  const next = blocks
+function nextAnchorBlock(blocks: TimeBlock[], now: Date): TimeBlock | null {
+  return blocks
     .filter(b => b.metadata?.role?.type === 'anchor' && b.status === 'pending' && new Date(b.startTime) > now)
-    .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime))[0];
+    .sort((a, b) => +new Date(a.startTime) - +new Date(b.startTime))[0] ?? null;
+}
+
+function anchorLabel(blocks: TimeBlock[], now: Date): string {
+  const next = nextAnchorBlock(blocks, now);
   return next ? `${next.activityName}, ${formatTime(next.startTime)}` : 'anchor';
+}
+
+/** Triage and reality-check endpoints look anchors up by activityId. */
+function anchorKey(block: TimeBlock): string {
+  return block.activityId || block.id;
 }
 
 const INSTALL_DISMISS_KEY = 'traverse-install-dismissed-at';
@@ -78,6 +96,8 @@ function TodayPageContent({ voice, theme, density, motion = true, timeFormat = '
   const [data, setData] = useState<MirrorData | null>(null);
   const [clock, setClock] = useState(() => new Date());
   const [openBlock, setOpenBlock] = useState<string | null>(null);
+  const [reality, setReality] = useState<RealityResult | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const [online, setOnline] = useState(true);
   const [queuedCount, setQueuedCount] = useState(0);
@@ -142,10 +162,10 @@ function TodayPageContent({ voice, theme, density, motion = true, timeFormat = '
       ? { ...prev, time_blocks: prev.time_blocks.map(b => b.id === id ? { ...b, status } : b) }
       : prev);
 
-  const handleDeclare = async (state: string) => {
+  const handleDeclare = async (state: string, selectedStepId?: string) => {
     setActionError(null);
-    const r = await mutate('/api/daily-plan/state', 'POST', { state });
-    if (!r.ok) { setActionError({ message: r.message, retry: () => handleDeclare(state) }); return; }
+    const r = await mutate('/api/daily-plan/state', 'POST', selectedStepId ? { state, selected_step_id: selectedStepId } : { state });
+    if (!r.ok) { setActionError({ message: r.message, retry: () => handleDeclare(state, selectedStepId) }); return; }
     if (!r.queued) await load();
     // Never bounce straight back into the prompt the user just answered.
     setMode(m => (m === 'declare' || m === 'loading' ? 'timeline' : m));
@@ -175,12 +195,67 @@ function TodayPageContent({ voice, theme, density, motion = true, timeFormat = '
   const handleComplete = (id: string) => handleBlockStatus(id, 'completed');
   const handleSkip = (id: string) => handleBlockStatus(id, 'skipped');
 
-  const handleTriage = async (triageMode: string) => {
-    if (!data?.triage_state.anchor) { setMode('timeline'); return; }
+  const handleTriage = async (triageMode: string, anchorOverride?: TimeBlock | null) => {
+    const anchor = anchorOverride ?? data?.triage_state.anchor;
+    if (!anchor) { setMode('timeline'); return; }
     setActionError(null);
-    const r = await mutate('/api/daily-plan/triage', 'POST', { mode: triageMode, anchor_id: data.triage_state.anchor.id });
-    if (!r.ok) { setActionError({ message: r.message, retry: () => handleTriage(triageMode) }); return; }
+    const r = await mutate('/api/daily-plan/triage', 'POST', { mode: triageMode, anchor_id: anchorKey(anchor) });
+    if (!r.ok) { setActionError({ message: r.message, retry: () => handleTriage(triageMode, anchorOverride) }); return; }
     if (triageMode === 'recalculate' && !r.queued) { await load(); return; }
+    setMode('timeline');
+  };
+
+  const handleRecalc = async () => {
+    setActionError(null);
+    setBusy(true);
+    const r = await mutate('/api/daily-plan/recalculate', 'POST', {});
+    setBusy(false);
+    if (!r.ok) { setActionError({ message: r.message, retry: handleRecalc }); return; }
+    if (!r.queued) await load();
+  };
+
+  const handleRealityCheck = async () => {
+    const anchor = data ? nextAnchorBlock(data.time_blocks, new Date()) : null;
+    if (!anchor) return;
+    setActionError(null);
+    setBusy(true);
+    try {
+      const res = await fetch('/api/daily-plan/reality-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ anchor_id: anchorKey(anchor) }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.message || "Couldn't check right now.");
+      setReality({
+        possible_steps: body.possible_steps ?? [],
+        skipped_steps: body.skipped_steps ?? [],
+        alternatives: body.alternatives ?? [],
+        runway: body.runway ?? 0,
+        required_duration: body.required_duration ?? 0,
+        passed: body.error === 'AnchorPassedError',
+      });
+      setMode('reality');
+    } catch (e) {
+      setActionError({ message: e instanceof Error ? e.message : "Couldn't check right now.", retry: handleRealityCheck });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRealityChoice = async (altId: string) => {
+    if (altId === 'keystone_only') {
+      await handleTriage('protect_keystone', data ? nextAnchorBlock(data.time_blocks, new Date()) : null);
+      return;
+    }
+    if (altId === 'skip_all' && reality) {
+      // "Skip prep, just go": skip the remaining prep steps, keep the anchor.
+      setMode('timeline');
+      for (const step of [...reality.possible_steps, ...reality.skipped_steps]) {
+        await handleBlockStatus(step.id, 'skipped');
+      }
+      return;
+    }
     setMode('timeline');
   };
 
@@ -292,7 +367,17 @@ function TodayPageContent({ voice, theme, density, motion = true, timeFormat = '
       )}
 
       {mode === 'declare' && (
-        <StateDeclaration voice={v} onDeclare={handleDeclare} onClose={() => setMode('timeline')} />
+        <StateDeclaration
+          voice={v}
+          steps={(data?.time_blocks ?? []).filter(b => b.status === 'pending' && b.metadata?.role?.type !== 'anchor')}
+          timeFormat={timeFormat}
+          onDeclare={handleDeclare}
+          onClose={() => setMode('timeline')}
+        />
+      )}
+
+      {mode === 'reality' && reality && (
+        <RealityCheckView voice={v} result={reality} onChoose={handleRealityChoice} onClose={() => setMode('timeline')} />
       )}
 
       {mode === 'timeline' && data && (
@@ -348,8 +433,16 @@ function TodayPageContent({ voice, theme, density, motion = true, timeFormat = '
             )}
 
             <div className="tv-actions" style={{ marginTop: 8 }}>
+              {nextAnchorBlock(data.time_blocks, clock) && (
+                <Button variant="quiet" hint={busy ? '…' : 'fit'} onClick={() => { if (!busy) handleRealityCheck(); }}>
+                  {copy.realityCheck.openButton[v]}
+                </Button>
+              )}
               <Button variant="quiet" hint="state" onClick={() => setMode('declare')}>
                 {copy.declareButton[v]}
+              </Button>
+              <Button variant="quiet" hint={busy ? '…' : 'now'} onClick={() => { if (!busy) handleRecalc(); }}>
+                {copy.recalcButton[v]}
               </Button>
               <Button variant="quiet" hint="close" onClick={() => setMode('helpful')}>
                 End the day in the app
@@ -382,7 +475,7 @@ function TodayPageContent({ voice, theme, density, motion = true, timeFormat = '
       )}
 
       {mode === 'triage' && data && (
-        <TriageView voice={v} triageState={data.triage_state} onDecide={handleTriage} onClose={() => setMode('timeline')} />
+        <TriageView voice={v} triageState={data.triage_state} onDecide={(m) => handleTriage(m)} onClose={() => setMode('timeline')} />
       )}
 
       {mode === 'helpful' && (
@@ -395,33 +488,96 @@ function TodayPageContent({ voice, theme, density, motion = true, timeFormat = '
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function StateDeclaration({ voice, onDeclare, onClose }: {
+const DECLARABLE_STATES = ['starting_day', 'ready_for_anchor', 'mid_chain', 'at_anchor', 'missed_it', 'just_checking'] as const;
+
+function StateDeclaration({ voice, steps, timeFormat, onDeclare, onClose }: {
   voice: Register;
-  onDeclare: (state: string) => void;
+  steps: TimeBlock[];
+  timeFormat: TimeFormat;
+  onDeclare: (state: string, selectedStepId?: string) => void;
   onClose: () => void;
 }) {
   const sd = copy.stateDeclaration;
-  const options = [
-    { state: 'starting_day',  label: sd.options.clear[voice], meta: '75 min ramp' },
-    { state: 'starting_day',  label: sd.options.foggy[voice], meta: '90 min ramp' },
-    { state: 'just_checking', label: sd.options.empty[voice], meta: '120 min · rest valid' },
-  ];
+  const [pickingStep, setPickingStep] = useState(false);
   return (
     <div className="tv-prompt" role="dialog" aria-label="state declaration">
       <div className="tv-prompt__header">
         <div className="tv-label">state · for chain padding only</div>
-        <button className="tv-close" onClick={onClose}>close</button>
+        <button className="tv-close" onClick={pickingStep ? () => setPickingStep(false) : onClose}>{pickingStep ? 'back' : 'close'}</button>
       </div>
-      <h2 className="tv-prompt__title">{sd.title[voice]}</h2>
-      <p className="tv-prompt__caption">{sd.caption[voice]}</p>
+      <h2 className="tv-prompt__title">{pickingStep ? sd.stepPicker[voice] : sd.title[voice]}</h2>
+      {!pickingStep && <p className="tv-prompt__caption">{sd.caption[voice]}</p>}
       <div className="tv-actions">
-        {options.map((o, i) => (
-          <button key={i} className="tv-btn" onClick={() => onDeclare(o.state)}>
-            <span style={{ fontFamily: 'var(--serif)', fontSize: 16 }}>{o.label}</span>
-            <span className="tv-btn__hint">{o.meta}</span>
-          </button>
-        ))}
+        {pickingStep
+          ? steps.map(step => (
+              <button key={step.id} className="tv-btn" onClick={() => onDeclare('mid_chain', step.id)}>
+                <span style={{ fontFamily: 'var(--serif)', fontSize: 16 }}>{step.activityName}</span>
+                <span className="tv-btn__hint">{formatTime(step.startTime, timeFormat)}</span>
+              </button>
+            ))
+          : DECLARABLE_STATES
+              .filter(state => state !== 'mid_chain' || steps.length > 0)
+              .map(state => (
+                <button
+                  key={state}
+                  className="tv-btn"
+                  onClick={() => (state === 'mid_chain' ? setPickingStep(true) : onDeclare(state))}
+                >
+                  <span style={{ fontFamily: 'var(--serif)', fontSize: 16 }}>{sd.options[state][voice]}</span>
+                  <span className="tv-btn__hint">{state === 'mid_chain' ? 'pick step →' : state.replace(/_/g, ' ')}</span>
+                </button>
+              ))}
       </div>
+    </div>
+  );
+}
+
+function RealityCheckView({ voice, result, onChoose, onClose }: {
+  voice: Register;
+  result: RealityResult;
+  onChoose: (alternativeId: string) => void;
+  onClose: () => void;
+}) {
+  const rc = copy.realityCheck;
+  return (
+    <div className="tv-prompt" role="dialog" aria-label="reality check">
+      <div className="tv-prompt__header">
+        <div className="tv-label">reality check · {result.runway} min runway</div>
+        <button className="tv-close" onClick={onClose}>back</button>
+      </div>
+      {result.passed ? (
+        <p className="tv-prompt__caption">{rc.passed[voice]}</p>
+      ) : (
+        <>
+          <h2 className="tv-prompt__title">{rc.title[voice]}</h2>
+          {result.possible_steps.length === 0 ? (
+            <p className="tv-prompt__caption">{rc.noRoom[voice]}</p>
+          ) : (
+            <section>
+              <div className="tv-label">{rc.fitsLabel[voice]}</div>
+              {result.possible_steps.map(s => (
+                <p key={s.id} className="tv-prose" style={{ margin: '2px 0' }}>{s.activity_name} <span className="tv-ui-s">· {s.duration} min</span></p>
+              ))}
+            </section>
+          )}
+          {result.skipped_steps.length > 0 && (
+            <section style={{ marginTop: 8 }}>
+              <div className="tv-label">{rc.droppedLabel[voice]}</div>
+              {result.skipped_steps.map(s => (
+                <p key={s.id} className="tv-prose" style={{ margin: '2px 0', color: 'var(--ink-mute)' }}>{s.activity_name} <span className="tv-ui-s">· {s.duration} min</span></p>
+              ))}
+            </section>
+          )}
+          <div className="tv-actions">
+            {result.alternatives.map(alt => (
+              <button key={alt.id} className={`tv-btn${alt.id === 'keystone_only' ? ' tv-btn--primary' : ''}`} onClick={() => onChoose(alt.id)}>
+                <span style={{ fontFamily: 'var(--serif)', fontSize: 16 }}>{alt.label}</span>
+                <span className="tv-btn__hint">{alt.description}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -3,31 +3,84 @@ export type Register = 'plain' | 'clinical' | 'warm';
 export const copy = {
   stateDeclaration: {
     title: {
-      plain:    'Where is your energy at right now?',
-      clinical: 'Self-report: current activation state.',
-      warm:     'How are you, right now?',
+      plain:    'Where are you in the chain right now?',
+      clinical: 'Self-report: current position in the activation chain.',
+      warm:     'Where are you at, right now?',
     },
     caption: {
-      plain:    'There is no wrong answer. This only changes how much time the chain leaves you.',
-      clinical: 'Used to set wake-ramp duration. Not stored beyond this session.',
+      plain:    'There is no wrong answer. This only changes which steps the chain still shows you.',
+      clinical: 'Used to filter the visible timeline. Not stored beyond today.',
       warm:     'Whatever you pick is just information. No score, no streak.',
     },
     options: {
-      clear: {
-        plain:    'Clear and ready to act.',
-        clinical: 'Clear · ready to initiate action.',
-        warm:     "I'm okay. Let's go.",
+      starting_day: {
+        plain:    'Just starting the day.',
+        clinical: 'Day start · show the full activation chain.',
+        warm:     "Just woke up, more or less.",
       },
-      foggy: {
-        plain:    'A bit foggy — take the gentle ramp.',
-        clinical: 'Foggy · standard ramp recommended.',
-        warm:     'Foggy. Easy on me, please.',
+      ready_for_anchor: {
+        plain:    "Ready — I just need to leave.",
+        clinical: 'Prep complete · show departure and anchor only.',
+        warm:     "I'm ready. Just tell me when to go.",
       },
-      empty: {
-        plain:    'Running on empty.',
-        clinical: 'Depleted · extended ramp or rest day.',
-        warm:     'Empty tank. I need slow.',
+      mid_chain: {
+        plain:    "Somewhere in the middle.",
+        clinical: 'Mid-chain · select current step.',
+        warm:     "I've started. Let me show you where.",
       },
+      at_anchor: {
+        plain:    "I'm already there.",
+        clinical: 'At anchor · mark prep and travel complete.',
+        warm:     'Made it. I\'m there.',
+      },
+      missed_it: {
+        plain:    "It's not happening today.",
+        clinical: 'Anchor missed · mark skipped, no penalty.',
+        warm:     "It didn't happen. That's okay.",
+      },
+      just_checking: {
+        plain:    'Just looking.',
+        clinical: 'View only · no changes.',
+        warm:     'Just peeking.',
+      },
+    },
+    stepPicker: {
+      plain:    'Which step are you on?',
+      clinical: 'Select the current step.',
+      warm:     'Which bit are you doing now?',
+    },
+  },
+
+  realityCheck: {
+    openButton: {
+      plain:    'What can I still fit?',
+      clinical: 'Run a reality check',
+      warm:     'What can I still do?',
+    },
+    title: {
+      plain:    'Here is what fits before the anchor.',
+      clinical: 'Reality check: steps that fit the remaining runway.',
+      warm:     "Here's what there's room for.",
+    },
+    fitsLabel: {
+      plain:    'fits',
+      clinical: 'within runway',
+      warm:     'room for',
+    },
+    noRoom: {
+      plain:    'There is time to head straight to the anchor.',
+      clinical: 'No prep steps fit. Proceed directly to departure.',
+      warm:     'Just enough time to go. That still counts.',
+    },
+    droppedLabel: {
+      plain:    "won't fit — fine to drop",
+      clinical: 'exceeds runway',
+      warm:     'can let go of',
+    },
+    passed: {
+      plain:    'This anchor has already started. Nothing to fit before it.',
+      clinical: 'Anchor start time has passed.',
+      warm:     "That one's already started. You can still go, or let it be.",
     },
   },
 
@@ -91,6 +144,12 @@ export const copy = {
     plain:    'Screenshot this if you want to leave the app. The plan does not need you to stay here.',
     clinical: 'This view is intended for short, intermittent use. No data is retained between sessions.',
     warm:     "You can leave any time. The plan won't be sad.",
+  },
+
+  recalcButton: {
+    plain:    'Recalculate from now',
+    clinical: 'Recalculate timeline from current moment',
+    warm:     'Start again from now',
   },
 
   declareButton: {
