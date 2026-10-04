@@ -46,7 +46,7 @@ describe("AnchorInfoCard", () => {
 
       // Should show "Anchor at" format
       expect(screen.getByText(/Anchor at/i)).toBeInTheDocument();
-      expect(screen.getByText(/2:00 PM/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/2:00 PM/i).length).toBeGreaterThan(0);
 
       // Should NOT show "Complete by" format
       expect(screen.queryByText(/Complete by/i)).not.toBeInTheDocument();

@@ -12,6 +12,8 @@
     "/api/calendar/sources",
   ];
 
+  const nativeFetch = window.fetch.bind(window);
+
   function shouldQueue(url, method) {
     if (!["POST", "PUT", "PATCH", "DELETE"].includes(method.toUpperCase()))
       return false;
@@ -41,40 +43,95 @@
     }
   }
 
+  function headerValue(headers, name) {
+    if (!headers) return null;
+    if (typeof headers.get === "function") return headers.get(name);
+    const key = Object.keys(headers).find(
+      (k) => k.toLowerCase() === name.toLowerCase(),
+    );
+    return key ? headers[key] : null;
+  }
+
+  function plainHeaders(headers) {
+    if (!headers) return { "Content-Type": "application/json" };
+    if (typeof headers.forEach === "function" && !Array.isArray(headers)) {
+      const out = {};
+      headers.forEach((v, k) => (out[k] = v));
+      return out;
+    }
+    return headers;
+  }
+
   function queueRequest(url, init = {}) {
     const queue = loadQueue();
+    const idempotencyKey = headerValue(init.headers, "Idempotency-Key");
+    // Same action retried by the caller while offline: keep one copy only.
+    if (idempotencyKey && queue.some((q) => q.idempotencyKey === idempotencyKey)) {
+      saveQueue(queue);
+      return;
+    }
     queue.push({
+      idempotencyKey,
       id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       url,
       method: init.method || "POST",
-      headers: init.headers || { "Content-Type": "application/json" },
+      headers: plainHeaders(init.headers),
       body: typeof init.body === "string" ? init.body : null,
       queuedAt: new Date().toISOString(),
     });
     saveQueue(queue);
   }
 
+  let flushing = false;
+  let retryDelayMs = 5000;
+  const MAX_RETRY_DELAY_MS = 5 * 60 * 1000;
+
   async function flushQueue() {
+    if (flushing) return;
     const queue = loadQueue();
     if (!queue.length || !navigator.onLine) return;
+    flushing = true;
 
     const remaining = [];
-    for (const item of queue) {
-      try {
-        const response = await fetch(item.url, {
-          method: item.method,
-          headers: item.headers,
-          body: item.body,
-        });
-        if (!response.ok) {
+    let dropped = 0;
+    try {
+      for (const item of queue) {
+        try {
+          const response = await nativeFetch(item.url, {
+            method: item.method,
+            headers: item.headers,
+            body: item.body,
+          });
+          // 4xx (except 408/429) will never succeed on replay — drop it
+          // rather than retrying forever.
+          if (
+            !response.ok &&
+            (response.status >= 500 ||
+              response.status === 408 ||
+              response.status === 429)
+          ) {
+            remaining.push(item);
+          } else if (!response.ok) {
+            dropped++;
+          }
+        } catch {
           remaining.push(item);
         }
-      } catch {
-        remaining.push(item);
       }
+    } finally {
+      flushing = false;
     }
 
-    saveQueue(remaining);
+    if (dropped > 0) {
+      window.dispatchEvent(
+        new CustomEvent("offline-queue-dropped", { detail: { dropped } }),
+      );
+    }
+
+    // Keep anything queued while this flush was running.
+    const seen = new Set(queue.map((q) => q.id));
+    const addedDuringFlush = loadQueue().filter((q) => !seen.has(q.id));
+    saveQueue(remaining.concat(addedDuringFlush));
     if (queue.length !== remaining.length) {
       window.dispatchEvent(
         new CustomEvent("offline-queue-flushed", {
@@ -87,7 +144,6 @@
     }
   }
 
-  const nativeFetch = window.fetch.bind(window);
   window.fetch = async (input, init = {}) => {
     const requestUrl = typeof input === "string" ? input : input.url;
     const method = (
@@ -131,6 +187,31 @@
       }
     });
   }
+
+  // Retry pending actions with exponential backoff while anything is queued
+  // (covers flaky connections where the "online" event never fires).
+  function scheduleRetry() {
+    setTimeout(async () => {
+      const before = loadQueue().length;
+      if (before) await flushQueue().catch(() => undefined);
+      const after = loadQueue().length;
+      retryDelayMs =
+        after && after >= before
+          ? Math.min(retryDelayMs * 2, MAX_RETRY_DELAY_MS)
+          : 5000;
+      scheduleRetry();
+    }, retryDelayMs);
+  }
+  scheduleRetry();
+
+  // Announce the persisted queue size once the page has mounted listeners.
+  window.addEventListener("load", () => {
+    window.dispatchEvent(
+      new CustomEvent("offline-queue-size", {
+        detail: { size: loadQueue().length },
+      }),
+    );
+  });
 
   // Try queue flush once on startup.
   flushQueue().catch(() => undefined);

@@ -133,3 +133,24 @@ prioritized version of this list):
 - No calendar import (ICS/link), no anchor-type taxonomy/suggestions, no editable plan-generation
   fields (wake/sleep/anchor type are hardcoded in `PlanPageContent.tsx`) — all still to build for
   beta per the user's stated scope.
+
+---
+
+## 2026-10-04 — beta blockers 1–3 + test cleanup
+
+- **Billing removed (donation-funded).** Middleware no longer gates on trial/subscription;
+  `getBillingSnapshot()` always allows access. Dead `src/pages/billing.astro` deleted (the route
+  already 301s to `/settings`). The settings "support traverse" card no longer links to `/billing`
+  (which looped back to `/settings`); it shows an optional donation link from `PUBLIC_DONATION_URL`.
+- **Mutations no longer fail silently** (parity-gaps #1). New `src/lib/net/mutate.ts` adds an
+  `Idempotency-Key` and returns explicit results. Today's done/skip/declare/triage now revert the
+  optimistic update and show a "not saved — try again" card on server errors. The global queue in
+  `public/sw-register.js` (it already existed — parity-gaps was wrong that nothing fires the queue
+  events) now dedupes by idempotency key, drops permanent 4xx failures instead of retrying forever,
+  retries with exponential backoff while anything is queued, keeps items queued mid-flush, and
+  announces the persisted queue size on load. `PATCH /api/time-blocks/:id/complete` short-circuits
+  when the block is already in the requested state, so replays don't re-stamp `completed_at`.
+- **Error boundaries** (parity-gaps #2) wrap Today and Plan, with tv-styled fallbacks.
+- **Install banner** (parity-gaps #5) has a "Not now" with a 30-day localStorage cooldown.
+- **Tests:** 4 stale v1 component assertions updated to current markup; new `mutate` unit tests.
+  `npm test` 273/273, `npm run build` clean.

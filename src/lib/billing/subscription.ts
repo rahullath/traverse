@@ -27,10 +27,9 @@ export function getBillingSnapshot(
     ? trialMs < Date.now()
     : false;
 
-  const isAccessAllowed =
-    status === "active" ||
-    status === "premium" ||
-    (status === "trial" && !isTrialExpired);
+  // traverse is donation-funded: access never depends on trial or
+  // subscription state. Fields above are kept only for legacy readers.
+  const isAccessAllowed = true;
 
   return {
     status,

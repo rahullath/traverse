@@ -7,7 +7,7 @@ interface NetworkBannerProps {
   onDismiss?: () => void;
 }
 
-export function NetworkBanner({ variant, queuedCount, onInstall }: NetworkBannerProps) {
+export function NetworkBanner({ variant, queuedCount, onInstall, onDismiss }: NetworkBannerProps) {
   if (variant === 'offline') {
     return (
       <div className="tv-banner tv-banner--offline">
@@ -38,6 +38,9 @@ export function NetworkBanner({ variant, queuedCount, onInstall }: NetworkBanner
         <span className="tv-banner__sub">Works offline, opens instantly, no app store.</span>
       </div>
       <button className="tv-banner__action" onClick={onInstall}>Install</button>
+      {onDismiss && (
+        <button className="tv-banner__action" onClick={onDismiss} aria-label="Dismiss install banner">Not now</button>
+      )}
     </div>
   );
 }

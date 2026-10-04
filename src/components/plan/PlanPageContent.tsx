@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Page, Button, Card, TimingStrip } from '@/components/tv';
+import { Page, Button, Card, TimingStrip, ErrorFallback } from '@/components/tv';
+import { ErrorBoundary } from '@/components/daily-plan/ErrorBoundary';
 import type { Register } from '@/lib/copy/voice';
 import { formatTime, type TimeFormat } from '@/lib/copy/time';
 import { deriveBlockState, blockEnv, isKeystoneBlock } from '@/lib/daily-plan/block-render';
@@ -61,7 +62,27 @@ function todayAt(hhmm: string): Date {
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export default function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'clock', anchorless }: Props) {
+export default function PlanPage(props: Props) {
+  return (
+    <ErrorBoundary
+      fallback={(_error, reset) => (
+        <Page theme={props.theme} density={props.density} motion={props.motion} active="plan">
+          <ErrorFallback
+            message="Building the chain hit an error while rendering. Nothing you've saved was lost."
+            onRetry={reset}
+            retryLabel="Try again"
+            onSecondary={() => { window.location.href = '/today'; }}
+            secondaryLabel="Back to today"
+          />
+        </Page>
+      )}
+    >
+      <PlanPageContent {...props} />
+    </ErrorBoundary>
+  );
+}
+
+function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'clock', anchorless }: Props) {
   const [mode, setMode] = useState<'wizard' | 'empty'>('wizard');
   const [step, setStep] = useState(0);
   const [anchor, setAnchor] = useState<AnchorChoice | null>(null);

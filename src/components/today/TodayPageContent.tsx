@@ -7,6 +7,8 @@ import { formatTime, type TimeFormat } from '@/lib/copy/time';
 import { Page, Runway, Button, TimingStrip, NetworkBanner, ErrorFallback } from '@/components/tv';
 import { deriveBlockState, blockEnv, isKeystoneBlock } from '@/lib/daily-plan/block-render';
 import { pwaService } from '@/lib/pwa/service-worker';
+import { mutate } from '@/lib/net/mutate';
+import { ErrorBoundary } from '@/components/daily-plan/ErrorBoundary';
 
 type Mode = 'loading' | 'no-plan' | 'error' | 'declare' | 'timeline' | 'triage' | 'helpful';
 
@@ -33,9 +35,45 @@ function anchorLabel(blocks: TimeBlock[], now: Date): string {
   return next ? `${next.activityName}, ${formatTime(next.startTime)}` : 'anchor';
 }
 
+const INSTALL_DISMISS_KEY = 'traverse-install-dismissed-at';
+const INSTALL_DISMISS_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+
+function isInstallDismissed(): boolean {
+  try {
+    const at = Number(localStorage.getItem(INSTALL_DISMISS_KEY));
+    return Number.isFinite(at) && at > 0 && Date.now() - at < INSTALL_DISMISS_COOLDOWN_MS;
+  } catch {
+    return false;
+  }
+}
+
+function dismissInstall() {
+  try { localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now())); } catch { /* noop */ }
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function TodayPageContent({ voice, theme, density, motion = true, timeFormat = 'clock' }: Props) {
+export default function TodayPage(props: Props) {
+  return (
+    <ErrorBoundary
+      fallback={(_error, reset) => (
+        <Page theme={props.theme} density={props.density} motion={props.motion} active="today">
+          <ErrorFallback
+            message="Today hit an error while rendering. Your plan is safe on the server — nothing was lost."
+            onRetry={reset}
+            retryLabel="Try again"
+            onSecondary={() => { window.location.reload(); }}
+            secondaryLabel="Reload the page"
+          />
+        </Page>
+      )}
+    >
+      <TodayPageContent {...props} />
+    </ErrorBoundary>
+  );
+}
+
+function TodayPageContent({ voice, theme, density, motion = true, timeFormat = 'clock' }: Props) {
   const [mode, setMode] = useState<Mode>('loading');
   const [data, setData] = useState<MirrorData | null>(null);
   const [clock, setClock] = useState(() => new Date());
@@ -45,6 +83,8 @@ export default function TodayPageContent({ voice, theme, density, motion = true,
   const [queuedCount, setQueuedCount] = useState(0);
   const [installable, setInstallable] = useState(false);
   const [installed, setInstalled] = useState(false);
+  const [installDismissed, setInstallDismissed] = useState(true);
+  const [actionError, setActionError] = useState<{ message: string; retry: () => void } | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 30_000);
@@ -60,21 +100,22 @@ export default function TodayPageContent({ voice, theme, density, motion = true,
     const goOnline = () => setOnline(true);
     const goOffline = () => setOnline(false);
     const onQueueSize = (e: Event) => setQueuedCount((e as CustomEvent<{ size: number }>).detail?.size ?? 0);
-    const onQueueFlushed = () => setQueuedCount(0);
+    const onQueueFlushed = (e: Event) => setQueuedCount((e as CustomEvent<{ remaining: number }>).detail?.remaining ?? 0);
+    setInstallDismissed(isInstallDismissed());
     const onInstallable = () => setInstallable(true);
     const onInstalled = () => { setInstalled(true); setInstallable(false); };
 
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     window.addEventListener('offline-queue-size', onQueueSize as EventListener);
-    window.addEventListener('offline-queue-flushed', onQueueFlushed);
+    window.addEventListener('offline-queue-flushed', onQueueFlushed as EventListener);
     window.addEventListener('pwa-installable', onInstallable);
     window.addEventListener('pwa-installed', onInstalled);
     return () => {
       window.removeEventListener('online', goOnline);
       window.removeEventListener('offline', goOffline);
       window.removeEventListener('offline-queue-size', onQueueSize as EventListener);
-      window.removeEventListener('offline-queue-flushed', onQueueFlushed);
+      window.removeEventListener('offline-queue-flushed', onQueueFlushed as EventListener);
       window.removeEventListener('pwa-installable', onInstallable);
       window.removeEventListener('pwa-installed', onInstalled);
     };
@@ -96,62 +137,58 @@ export default function TodayPageContent({ voice, theme, density, motion = true,
 
   useEffect(() => { load(); }, [load]);
 
+  const setBlockStatus = (id: string, status: TimeBlock['status']) =>
+    setData(prev => prev
+      ? { ...prev, time_blocks: prev.time_blocks.map(b => b.id === id ? { ...b, status } : b) }
+      : prev);
+
   const handleDeclare = async (state: string) => {
-    await fetch('/api/daily-plan/state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ state }),
-    }).catch(() => {});
-    setMode('timeline');
+    setActionError(null);
+    const r = await mutate('/api/daily-plan/state', 'POST', { state });
+    if (!r.ok) { setActionError({ message: r.message, retry: () => handleDeclare(state) }); return; }
+    if (!r.queued) await load();
+    // Never bounce straight back into the prompt the user just answered.
+    setMode(m => (m === 'declare' || m === 'loading' ? 'timeline' : m));
   };
 
-  const handleComplete = async (id: string) => {
-    setData(prev => prev
-      ? { ...prev, time_blocks: prev.time_blocks.map(b => b.id === id ? { ...b, status: 'completed' as const } : b) }
-      : prev);
+  const handleBlockStatus = async (id: string, status: 'completed' | 'skipped') => {
+    const block = data?.time_blocks.find(b => b.id === id);
+    const prevStatus = block?.status ?? 'pending';
+    setActionError(null);
+    setBlockStatus(id, status);
     setOpenBlock(null);
-    await fetch(`/api/time-blocks/${id}/complete`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'completed' }),
-    }).catch(() => {});
+    const r = await mutate(
+      `/api/time-blocks/${id}/complete`,
+      'PATCH',
+      status === 'skipped' ? { status, skip_reason: 'user_skipped' } : { status },
+      `block-${id}-${status}`,
+    );
+    if (!r.ok) {
+      setBlockStatus(id, prevStatus);
+      setActionError({
+        message: `Couldn't mark “${block?.activityName ?? 'that step'}” ${status === 'completed' ? 'done' : 'skipped'}. ${r.message}`,
+        retry: () => handleBlockStatus(id, status),
+      });
+    }
   };
 
-  const handleSkip = async (id: string) => {
-    setData(prev => prev
-      ? { ...prev, time_blocks: prev.time_blocks.map(b => b.id === id ? { ...b, status: 'skipped' as const } : b) }
-      : prev);
-    setOpenBlock(null);
-    await fetch(`/api/time-blocks/${id}/complete`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'skipped', skip_reason: 'user_skipped' }),
-    }).catch(() => {});
-  };
+  const handleComplete = (id: string) => handleBlockStatus(id, 'completed');
+  const handleSkip = (id: string) => handleBlockStatus(id, 'skipped');
 
   const handleTriage = async (triageMode: string) => {
     if (!data?.triage_state.anchor) { setMode('timeline'); return; }
-    await fetch('/api/daily-plan/triage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: triageMode, anchor_id: data.triage_state.anchor.id }),
-    }).catch(() => {});
-    if (triageMode === 'recalculate') { await load(); return; }
+    setActionError(null);
+    const r = await mutate('/api/daily-plan/triage', 'POST', { mode: triageMode, anchor_id: data.triage_state.anchor.id });
+    if (!r.ok) { setActionError({ message: r.message, retry: () => handleTriage(triageMode) }); return; }
+    if (triageMode === 'recalculate' && !r.queued) { await load(); return; }
     setMode('timeline');
   };
 
   const handleFeltHelpful = async (response: string) => {
-    await fetch('/api/analytics/felt-helpful', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ response, date: new Date().toISOString().split('T')[0] }),
-    }).catch(() => {});
+    // Best-effort: the day-close signal must never block leaving the screen.
+    await mutate('/api/analytics/felt-helpful', 'POST', { response, date: new Date().toISOString().split('T')[0] });
     // Marks phase-2 onboarding presets as eligible to surface once, next visit.
-    await fetch('/api/auth/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phase2_eligible_at: new Date().toISOString() }),
-    }).catch(() => {});
+    await mutate('/api/auth/preferences', 'PUT', { phase2_eligible_at: new Date().toISOString() });
     window.location.href = '/today';
   };
 
@@ -174,8 +211,25 @@ export default function TodayPageContent({ voice, theme, density, motion = true,
 
       {!online && <NetworkBanner variant="offline" />}
       {online && queuedCount > 0 && <NetworkBanner variant="queued" queuedCount={queuedCount} />}
-      {online && queuedCount === 0 && installable && !installed && (
-        <NetworkBanner variant="install" onInstall={() => pwaService.promptInstall()} />
+      {online && queuedCount === 0 && installable && !installed && !installDismissed && (
+        <NetworkBanner
+          variant="install"
+          onInstall={() => pwaService.promptInstall()}
+          onDismiss={() => { dismissInstall(); setInstallDismissed(true); }}
+        />
+      )}
+
+      {actionError && (
+        <div className="tv-card tv-card--quote" role="alert">
+          <div className="tv-label">not saved</div>
+          <p className="tv-prose" style={{ margin: 0 }}>{actionError.message}</p>
+          <div className="tv-actions">
+            <button className="tv-btn tv-btn--ghost" onClick={() => { const retry = actionError.retry; setActionError(null); retry(); }}>
+              <span>Try again</span><span className="tv-btn__hint">retry</span>
+            </button>
+            <button className="tv-close" onClick={() => setActionError(null)}>dismiss</button>
+          </div>
+        </div>
       )}
 
       {runway?.runway != null && (

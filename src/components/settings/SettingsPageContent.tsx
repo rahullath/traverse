@@ -18,6 +18,8 @@ export interface Props {
   anchorless: Anchorless;
 }
 
+const DONATION_URL = import.meta.env.PUBLIC_DONATION_URL as string | undefined;
+
 function save(patch: Record<string, unknown>) {
   fetch('/api/auth/preferences', {
     method: 'PUT',
@@ -132,8 +134,14 @@ export default function SettingsPageContent({ email, theme: initTheme, motion: i
       <Card style={{ marginTop: 16 }}>
         <div className="tv-label">support traverse</div>
         <p className="tv-prose" style={{ margin: 0 }}>
-          traverse runs on donations, not subscriptions — you keep full access either way. If it's been useful, you can chip in from{' '}
-          <a href="/billing" style={{ color: 'var(--accent)' }}>the support page</a>.
+          traverse is free and stays free — no trial, no paywall, nothing gets locked.
+          {DONATION_URL ? (
+            <>
+              {' '}If it's carried some of the load for you and you have spare to give,{' '}
+              <a href={DONATION_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>a small donation</a>{' '}
+              keeps it running. Entirely optional.
+            </>
+          ) : null}
         </p>
       </Card>
 

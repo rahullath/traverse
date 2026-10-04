@@ -1,7 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 import { createServerAuth } from "./lib/auth/simple-multi-user";
 import { RouteClassifier } from "./lib/utils/route-classifier";
-import { getBillingSnapshot } from "./lib/billing/subscription";
 
 const REDIRECTS: Record<string, string> = {
   "/dashboard":  "/today",
@@ -105,18 +104,8 @@ export const onRequest = defineMiddleware(
         // must not blanket-redirect it away once phase 1 is complete, or the
         // phase-2 preset surface (Phase 11) would be unreachable.
 
-        const billing = getBillingSnapshot(preferences);
-        const billingExemptRoutes = new Set([
-          "/billing",
-          "/settings",
-          "/logout",
-        ]);
-        if (!billing.isAccessAllowed && !billingExemptRoutes.has(pathname)) {
-          console.log(
-            `💳 Trial/subscription gate redirect from ${pathname} to /billing`,
-          );
-          return redirect("/billing");
-        }
+        // No billing gate: traverse is donation-funded and access is never
+        // restricted by trial or subscription state.
       } catch (error) {
         console.error(
           `⚠️ Middleware error for protected route ${pathname}:`,

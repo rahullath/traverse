@@ -117,6 +117,24 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
       );
     }
 
+    // Idempotent replay: the offline queue may resend the same action after a
+    // flaky connection. If the block is already in the requested state, return
+    // it unchanged instead of re-stamping completion metadata.
+    if (timeBlock.status === status) {
+      const { daily_plans: _owner, ...existingBlock } = timeBlock;
+      return new Response(
+        JSON.stringify({
+          updated_block: existingBlock,
+          remaining_time: null,
+          deduplicated: true,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     // Prepare update data
     const updateData: any = {
       status,

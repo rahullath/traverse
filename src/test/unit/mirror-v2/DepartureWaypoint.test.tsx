@@ -105,7 +105,7 @@ describe("DepartureWaypoint", () => {
         />,
       );
 
-      const timeElement = container.querySelector(".text-2xl");
+      const timeElement = container.querySelector(".text-3xl");
       expect(timeElement).toBeInTheDocument();
       expect(timeElement).toHaveTextContent(/1:30 PM/i);
     });
@@ -193,10 +193,10 @@ describe("DepartureWaypoint", () => {
         />,
       );
 
-      const timeElement = container.querySelector(".text-2xl");
+      const timeElement = container.querySelector(".text-3xl");
       expect(timeElement).toBeInTheDocument();
 
-      const labelElement = container.querySelector(".text-sm");
+      const labelElement = container.querySelector(".uppercase");
       expect(labelElement).toBeInTheDocument();
       expect(labelElement).toHaveTextContent(/Leave by/i);
     });
@@ -376,7 +376,7 @@ describe("DepartureWaypoint", () => {
         />,
       );
 
-      expect(screen.getByText(/Travel to:/i)).toBeInTheDocument();
+      expect(screen.getByText(/^Travel to$/i)).toBeInTheDocument();
       expect(screen.getByText("Team Meeting")).toBeInTheDocument();
     });
 
