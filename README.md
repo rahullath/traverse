@@ -1,19 +1,19 @@
-# MeshOS
+# traverse
 
-MeshOS is an executive-function support app.
+traverse is an executive-function support app.
 
 It is built to help people move through daily life when task initiation, sequencing, transitions, and recovery are hard.
 
 This is not a productivity theater app. The goal is not output-maxing. The goal is daily stability.
 
-## What MeshOS Is
+## What traverse Is
 
 - A practical scaffold for executive function
 - Chain-first planning around real anchors and constraints
 - A system for reducing ambiguity and transition friction
 - User-controlled structure with manual override
 
-## What MeshOS Is Not
+## What traverse Is Not
 
 - Not an AI life coach
 - Not a crypto or finance product
@@ -57,7 +57,7 @@ This is not a productivity theater app. The goal is not output-maxing. The goal 
 
 These modules may appear in the repo but are not part of the current reliability target.
 
-## Who MeshOS Is For
+## Who traverse Is For
 
 People who:
 
@@ -69,7 +69,7 @@ People who:
 
 ## Product Direction
 
-MeshOS is being shaped as an executive-function prosthetic layer:
+traverse is being shaped as an executive-function prosthetic layer:
 
 - Useful in chaos, not only on perfect days
 - Additive and minimal-risk implementation
@@ -113,7 +113,7 @@ MeshOS is being shaped as an executive-function prosthetic layer:
 
 ## Status
 
-MeshOS is under active stabilization and iteration.
+traverse is under active stabilization and iteration.
 
 The current objective is a reliable, multi-user-safe core experience for:
 
