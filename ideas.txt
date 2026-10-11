@@ -1,0 +1,122 @@
+May 2026 - some changes 1-3 were already there - rest are today's thoughts:
+
+1) subscription/billing changed to support/donate
+2) feedback form - comprehensive but easy to submit - all questions optional so that whatever they enter is logged by us and used
+3) opt-in dopamine settings - 
+
+users can enter the general sources of dopamine 
+Instead of framing it as good vs bad sources, treat them as regulation tools.
+
+For example the profile could simply ask:
+
+When you feel stuck, what do you usually reach for?
+
+Options might include things like:
+
+scrolling
+
+nicotine
+
+caffeine
+
+gaming
+
+food
+
+exercise
+
+talking to someone
+
+music
+
+pets
+
+No judgment. Just observation.
+
+The app doesn’t say “don’t do this”.
+
+It only uses the info to offer parallel options.
+
+Example interaction:
+
+User opens app at 4:30 PM in shutdown state.
+
+The app might say something like:
+
+People often reach for [scrolling] around this time.
+
+Before that, try one small reset:
+• step outside for 3 minutes
+• drink water
+• stand up and stretch
+
+(perhaps not something as generic and boring as these things, cause any artificial dopamine source is better than "stand up and stretch" or "drink water")
+
+If they still scroll afterward, the app doesn’t care.
+
+The key is inserting a tiny pause before the habitual loop.
+
+Why this works better neurologically
+
+Addictive loops usually follow:
+
+trigger → habit → relief
+
+You’re not trying to remove the habit.
+
+You’re inserting a micro-intervention between trigger and habit.
+
+Even a 30-second delay changes the loop over time.
+
+Another idea that fits your philosophy
+
+Instead of tracking dopamine sources, you could track energy states.
+
+Something like:
+
+Right now you feel:
+• foggy
+• overwhelmed
+• avoiding something
+• low energy
+• ready to act
+
+Then the app generates the minimum viable action.
+
+This keeps everything stateless and moment-focused.
+
+4) complete design revamp
+5) NHS integration - figure out how to make it useful for NHS - since it is the only way to reach neurodivergent people at scale and help them.
+
+They're going to test the app (some NHS staff) today, the core proposition perhaps for them would be the ability to integrate with user watch and user NHS data - I am not sure how we are going to do that and keep the app stateless and easy to use.
+
+6) calendar integration is NECESSARY - we already have a calendar component but it doesn't link with google or microsoft calendars easily making it impossible almost for users to sit and export an .ics while depressed local
+
+7) the anchor-less day dilemma - how do we help the user start their day without asking or assuming any information? especially when I personally am unable to start my own days - my entire routine collapsed because of the spring or easter break.
+
+I know for a fact that without an external trigger - for me it was either communist party meetings, I had to go to London. 
+so social events - community is the only way out for a solipsistic existence. 
+apart from this - the keystone is also important - my days generally go well if I just shut up and take a shower in the morning and terrible and spiralling otherwise
+
+other factors - like meds? are they diagnosed, self medicating (vaping, smoking, pot, whatever I used to I guess)
+how to help a completely anonymous user with potentially very complex and serious issues - without becoming a palantir-esque ai surveillance bot that 
+removes all sense of humanity and emotions and autonomy from the system - I dont want to control anyone's life, or optimize it.
+they just deserve to be able to get through the day without feeling like they wasted it if they didn't get anything done. and the absolute chaotic 
+complex structure of a billion different people makes it hard to do without collecting data - which is anathema to me and my ethics and principles.
+
+8) tutorial-esque stuff - or sample data for new users that disappears if they put anything of their own in, only for modules that need data - like a calendar or habits etc IDk
+
+--
+# point number 3 is not written by me - It also suffers from the paradox of reminding the user about dopamine sources that they didn't think of (optimistically)
+
+
+9) research topics, we need to do more research on neurodiversity, circadian rhythm , social elements, diet, environment, etc
+my knowledge is limited to the depression I have experienced and some minimal research I did on something when I pivote from the gamified all-knowing agentic optimizer for life to this version which is the anti-thesis of it.
+
+
+10) deployment strategies, how to merge between branches etc, like we are in a sub branch now - what can be pushed to main/prod - how to structure the new implementations etc
+
+
+11) renaming MIRROR UI - it sounds stupid. renaming the app itself from messy OS (since I abandoned the OS part of it), do we do this before the redesign
+
+

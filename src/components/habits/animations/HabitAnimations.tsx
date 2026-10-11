@@ -1,5 +1,5 @@
 // src/components/habits/animations/HabitAnimations.tsx
-import React from 'react';
+import React from "react";
 
 interface AnimationProps {
   children: React.ReactNode;
@@ -7,19 +7,18 @@ interface AnimationProps {
 }
 
 // Smooth fade-in animation for habit cards
-export const FadeInCard: React.FC<AnimationProps> = ({ children, className = '' }) => {
-  return (
-    <div className={`animate-fade-in-up ${className}`}>
-      {children}
-    </div>
-  );
+export const FadeInCard: React.FC<AnimationProps> = ({
+  children,
+  className = "",
+}) => {
+  return <div className={`animate-fade-in-up ${className}`}>{children}</div>;
 };
 
 // Success animation for completed habits
-export const SuccessAnimation: React.FC<{ isVisible: boolean; onComplete?: () => void }> = ({ 
-  isVisible, 
-  onComplete 
-}) => {
+export const SuccessAnimation: React.FC<{
+  isVisible: boolean;
+  onComplete?: () => void;
+}> = ({ isVisible, onComplete }) => {
   React.useEffect(() => {
     if (isVisible && onComplete) {
       const timer = setTimeout(onComplete, 2000);
@@ -33,11 +32,16 @@ export const SuccessAnimation: React.FC<{ isVisible: boolean; onComplete?: () =>
     <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
       <div className="animate-success-bounce bg-green-500 text-white px-8 py-4 rounded-full shadow-lg">
         <div className="flex items-center space-x-3">
-          <svg className="w-8 h-8 animate-check-draw" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth="3" 
+          <svg
+            className="w-8 h-8 animate-check-draw"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
               d="M5 13l4 4L19 7"
               className="animate-check-path"
             />
@@ -50,10 +54,10 @@ export const SuccessAnimation: React.FC<{ isVisible: boolean; onComplete?: () =>
 };
 
 // Streak celebration animation
-export const StreakCelebration: React.FC<{ 
-  streak: number; 
-  isVisible: boolean; 
-  onComplete?: () => void 
+export const StreakCelebration: React.FC<{
+  streak: number;
+  isVisible: boolean;
+  onComplete?: () => void;
 }> = ({ streak, isVisible, onComplete }) => {
   React.useEffect(() => {
     if (isVisible && onComplete) {
@@ -78,7 +82,9 @@ export const StreakCelebration: React.FC<{
       <div className="animate-streak-celebration bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-6 rounded-xl shadow-2xl">
         <div className="text-center">
           <div className="text-6xl mb-2 animate-bounce">🔥</div>
-          <div className="text-2xl font-bold mb-1">{getStreakMessage(streak)}</div>
+          <div className="text-2xl font-bold mb-1">
+            {getStreakMessage(streak)}
+          </div>
           <div className="text-lg opacity-90">Keep the momentum going!</div>
         </div>
       </div>
@@ -100,7 +106,7 @@ export const HabitCardSkeleton: React.FC = () => {
         </div>
         <div className="h-6 bg-gray-200 rounded-full w-16"></div>
       </div>
-      
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <div className="w-6 h-6 bg-gray-300 rounded"></div>
@@ -112,7 +118,7 @@ export const HabitCardSkeleton: React.FC = () => {
           <div className="h-3 bg-gray-200 rounded w-16"></div>
         </div>
       </div>
-      
+
       <div className="mb-4">
         <div className="h-3 bg-gray-200 rounded w-16 mb-2"></div>
         <div className="flex space-x-1">
@@ -121,7 +127,7 @@ export const HabitCardSkeleton: React.FC = () => {
           ))}
         </div>
       </div>
-      
+
       <div className="h-12 bg-gray-200 rounded-lg"></div>
     </div>
   );
@@ -132,20 +138,29 @@ export const SmoothTransition: React.FC<{
   children: React.ReactNode;
   isVisible: boolean;
   className?: string;
-}> = ({ children, isVisible, className = '' }) => {
+}> = ({ children, isVisible, className = "" }) => {
   return (
-    <div className={`transition-all duration-300 ease-in-out ${
-      isVisible ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
-    } ${className}`}>
+    <div
+      className={`transition-all duration-300 ease-in-out ${
+        isVisible
+          ? "opacity-100 transform translate-y-0"
+          : "opacity-0 transform translate-y-4"
+      } ${className}`}
+    >
       {children}
     </div>
   );
 };
 
 // Hover animation wrapper
-export const HoverScale: React.FC<AnimationProps> = ({ children, className = '' }) => {
+export const HoverScale: React.FC<AnimationProps> = ({
+  children,
+  className = "",
+}) => {
   return (
-    <div className={`transform transition-transform duration-200 hover:scale-105 ${className}`}>
+    <div
+      className={`transform transition-transform duration-200 hover:scale-105 ${className}`}
+    >
       {children}
     </div>
   );
@@ -157,7 +172,7 @@ export const PressAnimation: React.FC<{
   onClick?: () => void;
   className?: string;
   disabled?: boolean;
-}> = ({ children, onClick, className = '', disabled = false }) => {
+}> = ({ children, onClick, className = "", disabled = false }) => {
   return (
     <button
       onClick={onClick}

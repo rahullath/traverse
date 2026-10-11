@@ -1,15 +1,24 @@
 // Daily Plan Generator V1 Types
 
-export type EnergyState = 'low' | 'medium' | 'high';
-export type PlanStatus = 'active' | 'degraded' | 'completed';
-export type ActivityType = 'commitment' | 'task' | 'routine' | 'meal' | 'buffer' | 'travel';
-export type BlockStatus = 'pending' | 'completed' | 'skipped';
-export type TravelMethod = 'bike' | 'train' | 'walk' | 'bus';
+export type EnergyState = "low" | "medium" | "high";
+export type PlanStatus = "active" | "degraded" | "completed";
+export type ActivityType =
+  | "commitment"
+  | "task"
+  | "routine"
+  | "meal"
+  | "buffer"
+  | "travel";
+export type BlockStatus = "pending" | "completed" | "skipped";
+export type TravelMethod = "bike" | "train" | "walk" | "bus";
 
 // V2 Chain-Based Execution imports
-import type { ExecutionChain } from '../lib/chains/types';
-import type { HomeInterval, LocationPeriod } from '../lib/chains/location-state';
-import type { WakeRamp } from '../lib/chains/wake-ramp';
+import type { ExecutionChain } from "../lib/chains/types";
+import type {
+  HomeInterval,
+  LocationPeriod,
+} from "../lib/chains/location-state";
+import type { WakeRamp } from "../lib/chains/wake-ramp";
 
 export interface DailyPlan {
   id: string;
@@ -26,7 +35,7 @@ export interface DailyPlan {
   updatedAt: Date;
   timeBlocks?: TimeBlock[];
   exitTimes?: ExitTime[];
-  
+
   // V2 Chain-Based Execution fields
   // Requirements: 12.5, 18.1, 18.2, 18.3, 18.4
   chains?: ExecutionChain[];
@@ -57,13 +66,13 @@ export interface TimeBlock {
 export interface TimeBlockMetadata {
   // V1.2 fields (existing)
   targetTime?: Date;
-  placementReason?: 'anchor-aware' | 'default';
+  placementReason?: "anchor-aware" | "default";
   skipReason?: string;
-  
+
   // V2 Chain semantics fields
   // Requirements: 6.1, 6.2, 6.3, 6.4, 6.5
   role?: {
-    type: 'anchor' | 'chain-step' | 'exit-gate' | 'recovery';
+    type: "anchor" | "chain-step" | "exit-gate" | "recovery";
     required: boolean;
     chain_id?: string;
     gate_conditions?: Array<{
@@ -72,29 +81,70 @@ export interface TimeBlockMetadata {
       satisfied: boolean;
     }>;
   };
-  
+
   // Chain linkage fields
   // Requirements: 18.1, 18.2
   chain_id?: string;
   step_id?: string;
   anchor_id?: string;
-  
+  anchor_title?: string;
+  anchor_start?: string;
+  anchor_end?: string;
+  anchor_location?: string;
+  anchor_type?: string;
+  max_late_minutes?: number;
+
   // Location state tracking
   // Requirements: 18.3
-  location_state?: 'at_home' | 'not_home';
-  
+  location_state?: "at_home" | "not_home";
+
+  triage?: {
+    is_keystone?: boolean;
+    [key: string]: unknown;
+  };
+
   // Commitment envelope tracking
   // Requirements: 18.4
   commitment_envelope?: {
     envelope_id: string;
-    envelope_type: 'prep' | 'travel_there' | 'anchor' | 'travel_back' | 'recovery';
+    envelope_type:
+      | "prep"
+      | "travel_there"
+      | "anchor"
+      | "travel_back"
+      | "recovery";
   };
-  
+
+  timing_signals?: {
+    suggested_start_by: string;
+    ready_to_leave_by: string;
+    anchor_at: string;
+    effective_arrival_deadline: string;
+    max_late_minutes: number;
+    travel_duration_minutes: number;
+    selected_departure_slot?: string;
+    next_feasible_departure_slot?: string;
+  };
+
+  anchor_constraints?: {
+    max_late_minutes?: number;
+    strict_by_default?: boolean;
+  };
+
+  travel_profile?: {
+    label?: string;
+    selected_slot?: string;
+    next_feasible_slot?: string;
+    source?: "profile" | "fallback";
+    used_slots?: boolean;
+  };
+
   // Error handling metadata
   // Design: Error Handling
   fallback_used?: boolean;
   fallback_reason?: string;
   template_fallback?: boolean;
+  no_calendar_fallback?: boolean;
   original_anchor_type?: string;
   fallback_template?: string;
 
@@ -170,10 +220,20 @@ export interface ExitTimeRow {
 }
 
 // Helper type for creating new records (without generated fields)
-export type CreateDailyPlan = Omit<DailyPlanRow, 'id' | 'created_at' | 'updated_at' | 'generated_at'>;
-export type CreateTimeBlock = Omit<TimeBlockRow, 'id' | 'created_at' | 'updated_at'>;
-export type CreateExitTime = Omit<ExitTimeRow, 'id' | 'created_at'>;
+export type CreateDailyPlan = Omit<
+  DailyPlanRow,
+  "id" | "created_at" | "updated_at" | "generated_at"
+>;
+export type CreateTimeBlock = Omit<
+  TimeBlockRow,
+  "id" | "created_at" | "updated_at"
+>;
+export type CreateExitTime = Omit<ExitTimeRow, "id" | "created_at">;
 
 // Helper type for updating records
-export type UpdateDailyPlan = Partial<Omit<DailyPlanRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
-export type UpdateTimeBlock = Partial<Omit<TimeBlockRow, 'id' | 'plan_id' | 'created_at' | 'updated_at'>>;
+export type UpdateDailyPlan = Partial<
+  Omit<DailyPlanRow, "id" | "user_id" | "created_at" | "updated_at">
+>;
+export type UpdateTimeBlock = Partial<
+  Omit<TimeBlockRow, "id" | "plan_id" | "created_at" | "updated_at">
+>;

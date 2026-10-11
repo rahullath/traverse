@@ -1,0 +1,25 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ClinicalPageContent from '../components/clinical/ClinicalPageContent';
+import { createServerAuth } from '../lib/auth/simple-multi-user';
+
+const serverAuth = createServerAuth(Astro.cookies);
+const user = await serverAuth.getUser();
+
+let theme: 'daylight' | 'lamp' = 'daylight';
+let density: 'standard' | 'roomy' = 'standard';
+let motion = true;
+
+if (user) {
+  const preferences = await serverAuth.getUserPreferences(user.id);
+  const prefs = (preferences ?? {}) as Record<string, unknown>;
+  const rawTheme = prefs.theme as string | undefined;
+  theme = (rawTheme === 'dark' || rawTheme === 'midnight' || rawTheme === 'lamp') ? 'lamp' : 'daylight';
+  density = prefs.density === 'roomy' ? 'roomy' : 'standard';
+  motion = prefs.motion !== 'off';
+}
+---
+
+<Layout title="traverse — clinical reading">
+  <ClinicalPageContent client:load theme={theme} density={density} motion={motion} loggedIn={!!user} />
+</Layout>

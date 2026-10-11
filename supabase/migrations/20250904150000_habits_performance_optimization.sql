@@ -78,7 +78,7 @@ FROM habit_entries
 WHERE user_id IS NOT NULL
 GROUP BY user_id, date;
 
--- Create index on materialized view
+-- CREATE INDEX IF NOT EXISTS on materialized view
 CREATE UNIQUE INDEX IF NOT EXISTS idx_habit_daily_summary_user_date 
 ON habit_daily_summary(user_id, date);
 
@@ -103,7 +103,7 @@ JOIN habits h ON he.habit_id = h.id
 WHERE he.user_id IS NOT NULL AND h.is_active = true
 GROUP BY he.user_id, he.habit_id, date_trunc('week', he.date);
 
--- Create index on weekly stats
+-- CREATE INDEX IF NOT EXISTS on weekly stats
 CREATE INDEX IF NOT EXISTS idx_habit_weekly_stats_user_week 
 ON habit_weekly_stats(user_id, week_start DESC);
 

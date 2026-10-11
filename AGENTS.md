@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
+This file provides guidance to LLMs when working with code in this repository.
 
 ## Project Overview
 
@@ -31,6 +31,7 @@ Astro runs in full SSR mode (`output: 'server'`). Pages are `.astro` files that 
 ### Path Aliases
 
 Configured in `tsconfig.json` and `vitest.config.ts`:
+
 - `@/*` → `./src/*` (primary alias used throughout)
 - `components/*`, `lib/*`, `types/*` also map into `./src/`
 
@@ -45,9 +46,10 @@ Configured in `tsconfig.json` and `vitest.config.ts`:
 ### Middleware Flow (`src/middleware.ts`)
 
 Every request goes through middleware that:
+
 1. Classifies the route via `RouteClassifier` (static, public, protected)
 2. Skips auth for static assets and public routes
-3. For protected routes: checks Supabase auth → enforces onboarding completion → enforces billing/trial gate → allows access
+3. For protected routes: checks Supabase auth → enforces onboarding completion → allows access (there is no billing gate)
 
 ### Core Domain: Chain-Based Execution Engine
 
@@ -80,9 +82,9 @@ This is the most complex subsystem. The mental model:
 - Import from Loop Habits CSV via `src/lib/import/enhanced-loop-habits-v2.ts` with dedup/merge logic
 - Analytics dashboard with completion rates, heatmaps, streak timelines, cross-habit correlations
 
-### Token/Billing System
+### Funding (no billing)
 
-Users start with a token balance (trial credits). Token operations go through `src/lib/tokens/service.ts` and `ServerAuth.deductTokens()`. The middleware checks `getBillingSnapshot()` from `src/lib/billing/subscription.ts` to gate access when trial expires or subscription lapses.
+traverse is donation-funded. There is no trial, subscription or paywall, and access is never gated on billing state. `getBillingSnapshot()` in `src/lib/billing/subscription.ts` always returns `isAccessAllowed: true` and is kept only for legacy readers. The only funding surface is an optional donation link on `/settings`, shown when `PUBLIC_DONATION_URL` is set. Do not add billing gates or pressure-style nudges.
 
 ### Database
 
@@ -98,6 +100,7 @@ Tailwind CSS with a custom dark theme using CSS custom properties (`--background
 ### Testing
 
 Vitest with jsdom environment. Setup file at `src/test/setup.ts`. Tests are organized as:
+
 - `src/test/unit/` — Unit tests
 - `src/test/integration/` — Integration tests
 - `src/test/e2e/` — End-to-end tests
@@ -108,7 +111,7 @@ Vitest with jsdom environment. Setup file at `src/test/setup.ts`. Tests are orga
 - All protected API routes must call `serverAuth.requireAuth()` and derive `user_id` from the returned user object
 - All Supabase queries on user data must filter by `user_id`
 - RLS is enabled — but application-level scoping is still required as defense-in-depth
-- Onboarding and billing gates in middleware must not be bypassed in new routes unless explicitly exempt
+- The onboarding gate in middleware must not be bypassed in new routes unless explicitly exempt
 
 ## Current Focus
 

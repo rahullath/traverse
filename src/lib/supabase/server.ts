@@ -1,7 +1,7 @@
 // src/lib/supabase/server.ts
-import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
-import type { Database } from '../../types/supabase'
-import type { AstroCookies } from 'astro'
+import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
+import type { Database } from "../../types/supabase";
+import type { AstroCookies } from "astro";
 
 export function createServerClient(cookies: AstroCookies) {
   return createSupabaseServerClient<Database>(
@@ -21,21 +21,21 @@ export function createServerClient(cookies: AstroCookies) {
             ...options,
             httpOnly: false, // Must be false for client-side access
             secure: import.meta.env.PROD, // Only secure in production
-            sameSite: 'lax', // Lax for OAuth compatibility
-            path: '/', // Global path
-            maxAge: options.maxAge || 60 * 60 * 24 * 7 // Default 7 days
+            sameSite: "lax", // Lax for OAuth compatibility
+            path: "/", // Global path
+            maxAge: options.maxAge || 60 * 60 * 24 * 7, // Default 7 days
           });
         },
         remove(name: string, options: any) {
           cookies.delete(name, {
             ...options,
-            path: '/',
+            path: "/",
             httpOnly: false,
             secure: import.meta.env.PROD,
-            sameSite: 'lax'
+            sameSite: "lax",
           });
         },
       },
-    }
-  )
+    },
+  );
 }

@@ -131,7 +131,7 @@ CREATE TABLE milestones (
 );
 
 -- AI-generated insights and plans
-CREATE TABLE daily_plans (
+CREATE TABLE IF NOT EXISTS daily_plans ( -- already created by 20250118000000; keep that shape
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   plan_date DATE NOT NULL,
@@ -174,28 +174,28 @@ CREATE TABLE energy_patterns (
 );
 
 -- Indexes for optimal query performance
-CREATE INDEX idx_tasks_user_status ON tasks(user_id, status);
-CREATE INDEX idx_tasks_user_priority ON tasks(user_id, priority);
-CREATE INDEX idx_tasks_deadline ON tasks(deadline) WHERE deadline IS NOT NULL;
-CREATE INDEX idx_tasks_parent ON tasks(parent_task_id) WHERE parent_task_id IS NOT NULL;
-CREATE INDEX idx_tasks_category ON tasks(user_id, category);
-CREATE INDEX idx_tasks_created_at ON tasks(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_tasks_user_status ON tasks(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_tasks_user_priority ON tasks(user_id, priority);
+CREATE INDEX IF NOT EXISTS idx_tasks_deadline ON tasks(deadline) WHERE deadline IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_task_id) WHERE parent_task_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_category ON tasks(user_id, category);
+CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(user_id, created_at);
 
-CREATE INDEX idx_calendar_events_user_time ON calendar_events(user_id, start_time, end_time);
-CREATE INDEX idx_calendar_events_source ON calendar_events(source_id);
-CREATE INDEX idx_calendar_events_type ON calendar_events(user_id, event_type);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_user_time ON calendar_events(user_id, start_time, end_time);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_source ON calendar_events(source_id);
+CREATE INDEX IF NOT EXISTS idx_calendar_events_type ON calendar_events(user_id, event_type);
 
-CREATE INDEX idx_time_sessions_user_task ON time_sessions(user_id, task_id);
+CREATE INDEX IF NOT EXISTS idx_time_sessions_user_task ON time_sessions(user_id, task_id);
 -- Note: Functional index on date removed due to immutability constraints
--- CREATE INDEX idx_time_sessions_user_date ON time_sessions(user_id, DATE(start_time));
-CREATE INDEX idx_time_sessions_status ON time_sessions(user_id, completion_status);
+-- CREATE INDEX IF NOT EXISTS idx_time_sessions_user_date ON time_sessions(user_id, DATE(start_time));
+CREATE INDEX IF NOT EXISTS idx_time_sessions_status ON time_sessions(user_id, completion_status);
 
-CREATE INDEX idx_goals_user_status ON goals(user_id, status);
-CREATE INDEX idx_goals_category ON goals(user_id, category);
-CREATE INDEX idx_milestones_goal ON milestones(goal_id);
+CREATE INDEX IF NOT EXISTS idx_goals_user_status ON goals(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_goals_category ON goals(user_id, category);
+CREATE INDEX IF NOT EXISTS idx_milestones_goal ON milestones(goal_id);
 
-CREATE INDEX idx_daily_plans_user_date ON daily_plans(user_id, plan_date);
-CREATE INDEX idx_energy_patterns_user_time ON energy_patterns(user_id, time_of_day, day_of_week);
+CREATE INDEX IF NOT EXISTS idx_daily_plans_user_date ON daily_plans(user_id, plan_date);
+CREATE INDEX IF NOT EXISTS idx_energy_patterns_user_time ON energy_patterns(user_id, time_of_day, day_of_week);
 
 -- Row Level Security (RLS) policies
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
@@ -209,35 +209,44 @@ ALTER TABLE life_optimizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE energy_patterns ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for tasks
+DROP POLICY IF EXISTS "Users can view their own tasks" ON tasks;
 CREATE POLICY "Users can view their own tasks" ON tasks
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own tasks" ON tasks;
 CREATE POLICY "Users can insert their own tasks" ON tasks
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own tasks" ON tasks;
 CREATE POLICY "Users can update their own tasks" ON tasks
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own tasks" ON tasks;
 CREATE POLICY "Users can delete their own tasks" ON tasks
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for calendar_sources
+DROP POLICY IF EXISTS "Users can manage their own calendar sources" ON calendar_sources;
 CREATE POLICY "Users can manage their own calendar sources" ON calendar_sources
   FOR ALL USING (auth.uid() = user_id);
 
 -- RLS Policies for calendar_events
+DROP POLICY IF EXISTS "Users can manage their own calendar events" ON calendar_events;
 CREATE POLICY "Users can manage their own calendar events" ON calendar_events
   FOR ALL USING (auth.uid() = user_id);
 
 -- RLS Policies for time_sessions
+DROP POLICY IF EXISTS "Users can manage their own time sessions" ON time_sessions;
 CREATE POLICY "Users can manage their own time sessions" ON time_sessions
   FOR ALL USING (auth.uid() = user_id);
 
 -- RLS Policies for goals
+DROP POLICY IF EXISTS "Users can manage their own goals" ON goals;
 CREATE POLICY "Users can manage their own goals" ON goals
   FOR ALL USING (auth.uid() = user_id);
 
 -- RLS Policies for milestones
+DROP POLICY IF EXISTS "Users can manage milestones for their goals" ON milestones;
 CREATE POLICY "Users can manage milestones for their goals" ON milestones
   FOR ALL USING (
     EXISTS (
@@ -248,14 +257,17 @@ CREATE POLICY "Users can manage milestones for their goals" ON milestones
   );
 
 -- RLS Policies for daily_plans
+DROP POLICY IF EXISTS "Users can manage their own daily plans" ON daily_plans;
 CREATE POLICY "Users can manage their own daily plans" ON daily_plans
   FOR ALL USING (auth.uid() = user_id);
 
 -- RLS Policies for life_optimizations
+DROP POLICY IF EXISTS "Users can manage their own life optimizations" ON life_optimizations;
 CREATE POLICY "Users can manage their own life optimizations" ON life_optimizations
   FOR ALL USING (auth.uid() = user_id);
 
 -- RLS Policies for energy_patterns
+DROP POLICY IF EXISTS "Users can manage their own energy patterns" ON energy_patterns;
 CREATE POLICY "Users can manage their own energy patterns" ON energy_patterns
   FOR ALL USING (auth.uid() = user_id);
 
@@ -269,9 +281,11 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers for automatic timestamp updates
+DROP TRIGGER IF EXISTS update_tasks_updated_at ON tasks;
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_calendar_events_updated_at ON calendar_events;
 CREATE TRIGGER update_calendar_events_updated_at BEFORE UPDATE ON calendar_events
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -288,6 +302,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS set_task_completed_at_trigger ON tasks;
 CREATE TRIGGER set_task_completed_at_trigger BEFORE UPDATE ON tasks
     FOR EACH ROW EXECUTE FUNCTION set_task_completed_at();
 
@@ -302,5 +317,6 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS calculate_session_duration_trigger ON time_sessions;
 CREATE TRIGGER calculate_session_duration_trigger BEFORE INSERT OR UPDATE ON time_sessions
     FOR EACH ROW EXECUTE FUNCTION calculate_session_duration();

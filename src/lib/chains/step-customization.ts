@@ -1,10 +1,13 @@
-import type { ChainStep, ChainTemplate } from './types';
+import type { ChainStep, ChainTemplate } from "./types";
 
-export type ChainStepOverrides = Record<string, {
-  name?: string;
-  duration_estimate?: number;
-  disabled?: boolean;
-}>;
+export type ChainStepOverrides = Record<
+  string,
+  {
+    name?: string;
+    duration_estimate?: number;
+    disabled?: boolean;
+  }
+>;
 
 export type ChainCustomStep = {
   id: string;
@@ -15,7 +18,10 @@ export type ChainCustomStep = {
   insert_after_id?: string;
 };
 
-export function normalizeStepDuration(duration: number, fallback: number): number {
+export function normalizeStepDuration(
+  duration: number,
+  fallback: number,
+): number {
   if (!Number.isFinite(duration)) return fallback;
   const rounded = Math.round(duration);
   if (rounded < 0) return fallback;
@@ -25,7 +31,7 @@ export function normalizeStepDuration(duration: number, fallback: number): numbe
 export function applyChainStepOverrides(
   template: ChainTemplate,
   overrides?: ChainStepOverrides,
-  customSteps: ChainCustomStep[] = []
+  customSteps: ChainCustomStep[] = [],
 ): ChainTemplate {
   const hasOverrides = Boolean(overrides && Object.keys(overrides).length > 0);
   const hasCustomSteps = customSteps.length > 0;
@@ -40,12 +46,17 @@ export function applyChainStepOverrides(
 
     return {
       ...step,
-      name: typeof override.name === 'string' && override.name.trim().length > 0
-        ? override.name.trim()
-        : step.name,
-      duration_estimate: typeof override.duration_estimate === 'number'
-        ? normalizeStepDuration(override.duration_estimate, step.duration_estimate)
-        : step.duration_estimate,
+      name:
+        typeof override.name === "string" && override.name.trim().length > 0
+          ? override.name.trim()
+          : step.name,
+      duration_estimate:
+        typeof override.duration_estimate === "number"
+          ? normalizeStepDuration(
+              override.duration_estimate,
+              step.duration_estimate,
+            )
+          : step.duration_estimate,
     };
   });
 
@@ -73,7 +84,7 @@ export function applyChainStepOverrides(
       continue;
     }
 
-    const exitGateIndex = steps.findIndex((step) => step.id === 'exit-gate');
+    const exitGateIndex = steps.findIndex((step) => step.id === "exit-gate");
     if (exitGateIndex >= 0) {
       steps.splice(exitGateIndex, 0, normalizedCustomStep);
     } else {
@@ -105,7 +116,7 @@ export type ReflowResult = {
  */
 export function reflowStepsBackward(
   stepsInOrder: ReflowStep[],
-  chainCompletionDeadline: Date
+  chainCompletionDeadline: Date,
 ): ReflowResult[] {
   let currentEnd = new Date(chainCompletionDeadline);
   const reversed: ReflowResult[] = [];

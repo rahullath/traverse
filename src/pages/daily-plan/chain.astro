@@ -1,0 +1,25 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import { createServerAuth } from '../../lib/auth/simple-multi-user';
+import ChainPageContent from '../../components/daily-plan/ChainPageContent';
+
+// Require authentication
+const serverAuth = createServerAuth(Astro.cookies);
+const user = await serverAuth.getUser();
+
+if (!user) {
+  return Astro.redirect('/login');
+}
+---
+
+<DashboardLayout title="Chain - MessyOS" user={user}>
+  <div class="app-content-wrap">
+    <!-- Minimal header -->
+    <div class="mb-4">
+      <h1 class="text-xl font-semibold text-text-primary">Chain</h1>
+    </div>
+
+    <!-- Chain Mirror Content -->
+    <ChainPageContent client:load />
+  </div>
+</DashboardLayout>

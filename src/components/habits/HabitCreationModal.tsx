@@ -1,13 +1,13 @@
 // src/components/habits/HabitCreationModal.tsx
-import React, { useState, useEffect } from 'react';
-import { SemanticType, inferSemanticType } from '../../lib/habits/taxonomy';
+import React, { useState, useEffect } from "react";
+import { SemanticType, inferSemanticType } from "../../lib/habits/taxonomy";
 
 interface HabitTemplate {
   id: string;
   name: string;
   category: string;
-  type: 'build' | 'break' | 'maintain';
-  measurement_type: 'boolean' | 'count' | 'duration';
+  type: "build" | "break" | "maintain";
+  measurement_type: "boolean" | "count" | "duration";
   description: string;
   suggested_target?: number;
   color: string;
@@ -17,11 +17,11 @@ interface NewHabitData {
   name: string;
   description?: string;
   category: string;
-  type: 'build' | 'break' | 'maintain';
-  measurement_type: 'boolean' | 'count' | 'duration';
+  type: "build" | "break" | "maintain";
+  measurement_type: "boolean" | "count" | "duration";
   target_value?: number;
   target_unit?: string;
-  target_operator?: 'AT_LEAST' | 'AT_MOST' | 'EXACTLY';
+  target_operator?: "AT_LEAST" | "AT_MOST" | "EXACTLY";
   semantic_type?: SemanticType;
   color: string;
   reminder_time?: string;
@@ -36,152 +36,174 @@ interface HabitCreationModalProps {
 
 const HABIT_TEMPLATES: HabitTemplate[] = [
   {
-    id: 'exercise',
-    name: 'Exercise',
-    category: 'Health',
-    type: 'build',
-    measurement_type: 'duration',
-    description: 'Daily physical activity to stay healthy',
+    id: "exercise",
+    name: "Exercise",
+    category: "Health",
+    type: "build",
+    measurement_type: "duration",
+    description: "Daily physical activity to stay healthy",
     suggested_target: 30,
-    color: '#10B981'
+    color: "#10B981",
   },
   {
-    id: 'meditation',
-    name: 'Meditation',
-    category: 'Wellness',
-    type: 'build',
-    measurement_type: 'duration',
-    description: 'Mindfulness practice for mental clarity',
+    id: "meditation",
+    name: "Meditation",
+    category: "Wellness",
+    type: "build",
+    measurement_type: "duration",
+    description: "Mindfulness practice for mental clarity",
     suggested_target: 10,
-    color: '#8B5CF6'
+    color: "#8B5CF6",
   },
   {
-    id: 'reading',
-    name: 'Reading',
-    category: 'Learning',
-    type: 'build',
-    measurement_type: 'duration',
-    description: 'Daily reading for personal growth',
+    id: "reading",
+    name: "Reading",
+    category: "Learning",
+    type: "build",
+    measurement_type: "duration",
+    description: "Daily reading for personal growth",
     suggested_target: 30,
-    color: '#3B82F6'
+    color: "#3B82F6",
   },
   {
-    id: 'water',
-    name: 'Drink Water',
-    category: 'Health',
-    type: 'build',
-    measurement_type: 'count',
-    description: 'Stay hydrated throughout the day',
+    id: "water",
+    name: "Drink Water",
+    category: "Health",
+    type: "build",
+    measurement_type: "count",
+    description: "Stay hydrated throughout the day",
     suggested_target: 8,
-    color: '#06B6D4'
+    color: "#06B6D4",
   },
   {
-    id: 'journaling',
-    name: 'Journaling',
-    category: 'Wellness',
-    type: 'build',
-    measurement_type: 'boolean',
-    description: 'Daily reflection and gratitude practice',
-    color: '#F59E0B'
+    id: "journaling",
+    name: "Journaling",
+    category: "Wellness",
+    type: "build",
+    measurement_type: "boolean",
+    description: "Daily reflection and gratitude practice",
+    color: "#F59E0B",
   },
   {
-    id: 'social-media',
-    name: 'Limit Social Media',
-    category: 'Productivity',
-    type: 'break',
-    measurement_type: 'duration',
-    description: 'Reduce time spent on social media',
+    id: "social-media",
+    name: "Limit Social Media",
+    category: "Productivity",
+    type: "break",
+    measurement_type: "duration",
+    description: "Reduce time spent on social media",
     suggested_target: 60,
-    color: '#EF4444'
+    color: "#EF4444",
   },
   {
-    id: 'sleep',
-    name: 'Sleep 8 Hours',
-    category: 'Health',
-    type: 'maintain',
-    measurement_type: 'duration',
-    description: 'Maintain consistent sleep schedule',
+    id: "sleep",
+    name: "Sleep 8 Hours",
+    category: "Health",
+    type: "maintain",
+    measurement_type: "duration",
+    description: "Maintain consistent sleep schedule",
     suggested_target: 8,
-    color: '#6366F1'
+    color: "#6366F1",
   },
   {
-    id: 'walk',
-    name: 'Daily Walk',
-    category: 'Health',
-    type: 'build',
-    measurement_type: 'boolean',
-    description: 'Take a walk outside for fresh air',
-    color: '#059669'
-  }
+    id: "walk",
+    name: "Daily Walk",
+    category: "Health",
+    type: "build",
+    measurement_type: "boolean",
+    description: "Take a walk outside for fresh air",
+    color: "#059669",
+  },
 ];
 
 const CATEGORIES = [
-  'Health', 'Wellness', 'Learning', 'Productivity', 'Finance', 'Social', 'Creative', 'Other'
+  "Health",
+  "Wellness",
+  "Learning",
+  "Productivity",
+  "Finance",
+  "Social",
+  "Creative",
+  "Other",
 ];
 
 const COLORS = [
-  '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', '#6366F1', '#EC4899'
+  "#3B82F6",
+  "#10B981",
+  "#8B5CF6",
+  "#F59E0B",
+  "#EF4444",
+  "#06B6D4",
+  "#6366F1",
+  "#EC4899",
 ];
 
 // Recognized units for numerical habits (Requirements 10.1)
 const NUMERICAL_UNITS = [
-  'pouches',
-  'puffs',
-  'meals',
-  'sessions',
-  'drinks',
-  'minutes'
+  "pouches",
+  "puffs",
+  "meals",
+  "sessions",
+  "drinks",
+  "minutes",
 ];
 
 // Semantic type to unit mapping (Requirements 10.4)
 const SEMANTIC_TYPE_UNITS: Record<SemanticType, string[]> = {
-  [SemanticType.NICOTINE_POUCHES]: ['pouches'],
-  [SemanticType.VAPING_PUFFS]: ['puffs'],
-  [SemanticType.POT_USE]: ['sessions'],
-  [SemanticType.ENERGY_DRINK]: ['drinks'],
-  [SemanticType.MEALS_COOKED]: ['meals'],
-  [SemanticType.ORAL_HYGIENE_SESSIONS]: ['sessions'],
-  [SemanticType.SHOWER]: ['minutes'],
-  [SemanticType.SKINCARE]: ['minutes'],
-  [SemanticType.MEDS]: ['minutes'],
-  [SemanticType.STEP_OUT]: ['minutes'],
-  [SemanticType.SOCIALIZE]: ['minutes'],
-  [SemanticType.GYM]: ['minutes'],
-  [SemanticType.SLEEP_PROXY]: ['minutes'],
+  [SemanticType.NICOTINE_POUCHES]: ["pouches"],
+  [SemanticType.VAPING_PUFFS]: ["puffs"],
+  [SemanticType.POT_USE]: ["sessions"],
+  [SemanticType.ENERGY_DRINK]: ["drinks"],
+  [SemanticType.MEALS_COOKED]: ["meals"],
+  [SemanticType.ORAL_HYGIENE_SESSIONS]: ["sessions"],
+  [SemanticType.SHOWER]: ["minutes"],
+  [SemanticType.SKINCARE]: ["minutes"],
+  [SemanticType.MEDS]: ["minutes"],
+  [SemanticType.STEP_OUT]: ["minutes"],
+  [SemanticType.SOCIALIZE]: ["minutes"],
+  [SemanticType.GYM]: ["minutes"],
+  [SemanticType.SLEEP_PROXY]: ["minutes"],
 };
 
 // Semantic type display names
 const SEMANTIC_TYPE_LABELS: Record<SemanticType, string> = {
-  [SemanticType.NICOTINE_POUCHES]: 'Nicotine Pouches',
-  [SemanticType.VAPING_PUFFS]: 'Vaping/Puffs',
-  [SemanticType.POT_USE]: 'Cannabis Use',
-  [SemanticType.ENERGY_DRINK]: 'Energy Drinks',
-  [SemanticType.MEALS_COOKED]: 'Meals Cooked',
-  [SemanticType.ORAL_HYGIENE_SESSIONS]: 'Oral Hygiene',
-  [SemanticType.SHOWER]: 'Shower',
-  [SemanticType.SKINCARE]: 'Skincare',
-  [SemanticType.MEDS]: 'Medications',
-  [SemanticType.STEP_OUT]: 'Step Out',
-  [SemanticType.SOCIALIZE]: 'Socialize',
-  [SemanticType.GYM]: 'Gym/Exercise',
-  [SemanticType.SLEEP_PROXY]: 'Sleep',
+  [SemanticType.NICOTINE_POUCHES]: "Nicotine Pouches",
+  [SemanticType.VAPING_PUFFS]: "Vaping/Puffs",
+  [SemanticType.POT_USE]: "Cannabis Use",
+  [SemanticType.ENERGY_DRINK]: "Energy Drinks",
+  [SemanticType.MEALS_COOKED]: "Meals Cooked",
+  [SemanticType.ORAL_HYGIENE_SESSIONS]: "Oral Hygiene",
+  [SemanticType.SHOWER]: "Shower",
+  [SemanticType.SKINCARE]: "Skincare",
+  [SemanticType.MEDS]: "Medications",
+  [SemanticType.STEP_OUT]: "Step Out",
+  [SemanticType.SOCIALIZE]: "Socialize",
+  [SemanticType.GYM]: "Gym/Exercise",
+  [SemanticType.SLEEP_PROXY]: "Sleep",
 };
 
-export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCreationModalProps) {
-  const [step, setStep] = useState<'templates' | 'basic' | 'measurement' | 'preferences' | 'review'>('templates');
-  const [selectedTemplate, setSelectedTemplate] = useState<HabitTemplate | null>(null);
+export default function HabitCreationModal({
+  isOpen,
+  onClose,
+  onSave,
+}: HabitCreationModalProps) {
+  const [step, setStep] = useState<
+    "templates" | "basic" | "measurement" | "preferences" | "review"
+  >("templates");
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<HabitTemplate | null>(null);
   const [habitData, setHabitData] = useState<NewHabitData>({
-    name: '',
-    description: '',
-    category: 'Health',
-    type: 'build',
-    measurement_type: 'boolean',
-    color: '#3B82F6',
-    allows_skips: false
+    name: "",
+    description: "",
+    category: "Health",
+    type: "build",
+    measurement_type: "boolean",
+    color: "#3B82F6",
+    allows_skips: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestedUnits, setSuggestedUnits] = useState<string[]>(NUMERICAL_UNITS);
+  const [suggestedUnits, setSuggestedUnits] =
+    useState<string[]>(NUMERICAL_UNITS);
 
   // Auto-suggest units based on semantic type (Requirements 10.4)
   useEffect(() => {
@@ -190,8 +212,11 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
       if (units && units.length > 0) {
         setSuggestedUnits(units);
         // Auto-select first suggested unit if no unit is set
-        if (!habitData.target_unit && habitData.measurement_type !== 'boolean') {
-          setHabitData(prev => ({ ...prev, target_unit: units[0] }));
+        if (
+          !habitData.target_unit &&
+          habitData.measurement_type !== "boolean"
+        ) {
+          setHabitData((prev) => ({ ...prev, target_unit: units[0] }));
         }
       }
     } else {
@@ -204,7 +229,7 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
     if (habitData.name && !habitData.semantic_type) {
       const inferred = inferSemanticType(habitData.name, habitData.target_unit);
       if (inferred) {
-        setHabitData(prev => ({ ...prev, semantic_type: inferred }));
+        setHabitData((prev) => ({ ...prev, semantic_type: inferred }));
       }
     }
   }, [habitData.name, habitData.target_unit]);
@@ -212,16 +237,16 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setStep('templates');
+      setStep("templates");
       setSelectedTemplate(null);
       setHabitData({
-        name: '',
-        description: '',
-        category: 'Health',
-        type: 'build',
-        measurement_type: 'boolean',
-        color: '#3B82F6',
-        allows_skips: false
+        name: "",
+        description: "",
+        category: "Health",
+        type: "build",
+        measurement_type: "boolean",
+        color: "#3B82F6",
+        allows_skips: false,
       });
       setErrors({});
     }
@@ -230,25 +255,31 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
   const validateStep = (currentStep: string): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (currentStep === 'basic') {
+    if (currentStep === "basic") {
       if (!habitData.name.trim()) {
-        newErrors.name = 'Habit name is required';
+        newErrors.name = "Habit name is required";
       }
       if (!habitData.category) {
-        newErrors.category = 'Category is required';
+        newErrors.category = "Category is required";
       }
     }
 
-    if (currentStep === 'measurement') {
-      if (habitData.measurement_type === 'count' || habitData.measurement_type === 'duration') {
+    if (currentStep === "measurement") {
+      if (
+        habitData.measurement_type === "count" ||
+        habitData.measurement_type === "duration"
+      ) {
         if (!habitData.target_value || habitData.target_value <= 0) {
-          newErrors.target_value = 'Target value must be greater than 0';
+          newErrors.target_value = "Target value must be greater than 0";
         }
-        if (habitData.measurement_type === 'duration' && !habitData.target_unit) {
-          newErrors.target_unit = 'Time unit is required for duration habits';
+        if (
+          habitData.measurement_type === "duration" &&
+          !habitData.target_unit
+        ) {
+          newErrors.target_unit = "Time unit is required for duration habits";
         }
-        if (habitData.measurement_type === 'count' && !habitData.target_unit) {
-          newErrors.target_unit = 'Unit is required for count habits';
+        if (habitData.measurement_type === "count" && !habitData.target_unit) {
+          newErrors.target_unit = "Unit is required for count habits";
         }
       }
     }
@@ -260,7 +291,13 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
   const handleNext = () => {
     if (!validateStep(step)) return;
 
-    const steps = ['templates', 'basic', 'measurement', 'preferences', 'review'];
+    const steps = [
+      "templates",
+      "basic",
+      "measurement",
+      "preferences",
+      "review",
+    ];
     const currentIndex = steps.indexOf(step);
     if (currentIndex < steps.length - 1) {
       setStep(steps[currentIndex + 1] as any);
@@ -268,7 +305,13 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
   };
 
   const handleBack = () => {
-    const steps = ['templates', 'basic', 'measurement', 'preferences', 'review'];
+    const steps = [
+      "templates",
+      "basic",
+      "measurement",
+      "preferences",
+      "review",
+    ];
     const currentIndex = steps.indexOf(step);
     if (currentIndex > 0) {
       setStep(steps[currentIndex - 1] as any);
@@ -284,29 +327,33 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
       type: template.type,
       measurement_type: template.measurement_type,
       target_value: template.suggested_target,
-      target_unit: template.measurement_type === 'duration' ? 'minutes' : 
-                   template.measurement_type === 'count' ? 'times' : undefined,
+      target_unit:
+        template.measurement_type === "duration"
+          ? "minutes"
+          : template.measurement_type === "count"
+            ? "times"
+            : undefined,
       color: template.color,
-      allows_skips: false
+      allows_skips: false,
     });
-    setStep('basic');
+    setStep("basic");
   };
 
   const handleSkipTemplates = () => {
     setSelectedTemplate(null);
-    setStep('basic');
+    setStep("basic");
   };
 
   const handleSave = async () => {
-    if (!validateStep('review')) return;
+    if (!validateStep("review")) return;
 
     setIsLoading(true);
     try {
       await onSave(habitData);
       onClose();
     } catch (error) {
-      console.error('Error saving habit:', error);
-      setErrors({ general: 'Failed to save habit. Please try again.' });
+      console.error("Error saving habit:", error);
+      setErrors({ general: "Failed to save habit. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -321,18 +368,34 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-white">Create New Habit</h2>
+              <h2 className="text-2xl font-bold text-white">
+                Create New Habit
+              </h2>
               <p className="text-gray-400 text-sm">
-                {step === 'templates' && 'Choose from popular templates or start from scratch'}
-                {step === 'basic' && 'Basic information about your habit'}
-                {step === 'measurement' && 'How will you track this habit?'}
-                {step === 'preferences' && 'Customize your habit preferences'}
-                {step === 'review' && 'Review and create your habit'}
+                {step === "templates" &&
+                  "Choose from popular templates or start from scratch"}
+                {step === "basic" && "Basic information about your habit"}
+                {step === "measurement" && "How will you track this habit?"}
+                {step === "preferences" && "Customize your habit preferences"}
+                {step === "review" && "Review and create your habit"}
               </p>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-white">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
               </svg>
             </button>
           </div>
@@ -340,21 +403,39 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
           {/* Progress Bar */}
           <div className="mb-8">
             <div className="flex items-center space-x-2 mb-2">
-              {['templates', 'basic', 'measurement', 'preferences', 'review'].map((s, index) => {
-                const steps = ['templates', 'basic', 'measurement', 'preferences', 'review'];
+              {[
+                "templates",
+                "basic",
+                "measurement",
+                "preferences",
+                "review",
+              ].map((s, index) => {
+                const steps = [
+                  "templates",
+                  "basic",
+                  "measurement",
+                  "preferences",
+                  "review",
+                ];
                 const currentIndex = steps.indexOf(step);
                 const isActive = index <= currentIndex;
                 return (
                   <div key={s} className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                      isActive ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-400'
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        isActive
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-700 text-gray-400"
+                      }`}
+                    >
                       {index + 1}
                     </div>
                     {index < 4 && (
-                      <div className={`w-8 h-1 mx-2 ${
-                        isActive ? 'bg-blue-600' : 'bg-gray-700'
-                      }`}></div>
+                      <div
+                        className={`w-8 h-1 mx-2 ${
+                          isActive ? "bg-blue-600" : "bg-gray-700"
+                        }`}
+                      ></div>
                     )}
                   </div>
                 );
@@ -364,9 +445,11 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
 
           {/* Step Content */}
           <div className="space-y-6">
-            {step === 'templates' && (
+            {step === "templates" && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Choose a Template</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  Choose a Template
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {HABIT_TEMPLATES.map((template) => (
                     <button
@@ -375,22 +458,32 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                       className="p-4 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-600 text-left transition-colors"
                     >
                       <div className="flex items-start space-x-3">
-                        <div 
+                        <div
                           className="w-4 h-4 rounded-full mt-1"
                           style={{ backgroundColor: template.color }}
                         ></div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-white">{template.name}</h4>
-                          <p className="text-sm text-gray-400 mt-1">{template.description}</p>
+                          <h4 className="font-medium text-white">
+                            {template.name}
+                          </h4>
+                          <p className="text-sm text-gray-400 mt-1">
+                            {template.description}
+                          </p>
                           <div className="flex items-center space-x-2 mt-2">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              template.type === 'build' ? 'bg-green-500/20 text-green-400' :
-                              template.type === 'break' ? 'bg-red-500/20 text-red-400' :
-                              'bg-blue-500/20 text-blue-400'
-                            }`}>
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full ${
+                                template.type === "build"
+                                  ? "bg-green-500/20 text-green-400"
+                                  : template.type === "break"
+                                    ? "bg-red-500/20 text-red-400"
+                                    : "bg-blue-500/20 text-blue-400"
+                              }`}
+                            >
                               {template.type}
                             </span>
-                            <span className="text-xs text-gray-500">{template.category}</span>
+                            <span className="text-xs text-gray-500">
+                              {template.category}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -406,7 +499,7 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
               </div>
             )}
 
-            {step === 'basic' && (
+            {step === "basic" && (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -415,11 +508,15 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                   <input
                     type="text"
                     value={habitData.name}
-                    onChange={(e) => setHabitData({ ...habitData, name: e.target.value })}
+                    onChange={(e) =>
+                      setHabitData({ ...habitData, name: e.target.value })
+                    }
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., Morning Exercise"
                   />
-                  {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
+                  {errors.name && (
+                    <p className="text-red-400 text-sm mt-1">{errors.name}</p>
+                  )}
                 </div>
 
                 <div>
@@ -428,7 +525,12 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                   </label>
                   <textarea
                     value={habitData.description}
-                    onChange={(e) => setHabitData({ ...habitData, description: e.target.value })}
+                    onChange={(e) =>
+                      setHabitData({
+                        ...habitData,
+                        description: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                     rows={3}
                     placeholder="What is this habit about?"
@@ -442,14 +544,22 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                     </label>
                     <select
                       value={habitData.category}
-                      onChange={(e) => setHabitData({ ...habitData, category: e.target.value })}
+                      onChange={(e) =>
+                        setHabitData({ ...habitData, category: e.target.value })
+                      }
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       {CATEGORIES.map((category) => (
-                        <option key={category} value={category}>{category}</option>
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
                       ))}
                     </select>
-                    {errors.category && <p className="text-red-400 text-sm mt-1">{errors.category}</p>}
+                    {errors.category && (
+                      <p className="text-red-400 text-sm mt-1">
+                        {errors.category}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -458,19 +568,26 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                     </label>
                     <select
                       value={habitData.type}
-                      onChange={(e) => setHabitData({ ...habitData, type: e.target.value as any })}
+                      onChange={(e) =>
+                        setHabitData({
+                          ...habitData,
+                          type: e.target.value as any,
+                        })
+                      }
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="build">Build (positive habit)</option>
                       <option value="break">Break (stop bad habit)</option>
-                      <option value="maintain">Maintain (keep current level)</option>
+                      <option value="maintain">
+                        Maintain (keep current level)
+                      </option>
                     </select>
                   </div>
                 </div>
               </div>
             )}
 
-            {step === 'measurement' && (
+            {step === "measurement" && (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -482,13 +599,22 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                         type="radio"
                         name="measurement_type"
                         value="boolean"
-                        checked={habitData.measurement_type === 'boolean'}
-                        onChange={(e) => setHabitData({ ...habitData, measurement_type: e.target.value as any })}
+                        checked={habitData.measurement_type === "boolean"}
+                        onChange={(e) =>
+                          setHabitData({
+                            ...habitData,
+                            measurement_type: e.target.value as any,
+                          })
+                        }
                         className="text-blue-600"
                       />
                       <div>
-                        <div className="text-white font-medium">Yes/No (Boolean)</div>
-                        <div className="text-gray-400 text-sm">Simple completion tracking</div>
+                        <div className="text-white font-medium">
+                          Yes/No (Boolean)
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          Simple completion tracking
+                        </div>
                       </div>
                     </label>
                     <label className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
@@ -496,13 +622,20 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                         type="radio"
                         name="measurement_type"
                         value="count"
-                        checked={habitData.measurement_type === 'count'}
-                        onChange={(e) => setHabitData({ ...habitData, measurement_type: e.target.value as any })}
+                        checked={habitData.measurement_type === "count"}
+                        onChange={(e) =>
+                          setHabitData({
+                            ...habitData,
+                            measurement_type: e.target.value as any,
+                          })
+                        }
                         className="text-blue-600"
                       />
                       <div>
                         <div className="text-white font-medium">Count</div>
-                        <div className="text-gray-400 text-sm">Track number of times (e.g., 8 glasses of water)</div>
+                        <div className="text-gray-400 text-sm">
+                          Track number of times (e.g., 8 glasses of water)
+                        </div>
                       </div>
                     </label>
                     <label className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
@@ -510,13 +643,20 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                         type="radio"
                         name="measurement_type"
                         value="duration"
-                        checked={habitData.measurement_type === 'duration'}
-                        onChange={(e) => setHabitData({ ...habitData, measurement_type: e.target.value as any })}
+                        checked={habitData.measurement_type === "duration"}
+                        onChange={(e) =>
+                          setHabitData({
+                            ...habitData,
+                            measurement_type: e.target.value as any,
+                          })
+                        }
                         className="text-blue-600"
                       />
                       <div>
                         <div className="text-white font-medium">Duration</div>
-                        <div className="text-gray-400 text-sm">Track time spent (e.g., 30 minutes of exercise)</div>
+                        <div className="text-gray-400 text-sm">
+                          Track time spent (e.g., 30 minutes of exercise)
+                        </div>
                       </div>
                     </label>
                   </div>
@@ -528,21 +668,32 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                     Semantic Type (Optional)
                   </label>
                   <select
-                    value={habitData.semantic_type || ''}
-                    onChange={(e) => setHabitData({ ...habitData, semantic_type: e.target.value as SemanticType || undefined })}
+                    value={habitData.semantic_type || ""}
+                    onChange={(e) =>
+                      setHabitData({
+                        ...habitData,
+                        semantic_type:
+                          (e.target.value as SemanticType) || undefined,
+                      })
+                    }
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">None (Auto-detect)</option>
-                    {Object.entries(SEMANTIC_TYPE_LABELS).map(([type, label]) => (
-                      <option key={type} value={type}>{label}</option>
-                    ))}
+                    {Object.entries(SEMANTIC_TYPE_LABELS).map(
+                      ([type, label]) => (
+                        <option key={type} value={type}>
+                          {label}
+                        </option>
+                      ),
+                    )}
                   </select>
                   <p className="text-gray-400 text-xs mt-1">
                     Helps the system understand your habit for better insights
                   </p>
                 </div>
 
-                {(habitData.measurement_type === 'count' || habitData.measurement_type === 'duration') && (
+                {(habitData.measurement_type === "count" ||
+                  habitData.measurement_type === "duration") && (
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -551,29 +702,50 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                         </label>
                         <input
                           type="number"
-                          value={habitData.target_value || ''}
-                          onChange={(e) => setHabitData({ ...habitData, target_value: parseInt(e.target.value) || undefined })}
+                          value={habitData.target_value || ""}
+                          onChange={(e) =>
+                            setHabitData({
+                              ...habitData,
+                              target_value:
+                                parseInt(e.target.value) || undefined,
+                            })
+                          }
                           className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="e.g., 30"
                           min="1"
                         />
-                        {errors.target_value && <p className="text-red-400 text-sm mt-1">{errors.target_value}</p>}
+                        {errors.target_value && (
+                          <p className="text-red-400 text-sm mt-1">
+                            {errors.target_value}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                           Unit * (Requirements 10.1)
                         </label>
                         <select
-                          value={habitData.target_unit || ''}
-                          onChange={(e) => setHabitData({ ...habitData, target_unit: e.target.value })}
+                          value={habitData.target_unit || ""}
+                          onChange={(e) =>
+                            setHabitData({
+                              ...habitData,
+                              target_unit: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="">Select unit</option>
                           {suggestedUnits.map((unit) => (
-                            <option key={unit} value={unit}>{unit}</option>
+                            <option key={unit} value={unit}>
+                              {unit}
+                            </option>
                           ))}
                         </select>
-                        {errors.target_unit && <p className="text-red-400 text-sm mt-1">{errors.target_unit}</p>}
+                        {errors.target_unit && (
+                          <p className="text-red-400 text-sm mt-1">
+                            {errors.target_unit}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -588,8 +760,16 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                             type="radio"
                             name="target_operator"
                             value="AT_LEAST"
-                            checked={habitData.target_operator === 'AT_LEAST' || !habitData.target_operator}
-                            onChange={(e) => setHabitData({ ...habitData, target_operator: e.target.value as any })}
+                            checked={
+                              habitData.target_operator === "AT_LEAST" ||
+                              !habitData.target_operator
+                            }
+                            onChange={(e) =>
+                              setHabitData({
+                                ...habitData,
+                                target_operator: e.target.value as any,
+                              })
+                            }
                             className="text-blue-600"
                           />
                           <span className="text-white text-sm">At Least</span>
@@ -599,8 +779,13 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                             type="radio"
                             name="target_operator"
                             value="EXACTLY"
-                            checked={habitData.target_operator === 'EXACTLY'}
-                            onChange={(e) => setHabitData({ ...habitData, target_operator: e.target.value as any })}
+                            checked={habitData.target_operator === "EXACTLY"}
+                            onChange={(e) =>
+                              setHabitData({
+                                ...habitData,
+                                target_operator: e.target.value as any,
+                              })
+                            }
                             className="text-blue-600"
                           />
                           <span className="text-white text-sm">Exactly</span>
@@ -610,19 +795,24 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                             type="radio"
                             name="target_operator"
                             value="AT_MOST"
-                            checked={habitData.target_operator === 'AT_MOST'}
-                            onChange={(e) => setHabitData({ ...habitData, target_operator: e.target.value as any })}
+                            checked={habitData.target_operator === "AT_MOST"}
+                            onChange={(e) =>
+                              setHabitData({
+                                ...habitData,
+                                target_operator: e.target.value as any,
+                              })
+                            }
                             className="text-blue-600"
                           />
                           <span className="text-white text-sm">At Most</span>
                         </label>
                       </div>
                       <p className="text-gray-400 text-xs mt-1">
-                        {habitData.target_operator === 'AT_MOST' 
-                          ? 'Success if value is less than or equal to target'
-                          : habitData.target_operator === 'EXACTLY'
-                          ? 'Success only if value matches target exactly'
-                          : 'Success if value is greater than or equal to target'}
+                        {habitData.target_operator === "AT_MOST"
+                          ? "Success if value is less than or equal to target"
+                          : habitData.target_operator === "EXACTLY"
+                            ? "Success only if value matches target exactly"
+                            : "Success if value is greater than or equal to target"}
                       </p>
                     </div>
                   </>
@@ -630,7 +820,7 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
               </div>
             )}
 
-            {step === 'preferences' && (
+            {step === "preferences" && (
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -642,7 +832,9 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                         key={color}
                         onClick={() => setHabitData({ ...habitData, color })}
                         className={`w-8 h-8 rounded-full border-2 ${
-                          habitData.color === color ? 'border-white' : 'border-gray-600'
+                          habitData.color === color
+                            ? "border-white"
+                            : "border-gray-600"
                         }`}
                         style={{ backgroundColor: color }}
                       />
@@ -656,8 +848,13 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                   </label>
                   <input
                     type="time"
-                    value={habitData.reminder_time || ''}
-                    onChange={(e) => setHabitData({ ...habitData, reminder_time: e.target.value })}
+                    value={habitData.reminder_time || ""}
+                    onChange={(e) =>
+                      setHabitData({
+                        ...habitData,
+                        reminder_time: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -667,62 +864,82 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                     <input
                       type="checkbox"
                       checked={habitData.allows_skips}
-                      onChange={(e) => setHabitData({ ...habitData, allows_skips: e.target.checked })}
+                      onChange={(e) =>
+                        setHabitData({
+                          ...habitData,
+                          allows_skips: e.target.checked,
+                        })
+                      }
                       className="text-blue-600"
                     />
                     <div>
-                      <div className="text-white font-medium">Allow Skip Days</div>
-                      <div className="text-gray-400 text-sm">Skip days won't break your streak</div>
+                      <div className="text-white font-medium">
+                        Allow Skip Days
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        Skip days won't break your streak
+                      </div>
                     </div>
                   </label>
                 </div>
               </div>
             )}
 
-            {step === 'review' && (
+            {step === "review" && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white mb-4">Review Your Habit</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  Review Your Habit
+                </h3>
                 <div className="bg-gray-800 rounded-lg p-4 space-y-3">
                   <div className="flex items-center space-x-3">
-                    <div 
+                    <div
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: habitData.color }}
                     ></div>
-                    <h4 className="text-xl font-semibold text-white">{habitData.name}</h4>
+                    <h4 className="text-xl font-semibold text-white">
+                      {habitData.name}
+                    </h4>
                   </div>
-                  
+
                   {habitData.description && (
                     <p className="text-gray-300">{habitData.description}</p>
                   )}
-                  
+
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-400">Category:</span>
-                      <span className="text-white ml-2">{habitData.category}</span>
+                      <span className="text-white ml-2">
+                        {habitData.category}
+                      </span>
                     </div>
                     <div>
                       <span className="text-gray-400">Type:</span>
-                      <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                        habitData.type === 'build' ? 'bg-green-500/20 text-green-400' :
-                        habitData.type === 'break' ? 'bg-red-500/20 text-red-400' :
-                        'bg-blue-500/20 text-blue-400'
-                      }`}>
+                      <span
+                        className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                          habitData.type === "build"
+                            ? "bg-green-500/20 text-green-400"
+                            : habitData.type === "break"
+                              ? "bg-red-500/20 text-red-400"
+                              : "bg-blue-500/20 text-blue-400"
+                        }`}
+                      >
                         {habitData.type}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">Measurement:</span>
                       <span className="text-white ml-2">
-                        {habitData.measurement_type === 'boolean' ? 'Yes/No' :
-                         habitData.measurement_type === 'count' ? 
-                           `${habitData.target_operator === 'AT_MOST' ? '≤' : habitData.target_operator === 'EXACTLY' ? '=' : '≥'} ${habitData.target_value} ${habitData.target_unit}` :
-                           `${habitData.target_operator === 'AT_MOST' ? '≤' : habitData.target_operator === 'EXACTLY' ? '=' : '≥'} ${habitData.target_value} ${habitData.target_unit}`}
+                        {habitData.measurement_type === "boolean"
+                          ? "Yes/No"
+                          : habitData.measurement_type === "count"
+                            ? `${habitData.target_operator === "AT_MOST" ? "≤" : habitData.target_operator === "EXACTLY" ? "=" : "≥"} ${habitData.target_value} ${habitData.target_unit}`
+                            : `${habitData.target_operator === "AT_MOST" ? "≤" : habitData.target_operator === "EXACTLY" ? "=" : "≥"} ${habitData.target_value} ${habitData.target_unit}`}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">Skip Policy:</span>
                       <span className="text-white ml-2">
-                        {habitData.allows_skips ? 'Flexible' : 'Strict'}
+                        {habitData.allows_skips ? "Flexible" : "Strict"}
                       </span>
                     </div>
                     {habitData.semantic_type && (
@@ -734,15 +951,17 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
                       </div>
                     )}
                   </div>
-                  
+
                   {habitData.reminder_time && (
                     <div className="text-sm">
                       <span className="text-gray-400">Reminder:</span>
-                      <span className="text-white ml-2">{habitData.reminder_time}</span>
+                      <span className="text-white ml-2">
+                        {habitData.reminder_time}
+                      </span>
                     </div>
                   )}
                 </div>
-                
+
                 {errors.general && (
                   <p className="text-red-400 text-sm">{errors.general}</p>
                 )}
@@ -753,19 +972,19 @@ export default function HabitCreationModal({ isOpen, onClose, onSave }: HabitCre
           {/* Navigation */}
           <div className="flex justify-between mt-8">
             <button
-              onClick={step === 'templates' ? onClose : handleBack}
+              onClick={step === "templates" ? onClose : handleBack}
               className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-colors"
             >
-              {step === 'templates' ? 'Cancel' : 'Back'}
+              {step === "templates" ? "Cancel" : "Back"}
             </button>
-            
-            {step === 'review' ? (
+
+            {step === "review" ? (
               <button
                 onClick={handleSave}
                 disabled={isLoading}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
               >
-                {isLoading ? 'Creating...' : 'Create Habit'}
+                {isLoading ? "Creating..." : "Create Habit"}
               </button>
             ) : (
               <button

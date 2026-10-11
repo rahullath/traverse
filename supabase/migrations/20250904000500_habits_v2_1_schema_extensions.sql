@@ -3,7 +3,7 @@
 -- Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
 
 -- Add new columns to habit_entries table
-DO $
+DO $$
 BEGIN
     -- Add numeric_value column (DOUBLE PRECISION NULL)
     -- Stores quantified measurements: pouches, meals, sessions, etc.
@@ -29,7 +29,7 @@ BEGIN
         COMMENT ON COLUMN habit_entries.source IS 'Origin of entry: loop_root, loop_per_habit, manual, macro';
     END IF;
 
-END $;
+END $$;
 
 -- Create indexes for performance
 -- Index on numeric_value for numerical habit queries
@@ -54,21 +54,22 @@ ON habit_entries(date, user_id)
 WHERE date IS NOT NULL AND user_id IS NOT NULL;
 
 -- Add check constraint for source values
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint 
         WHERE conname = 'habit_entries_source_check'
     ) THEN
+ALTER TABLE habit_entries DROP CONSTRAINT IF EXISTS habit_entries_source_check;
         ALTER TABLE habit_entries 
         ADD CONSTRAINT habit_entries_source_check 
         CHECK (source IS NULL OR source IN ('loop_root', 'loop_per_habit', 'manual', 'macro'));
     END IF;
-END $;
+END $$;
 
 -- Verify backward compatibility by checking existing queries still work
 -- This is a validation query that should return successfully
-DO $
+DO $$
 DECLARE
     test_count INTEGER;
 BEGIN
@@ -79,4 +80,4 @@ BEGIN
     LIMIT 1;
     
     RAISE NOTICE 'Backward compatibility verified: existing queries work correctly';
-END $;
+END $$;

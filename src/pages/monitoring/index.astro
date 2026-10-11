@@ -1,0 +1,26 @@
+---
+// src/pages/monitoring/index.astro
+// Monitoring dashboard page
+
+import { createServerAuth } from '@/lib/auth/simple-multi-user';
+import { MetricsDashboard } from '@/components/monitoring/MetricsDashboard';
+
+const serverAuth = createServerAuth(Astro.cookies);
+const user = await serverAuth.requireAuth();
+
+// In production, add role-based access control here
+// For now, allow any authenticated user
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Monitoring Dashboard - MeshOS</title>
+  </head>
+  <body class="bg-background min-h-screen">
+    <div class="container mx-auto">
+      <MetricsDashboard client:load />
+    </div>
+  </body>
+</html>

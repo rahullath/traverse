@@ -78,12 +78,12 @@ CREATE TABLE progress_summaries (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_life_optimization_scores_user_date ON life_optimization_scores(user_id, score_date DESC);
-CREATE INDEX idx_user_achievements_user_earned ON user_achievements(user_id, earned_at DESC);
-CREATE INDEX idx_user_achievements_achievement ON user_achievements(achievement_id);
-CREATE INDEX idx_cross_module_correlations_user ON cross_module_correlations(user_id);
-CREATE INDEX idx_progress_summaries_user_type ON progress_summaries(user_id, summary_type);
-CREATE INDEX idx_progress_summaries_share_token ON progress_summaries(share_token) WHERE share_token IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_life_optimization_scores_user_date ON life_optimization_scores(user_id, score_date DESC);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user_earned ON user_achievements(user_id, earned_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_achievement ON user_achievements(achievement_id);
+CREATE INDEX IF NOT EXISTS idx_cross_module_correlations_user ON cross_module_correlations(user_id);
+CREATE INDEX IF NOT EXISTS idx_progress_summaries_user_type ON progress_summaries(user_id, summary_type);
+CREATE INDEX IF NOT EXISTS idx_progress_summaries_share_token ON progress_summaries(share_token) WHERE share_token IS NOT NULL;
 
 -- Insert default achievements
 INSERT INTO achievements (name, description, category, type, criteria, reward_tokens, icon, color, rarity) VALUES
@@ -349,6 +349,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_life_score_on_habit_entry ON habit_entries;
 CREATE TRIGGER update_life_score_on_habit_entry
   AFTER INSERT OR UPDATE ON habit_entries
   FOR EACH ROW

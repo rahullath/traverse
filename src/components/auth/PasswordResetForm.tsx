@@ -1,21 +1,23 @@
 // src/components/auth/PasswordResetForm.tsx - Enhanced password reset form component
-import React, { useState } from 'react';
-import { authClient } from '../../lib/auth/config';
-import { validateEmail } from '../../lib/auth/validation';
-import { mapSupabaseError } from '../../lib/auth/errors';
-import { withNetworkAwareRetry } from '../../lib/auth/retry';
-import { LoadingSpinner } from './LoadingSpinner';
-import { ErrorMessage } from './ErrorMessage';
-import { SuccessMessage } from './SuccessMessage';
+import React, { useState } from "react";
+import { authClient } from "../../lib/auth/config";
+import { validateEmail } from "../../lib/auth/validation";
+import { mapSupabaseError } from "../../lib/auth/errors";
+import { withNetworkAwareRetry } from "../../lib/auth/retry";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { ErrorMessage } from "./ErrorMessage";
+import { SuccessMessage } from "./SuccessMessage";
 
 interface PasswordResetFormProps {
-  mode?: 'request' | 'update';
+  mode?: "request" | "update";
 }
 
-export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) {
-  const [email, setEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+export function PasswordResetForm({
+  mode = "request",
+}: PasswordResetFormProps) {
+  const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
 
   const handlePasswordResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate email
     const emailError = validateEmail(email);
     if (emailError) {
@@ -39,11 +41,12 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
       await withNetworkAwareRetry(
         async () => {
           const { error } = await authClient.auth.resetPasswordForEmail(email, {
-            redirectTo: typeof window !== 'undefined' 
-              ? `${window.location.origin}/reset-password?mode=update`
-              : import.meta.env.PROD 
-                ? 'https://messy-os.vercel.app/reset-password?mode=update'
-                : 'http://localhost:4321/reset-password?mode=update'
+            redirectTo:
+              typeof window !== "undefined"
+                ? `${window.location.origin}/reset-password?mode=update`
+                : import.meta.env.PROD
+                  ? "https://messy-os.vercel.app/reset-password?mode=update"
+                  : "http://localhost:4321/reset-password?mode=update",
           });
 
           if (error) {
@@ -51,15 +54,20 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
           }
         },
         (networkError) => {
-          console.warn('Network error during password reset request, retrying...', networkError);
-          setRetryCount(prev => prev + 1);
-        }
+          console.warn(
+            "Network error during password reset request, retrying...",
+            networkError,
+          );
+          setRetryCount((prev) => prev + 1);
+        },
       );
 
-      setSuccess('Password reset email sent! Check your inbox and spam folder for further instructions.');
+      setSuccess(
+        "Password reset email sent! Check your inbox and spam folder for further instructions.",
+      );
       setRetryCount(0);
     } catch (error) {
-      console.error('Password reset error:', error);
+      console.error("Password reset error:", error);
       setError(error);
     } finally {
       setIsLoading(false);
@@ -68,20 +76,20 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate passwords
     if (!newPassword) {
-      setError({ message: 'New password is required' });
+      setError({ message: "New password is required" });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError({ message: 'Passwords do not match' });
+      setError({ message: "Passwords do not match" });
       return;
     }
 
     if (newPassword.length < 8) {
-      setError({ message: 'Password must be at least 8 characters long' });
+      setError({ message: "Password must be at least 8 characters long" });
       return;
     }
 
@@ -93,7 +101,7 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
       await withNetworkAwareRetry(
         async () => {
           const { error } = await authClient.auth.updateUser({
-            password: newPassword
+            password: newPassword,
           });
 
           if (error) {
@@ -101,20 +109,25 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
           }
         },
         (networkError) => {
-          console.warn('Network error during password update, retrying...', networkError);
-          setRetryCount(prev => prev + 1);
-        }
+          console.warn(
+            "Network error during password update, retrying...",
+            networkError,
+          );
+          setRetryCount((prev) => prev + 1);
+        },
       );
 
-      setSuccess('Password updated successfully! You can now sign in with your new password.');
+      setSuccess(
+        "Password updated successfully! You can now sign in with your new password.",
+      );
       setRetryCount(0);
-      
+
       // Redirect to login after successful password update
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = "/login";
       }, 2000);
     } catch (error) {
-      console.error('Password update error:', error);
+      console.error("Password update error:", error);
       setError(error);
     } finally {
       setIsLoading(false);
@@ -122,27 +135,27 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
   };
 
   const handleRetry = async () => {
-    if (mode === 'request') {
-      await handlePasswordResetRequest(new Event('submit') as any);
+    if (mode === "request") {
+      await handlePasswordResetRequest(new Event("submit") as any);
     } else {
-      await handlePasswordUpdate(new Event('submit') as any);
+      await handlePasswordUpdate(new Event("submit") as any);
     }
   };
 
-  if (mode === 'update') {
+  if (mode === "update") {
     return (
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg border border-slate-700 p-8">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white mb-2">Update Password</h2>
-          <p className="text-gray-400">
-            Enter your new password below.
-          </p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Update Password
+          </h2>
+          <p className="text-gray-400">Enter your new password below.</p>
         </div>
 
         {success && <SuccessMessage message={success} />}
         {error && (
-          <ErrorMessage 
-            message={error.message || 'Failed to update password'} 
+          <ErrorMessage
+            message={error.message || "Failed to update password"}
             error={error}
             onRetry={handleRetry}
             showSuggestions={true}
@@ -151,7 +164,10 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
 
         <form onSubmit={handlePasswordUpdate} className="space-y-4">
           <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-300 mb-1">
+            <label
+              htmlFor="newPassword"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
               New Password
             </label>
             <input
@@ -168,7 +184,10 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-300 mb-1"
+            >
               Confirm New Password
             </label>
             <input
@@ -194,14 +213,14 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
                 <span className="ml-2">Updating...</span>
               </div>
             ) : (
-              'Update Password'
+              "Update Password"
             )}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <a 
-            href="/login" 
+          <a
+            href="/login"
             className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
           >
             ← Back to Sign In
@@ -216,14 +235,15 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">Reset Password</h2>
         <p className="text-gray-400">
-          Enter your email address and we'll send you a link to reset your password.
+          Enter your email address and we'll send you a link to reset your
+          password.
         </p>
       </div>
 
       {success && <SuccessMessage message={success} />}
       {error && (
-        <ErrorMessage 
-          message={error.message || 'Failed to send password reset email'} 
+        <ErrorMessage
+          message={error.message || "Failed to send password reset email"}
           error={error}
           onRetry={handleRetry}
           showSuggestions={true}
@@ -232,7 +252,10 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
 
       <form onSubmit={handlePasswordResetRequest} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-300 mb-1"
+          >
             Email Address
           </label>
           <input
@@ -255,23 +278,26 @@ export function PasswordResetForm({ mode = 'request' }: PasswordResetFormProps) 
           {isLoading ? (
             <div className="flex items-center justify-center">
               <LoadingSpinner size="sm" />
-              <span className="ml-2">Sending{retryCount > 0 && ` (Attempt ${retryCount + 1})`}...</span>
+              <span className="ml-2">
+                Sending{retryCount > 0 && ` (Attempt ${retryCount + 1})`}...
+              </span>
             </div>
           ) : (
-            'Send Reset Email'
+            "Send Reset Email"
           )}
         </button>
       </form>
 
       <div className="mt-6 text-center space-y-2">
-        <a 
-          href="/login" 
+        <a
+          href="/login"
           className="block text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
         >
           ← Back to Sign In
         </a>
         <p className="text-xs text-gray-500">
-          Didn't receive the email? Check your spam folder or try again in a few minutes.
+          Didn't receive the email? Check your spam folder or try again in a few
+          minutes.
         </p>
       </div>
     </div>

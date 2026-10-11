@@ -1,8 +1,8 @@
 // src/lib/habits/cache-service.ts - Caching service for habit data
-import type { Database } from '../../types/supabase';
+import type { Database } from "../../types/supabase";
 
-type HabitData = Database['public']['Tables']['habits']['Row'];
-type HabitEntry = Database['public']['Tables']['habit_entries']['Row'];
+type HabitData = Database["public"]["Tables"]["habits"]["Row"];
+type HabitEntry = Database["public"]["Tables"]["habit_entries"]["Row"];
 
 interface CacheEntry<T> {
   data: T;
@@ -55,29 +55,29 @@ class HabitCacheService {
    * Generate cache key for habit entries
    */
   private getHabitEntriesKey(
-    userId: string, 
-    habitId?: string, 
-    days?: number
+    userId: string,
+    habitId?: string,
+    days?: number,
   ): string {
-    const parts = ['entries', userId];
+    const parts = ["entries", userId];
     if (habitId) parts.push(habitId);
     if (days) parts.push(`${days}d`);
-    return parts.join(':');
+    return parts.join(":");
   }
 
   /**
    * Generate cache key for analytics data
    */
   private getAnalyticsKey(
-    userId: string, 
-    days: number = 30, 
-    habitIds?: string[]
+    userId: string,
+    days: number = 30,
+    habitIds?: string[],
   ): string {
-    const parts = ['analytics', userId, `${days}d`];
+    const parts = ["analytics", userId, `${days}d`];
     if (habitIds?.length) {
-      parts.push(habitIds.sort().join(','));
+      parts.push(habitIds.sort().join(","));
     }
-    return parts.join(':');
+    return parts.join(":");
   }
 
   /**
@@ -113,14 +113,18 @@ class HabitCacheService {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
   /**
    * Cache user habits
    */
-  cacheUserHabits(userId: string, habits: HabitData[], activeOnly: boolean = true): void {
+  cacheUserHabits(
+    userId: string,
+    habits: HabitData[],
+    activeOnly: boolean = true,
+  ): void {
     const key = this.getUserHabitsKey(userId, activeOnly);
     this.set(key, habits, this.DEFAULT_TTL);
   }
@@ -128,7 +132,10 @@ class HabitCacheService {
   /**
    * Get cached user habits
    */
-  getCachedUserHabits(userId: string, activeOnly: boolean = true): HabitData[] | null {
+  getCachedUserHabits(
+    userId: string,
+    activeOnly: boolean = true,
+  ): HabitData[] | null {
     const key = this.getUserHabitsKey(userId, activeOnly);
     return this.get<HabitData[]>(key);
   }
@@ -137,10 +144,10 @@ class HabitCacheService {
    * Cache habit entries
    */
   cacheHabitEntries(
-    userId: string, 
-    entries: HabitEntry[], 
-    habitId?: string, 
-    days?: number
+    userId: string,
+    entries: HabitEntry[],
+    habitId?: string,
+    days?: number,
   ): void {
     const key = this.getHabitEntriesKey(userId, habitId, days);
     this.set(key, entries, this.DEFAULT_TTL);
@@ -150,9 +157,9 @@ class HabitCacheService {
    * Get cached habit entries
    */
   getCachedHabitEntries(
-    userId: string, 
-    habitId?: string, 
-    days?: number
+    userId: string,
+    habitId?: string,
+    days?: number,
   ): HabitEntry[] | null {
     const key = this.getHabitEntriesKey(userId, habitId, days);
     return this.get<HabitEntry[]>(key);
@@ -162,10 +169,10 @@ class HabitCacheService {
    * Cache analytics data
    */
   cacheAnalytics(
-    userId: string, 
-    analytics: HabitAnalytics[], 
-    days: number = 30, 
-    habitIds?: string[]
+    userId: string,
+    analytics: HabitAnalytics[],
+    days: number = 30,
+    habitIds?: string[],
   ): void {
     const key = this.getAnalyticsKey(userId, days, habitIds);
     this.set(key, analytics, this.ANALYTICS_TTL);
@@ -175,9 +182,9 @@ class HabitCacheService {
    * Get cached analytics data
    */
   getCachedAnalytics(
-    userId: string, 
-    days: number = 30, 
-    habitIds?: string[]
+    userId: string,
+    days: number = 30,
+    habitIds?: string[],
   ): HabitAnalytics[] | null {
     const key = this.getAnalyticsKey(userId, days, habitIds);
     return this.get<HabitAnalytics[]>(key);
@@ -204,14 +211,14 @@ class HabitCacheService {
    */
   invalidateUserCache(userId: string): void {
     const keysToDelete: string[] = [];
-    
+
     for (const [key] of this.cache) {
       if (key.includes(userId)) {
         keysToDelete.push(key);
       }
     }
-    
-    keysToDelete.forEach(key => this.cache.delete(key));
+
+    keysToDelete.forEach((key) => this.cache.delete(key));
   }
 
   /**
@@ -219,14 +226,17 @@ class HabitCacheService {
    */
   invalidateHabitCache(userId: string, habitId: string): void {
     const keysToDelete: string[] = [];
-    
+
     for (const [key] of this.cache) {
-      if (key.includes(userId) && (key.includes(habitId) || key.includes('habits:'))) {
+      if (
+        key.includes(userId) &&
+        (key.includes(habitId) || key.includes("habits:"))
+      ) {
         keysToDelete.push(key);
       }
     }
-    
-    keysToDelete.forEach(key => this.cache.delete(key));
+
+    keysToDelete.forEach((key) => this.cache.delete(key));
   }
 
   /**
@@ -262,7 +272,7 @@ class HabitCacheService {
       totalSize,
       hitRate: 0, // Would need to track hits/misses for accurate calculation
       oldestEntry: oldestTimestamp,
-      newestEntry: newestTimestamp
+      newestEntry: newestTimestamp,
     };
   }
 
@@ -279,7 +289,7 @@ class HabitCacheService {
       }
     }
 
-    keysToDelete.forEach(key => {
+    keysToDelete.forEach((key) => {
       this.cache.delete(key);
       removedCount++;
     });
@@ -290,18 +300,15 @@ class HabitCacheService {
   /**
    * Preload frequently accessed data
    */
-  async preloadUserData(
-    userId: string, 
-    supabaseClient: any
-  ): Promise<void> {
+  async preloadUserData(userId: string, supabaseClient: any): Promise<void> {
     try {
       // Preload user habits
       const { data: habits } = await supabaseClient
-        .from('habits')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .order('position', { ascending: true });
+        .from("habits")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .order("position", { ascending: true });
 
       if (habits) {
         this.cacheUserHabits(userId, habits);
@@ -312,31 +319,30 @@ class HabitCacheService {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const { data: entries } = await supabaseClient
-        .from('habit_entries')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-        .order('date', { ascending: false });
+        .from("habit_entries")
+        .select("*")
+        .eq("user_id", userId)
+        .gte("date", thirtyDaysAgo.toISOString().split("T")[0])
+        .order("date", { ascending: false });
 
       if (entries) {
         this.cacheHabitEntries(userId, entries, undefined, 30);
       }
 
       // Preload today's daily summary
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       const { data: dailySummary } = await supabaseClient
-        .from('habit_daily_summary')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('date', today)
+        .from("habit_daily_summary")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("date", today)
         .single();
 
       if (dailySummary) {
         this.cacheDailySummary(userId, today, dailySummary);
       }
-
     } catch (error) {
-      console.warn('Failed to preload user data:', error);
+      console.warn("Failed to preload user data:", error);
     }
   }
 }
@@ -345,13 +351,16 @@ class HabitCacheService {
 export const habitCacheService = new HabitCacheService();
 
 // Auto-cleanup every 10 minutes
-if (typeof window !== 'undefined') {
-  setInterval(() => {
-    const removedCount = habitCacheService.cleanup();
-    if (removedCount > 0) {
-      console.debug(`Cleaned up ${removedCount} expired cache entries`);
-    }
-  }, 10 * 60 * 1000);
+if (typeof window !== "undefined") {
+  setInterval(
+    () => {
+      const removedCount = habitCacheService.cleanup();
+      if (removedCount > 0) {
+        console.debug(`Cleaned up ${removedCount} expired cache entries`);
+      }
+    },
+    10 * 60 * 1000,
+  );
 }
 
 export default habitCacheService;

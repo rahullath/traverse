@@ -420,20 +420,23 @@
   gap: 0.5rem;
 }
 
-.time-details, .properties-grid {
+.time-details,
+.properties-grid {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.time-row, .property {
+.time-row,
+.property {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   color: rgb(var(--text-secondary));
 }
 
-.time-row strong, .property strong {
+.time-row strong,
+.property strong {
   color: rgb(var(--text-primary));
   min-width: 60px;
 }
@@ -462,7 +465,8 @@
   white-space: pre-wrap;
 }
 
-.importance-badge, .flexibility-badge {
+.importance-badge,
+.flexibility-badge {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.75rem;

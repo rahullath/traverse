@@ -1,17 +1,35 @@
 // TypeScript interfaces and types for Intelligent Task Management
 
 // Enum types matching database enums
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | 'deferred';
-export type TaskComplexity = 'simple' | 'moderate' | 'complex';
-export type EnergyLevel = 'low' | 'medium' | 'high';
-export type CalendarSourceType = 'google' | 'ical' | 'outlook' | 'manual';
-export type EventType = 'class' | 'meeting' | 'personal' | 'workout' | 'task' | 'break' | 'meal';
-export type FlexibilityType = 'fixed' | 'moveable' | 'flexible';
-export type ImportanceLevel = 'low' | 'medium' | 'high' | 'critical';
-export type SessionStatus = 'active' | 'completed' | 'partial' | 'abandoned';
-export type GoalCategory = 'career' | 'health' | 'creative' | 'financial' | 'social' | 'personal';
-export type GoalStatus = 'active' | 'completed' | 'paused' | 'cancelled';
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
+export type TaskStatus =
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "deferred";
+export type TaskComplexity = "simple" | "moderate" | "complex";
+export type EnergyLevel = "low" | "medium" | "high";
+export type CalendarSourceType = "google" | "ical" | "outlook" | "manual";
+export type EventType =
+  | "class"
+  | "meeting"
+  | "personal"
+  | "workout"
+  | "task"
+  | "break"
+  | "meal";
+export type FlexibilityType = "fixed" | "moveable" | "flexible";
+export type ImportanceLevel = "low" | "medium" | "high" | "critical";
+export type SessionStatus = "active" | "completed" | "partial" | "abandoned";
+export type GoalCategory =
+  | "career"
+  | "health"
+  | "creative"
+  | "financial"
+  | "social"
+  | "personal";
+export type GoalStatus = "active" | "completed" | "paused" | "cancelled";
 
 // Core Task interface
 export interface Task {
@@ -242,8 +260,8 @@ export interface TaskQueryParams {
   parent_task_id?: string;
   page?: number;
   limit?: number;
-  sort_by?: 'created_at' | 'updated_at' | 'deadline' | 'priority' | 'title';
-  sort_order?: 'asc' | 'desc';
+  sort_by?: "created_at" | "updated_at" | "deadline" | "priority" | "title";
+  sort_order?: "asc" | "desc";
 }
 
 export interface SessionQueryParams {
@@ -269,10 +287,17 @@ export interface ValidationResult {
 // AI-related interfaces for future use
 export interface AILifeCoach {
   generateDailyPlan(userId: string, date: Date): Promise<DailyPlan>;
-  processGoalConversation(userId: string, conversation: string): Promise<GoalActionPlan>;
+  processGoalConversation(
+    userId: string,
+    conversation: string,
+  ): Promise<GoalActionPlan>;
   analyzeLifeBalance(userId: string): Promise<LifeBalanceAnalysis>;
   suggestLifeOptimizations(userId: string): Promise<LifeOptimization[]>;
-  handleContextualQuery(userId: string, query: string, context: LifeContext): Promise<AIResponse>;
+  handleContextualQuery(
+    userId: string,
+    query: string,
+    context: LifeContext,
+  ): Promise<AIResponse>;
 }
 
 export interface LifeContext {
@@ -313,7 +338,7 @@ export interface AIResponse {
 }
 
 // Import TimeSlot from calendar.ts for consistency
-import type { TimeSlot } from './calendar';
+import type { TimeSlot } from "./calendar";
 
 export interface SchedulingConstraints {
   preferred_times?: TimeSlot[];
@@ -322,7 +347,7 @@ export interface SchedulingConstraints {
   buffer_time?: number;
 }
 
-import type { ScheduledTask as CalendarScheduledTask } from './calendar';
+import type { ScheduledTask as CalendarScheduledTask } from "./calendar";
 
 export interface OptimalSchedule {
   scheduledTasks: CalendarScheduledTask[];
@@ -341,6 +366,6 @@ export interface ScheduleOption {
 }
 
 // Database utility types
-export type DatabaseTask = Omit<Task, 'id' | 'created_at' | 'updated_at'>;
-export type DatabaseTimeSession = Omit<TimeSession, 'id' | 'created_at'>;
-export type DatabaseGoal = Omit<Goal, 'id' | 'created_at'>;
+export type DatabaseTask = Omit<Task, "id" | "created_at" | "updated_at">;
+export type DatabaseTimeSession = Omit<TimeSession, "id" | "created_at">;
+export type DatabaseGoal = Omit<Goal, "id" | "created_at">;

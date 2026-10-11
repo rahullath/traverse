@@ -62,6 +62,10 @@ const {
   <body>
     <slot />
     <script is:inline src="/sw-register.js"></script>
+    <script>
+      import { pwaService } from '@/lib/pwa/service-worker';
+      pwaService.init();
+    </script>
   </body>
 </html>
 

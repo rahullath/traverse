@@ -4,7 +4,7 @@ export interface Location {
   id?: string;
   name: string;
   coordinates: [number, number]; // [latitude, longitude]
-  type: 'home' | 'university' | 'gym' | 'store' | 'other';
+  type: "home" | "university" | "gym" | "store" | "other";
   address?: string;
   buildingCode?: string; // For university buildings
   notes?: string;
@@ -12,7 +12,7 @@ export interface Location {
 
 export interface WeatherData {
   temperature: number;
-  condition: 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy';
+  condition: "sunny" | "cloudy" | "rainy" | "stormy" | "snowy";
   windSpeed: number;
   humidity: number;
   precipitation: number;
@@ -25,12 +25,12 @@ export interface TravelRoute {
   id?: string;
   from: Location;
   to: Location;
-  method: 'bike' | 'train' | 'walk' | 'bus';
+  method: "bike" | "train" | "walk" | "bus";
   distance: number; // in meters
   duration: number; // in minutes
   cost: number; // in pence
   elevation: number; // elevation gain in meters
-  difficulty: 'easy' | 'moderate' | 'hard';
+  difficulty: "easy" | "moderate" | "hard";
   weatherSuitability: number; // 0-1 score
   energyRequired: number; // 1-5 scale
   safetyRating: number; // 1-5 scale
@@ -43,14 +43,14 @@ export interface TravelRoute {
 }
 
 export interface TravelPreferences {
-  preferredMethod: 'bike' | 'train' | 'mixed';
+  preferredMethod: "bike" | "train" | "mixed";
   maxWalkingDistance: number; // in meters
   weatherThreshold: {
     minTemperature: number;
     maxWindSpeed: number;
     maxPrecipitation: number;
   };
-  fitnessLevel: 'low' | 'medium' | 'high';
+  fitnessLevel: "low" | "medium" | "high";
   budgetConstraints: {
     dailyLimit: number; // in pence
     weeklyLimit: number; // in pence
@@ -89,7 +89,7 @@ export interface TravelConditions {
     flexibility: number; // minutes
   };
   postActivityConsiderations?: {
-    type: 'gym' | 'class' | 'meeting';
+    type: "gym" | "class" | "meeting";
     fatigue: number; // 1-5 scale
     showerNeeded: boolean;
     equipmentToCarry: string[];
@@ -111,8 +111,8 @@ export interface TrainService {
 export interface CyclingRoute {
   path: [number, number][]; // Array of coordinates
   elevationProfile: number[]; // Elevation at each point
-  surfaceType: 'road' | 'cycle-path' | 'mixed';
-  trafficLevel: 'low' | 'medium' | 'high';
+  surfaceType: "road" | "cycle-path" | "mixed";
+  trafficLevel: "low" | "medium" | "high";
   bikeParking: {
     available: boolean;
     secure: boolean;
@@ -124,10 +124,10 @@ export interface CyclingRoute {
 export interface TravelCostTracking {
   userId: string;
   date: Date;
-  method: 'bike' | 'train' | 'walk' | 'bus';
+  method: "bike" | "train" | "walk" | "bus";
   route: string;
   cost: number; // in pence
-  category: 'daily-commute' | 'gym' | 'shopping' | 'social' | 'other';
+  category: "daily-commute" | "gym" | "shopping" | "social" | "other";
   notes?: string;
 }
 

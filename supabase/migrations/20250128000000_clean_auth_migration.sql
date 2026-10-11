@@ -110,9 +110,11 @@ CREATE INDEX IF NOT EXISTS idx_bank_transaction_insights_user_id ON bank_transac
 DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
 CREATE POLICY "Users can view own profile" ON profiles
   FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE USING (auth.uid() = id);
 
@@ -121,12 +123,15 @@ DROP POLICY IF EXISTS "Users can view own tokens" ON user_tokens;
 DROP POLICY IF EXISTS "Users can update own tokens" ON user_tokens;
 DROP POLICY IF EXISTS "Users can insert own tokens" ON user_tokens;
 
+DROP POLICY IF EXISTS "Users can view own tokens" ON user_tokens;
 CREATE POLICY "Users can view own tokens" ON user_tokens
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own tokens" ON user_tokens;
 CREATE POLICY "Users can update own tokens" ON user_tokens
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own tokens" ON user_tokens;
 CREATE POLICY "Users can insert own tokens" ON user_tokens
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -134,9 +139,11 @@ CREATE POLICY "Users can insert own tokens" ON user_tokens
 DROP POLICY IF EXISTS "Users can view own transactions" ON token_transactions;
 DROP POLICY IF EXISTS "Users can insert own transactions" ON token_transactions;
 
+DROP POLICY IF EXISTS "Users can view own transactions" ON token_transactions;
 CREATE POLICY "Users can view own transactions" ON token_transactions
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own transactions" ON token_transactions;
 CREATE POLICY "Users can insert own transactions" ON token_transactions
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -145,12 +152,15 @@ DROP POLICY IF EXISTS "Users can view own preferences" ON user_preferences;
 DROP POLICY IF EXISTS "Users can update own preferences" ON user_preferences;
 DROP POLICY IF EXISTS "Users can insert own preferences" ON user_preferences;
 
+DROP POLICY IF EXISTS "Users can view own preferences" ON user_preferences;
 CREATE POLICY "Users can view own preferences" ON user_preferences
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own preferences" ON user_preferences;
 CREATE POLICY "Users can update own preferences" ON user_preferences
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own preferences" ON user_preferences;
 CREATE POLICY "Users can insert own preferences" ON user_preferences
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -159,12 +169,15 @@ DROP POLICY IF EXISTS "Users can view own github profile" ON github_profiles;
 DROP POLICY IF EXISTS "Users can update own github profile" ON github_profiles;
 DROP POLICY IF EXISTS "Users can insert own github profile" ON github_profiles;
 
+DROP POLICY IF EXISTS "Users can view own github profile" ON github_profiles;
 CREATE POLICY "Users can view own github profile" ON github_profiles
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own github profile" ON github_profiles;
 CREATE POLICY "Users can update own github profile" ON github_profiles
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own github profile" ON github_profiles;
 CREATE POLICY "Users can insert own github profile" ON github_profiles
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -173,12 +186,15 @@ DROP POLICY IF EXISTS "Users can view own outlook profile" ON outlook_profiles;
 DROP POLICY IF EXISTS "Users can update own outlook profile" ON outlook_profiles;
 DROP POLICY IF EXISTS "Users can insert own outlook profile" ON outlook_profiles;
 
+DROP POLICY IF EXISTS "Users can view own outlook profile" ON outlook_profiles;
 CREATE POLICY "Users can view own outlook profile" ON outlook_profiles
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own outlook profile" ON outlook_profiles;
 CREATE POLICY "Users can update own outlook profile" ON outlook_profiles
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own outlook profile" ON outlook_profiles;
 CREATE POLICY "Users can insert own outlook profile" ON outlook_profiles
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -186,9 +202,11 @@ CREATE POLICY "Users can insert own outlook profile" ON outlook_profiles
 DROP POLICY IF EXISTS "Users can view own fitness metrics" ON fitness_metrics;
 DROP POLICY IF EXISTS "Users can insert own fitness metrics" ON fitness_metrics;
 
+DROP POLICY IF EXISTS "Users can view own fitness metrics" ON fitness_metrics;
 CREATE POLICY "Users can view own fitness metrics" ON fitness_metrics
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own fitness metrics" ON fitness_metrics;
 CREATE POLICY "Users can insert own fitness metrics" ON fitness_metrics
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -196,9 +214,11 @@ CREATE POLICY "Users can insert own fitness metrics" ON fitness_metrics
 DROP POLICY IF EXISTS "Users can view own bank insights" ON bank_transaction_insights;
 DROP POLICY IF EXISTS "Users can insert own bank insights" ON bank_transaction_insights;
 
+DROP POLICY IF EXISTS "Users can view own bank insights" ON bank_transaction_insights;
 CREATE POLICY "Users can view own bank insights" ON bank_transaction_insights
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own bank insights" ON bank_transaction_insights;
 CREATE POLICY "Users can insert own bank insights" ON bank_transaction_insights
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
@@ -270,7 +290,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 DO $$ 
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'create_user_profile_and_wallet_trigger') THEN
-    CREATE TRIGGER create_user_profile_and_wallet_trigger
+    DROP TRIGGER IF EXISTS create_user_profile_and_wallet_trigger ON auth.users;
+CREATE TRIGGER create_user_profile_and_wallet_trigger
       AFTER INSERT ON auth.users
       FOR EACH ROW
       EXECUTE FUNCTION create_user_profile_and_wallet();

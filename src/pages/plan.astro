@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PlanPageContent from '../components/plan/PlanPageContent';
+import { createServerAuth } from '../lib/auth/simple-multi-user';
+
+const serverAuth = createServerAuth(Astro.cookies);
+const user = await serverAuth.getUser();
+if (!user) return Astro.redirect('/login');
+
+const preferences = await serverAuth.getUserPreferences(user.id);
+const prefs = (preferences ?? {}) as Record<string, unknown>;
+
+const voice = (['plain', 'clinical', 'warm'] as const).includes(prefs.voice as any)
+  ? (prefs.voice as 'plain' | 'clinical' | 'warm')
+  : 'plain';
+
+const rawTheme = prefs.theme as string | undefined;
+const theme = (rawTheme === 'dark' || rawTheme === 'midnight' || rawTheme === 'lamp')
+  ? 'lamp' as const
+  : 'daylight' as const;
+
+const density = prefs.density === 'roomy' ? 'roomy' as const : 'standard' as const;
+const motion = prefs.motion !== 'off';
+const timeFormat = prefs.timeFormat === 'chunks' ? 'chunks' as const : 'clock' as const;
+const anchorless = (['choice', 'suggest', 'refuse'] as const).includes(prefs.anchorless as any)
+  ? (prefs.anchorless as 'choice' | 'suggest' | 'refuse')
+  : 'choice';
+// Onboarding phase 1 stores wake/sleep under onboarding_presets.phase_1.answers.
+const phase1 = ((prefs.onboarding_presets as any)?.phase_1?.answers ?? {}) as Record<string, unknown>;
+const pick = (k: string) => (typeof phase1[k] === 'string' ? phase1[k] as string : typeof prefs[k] === 'string' ? prefs[k] as string : undefined);
+const wakeDefault = pick('wake_window_start');
+const sleepDefault = pick('sleep_window_end');
+---
+
+<Layout title="traverse — build a chain">
+  <PlanPageContent client:load voice={voice} theme={theme} density={density} motion={motion} timeFormat={timeFormat} anchorless={anchorless} wakeDefault={wakeDefault} sleepDefault={sleepDefault} />
+</Layout>

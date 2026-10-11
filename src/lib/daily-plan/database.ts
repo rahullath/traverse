@@ -1,6 +1,6 @@
 // Daily Plan Generator V1 - Database Utilities
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   DailyPlan,
   DailyPlanRow,
@@ -13,7 +13,7 @@ import type {
   CreateExitTime,
   UpdateDailyPlan,
   UpdateTimeBlock,
-} from '../../types/daily-plan';
+} from "../../types/daily-plan";
 
 // Type for Supabase client (generic to work with any database schema)
 type AnySupabaseClient = SupabaseClient<any, any, any>;
@@ -51,16 +51,19 @@ function rowToTimeBlock(row: TimeBlockRow): TimeBlock {
     sequenceOrder: row.sequence_order,
     status: row.status,
     skipReason: row.skip_reason,
-    metadata: row.metadata ? {
-      ...rawMetadata,
-      targetTime: rawMetadata.targetTime
-        ? new Date(rawMetadata.targetTime)
-        : rawMetadata.target_time
-          ? new Date(rawMetadata.target_time)
-          : undefined,
-      placementReason: rawMetadata.placementReason ?? rawMetadata.placement_reason,
-      skipReason: rawMetadata.skipReason ?? rawMetadata.skip_reason,
-    } : undefined,
+    metadata: row.metadata
+      ? {
+          ...rawMetadata,
+          targetTime: rawMetadata.targetTime
+            ? new Date(rawMetadata.targetTime)
+            : rawMetadata.target_time
+              ? new Date(rawMetadata.target_time)
+              : undefined,
+          placementReason:
+            rawMetadata.placementReason ?? rawMetadata.placement_reason,
+          skipReason: rawMetadata.skipReason ?? rawMetadata.skip_reason,
+        }
+      : undefined,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };
@@ -83,10 +86,10 @@ function rowToExitTime(row: ExitTimeRow): ExitTime {
 // Daily Plan CRUD operations
 export async function createDailyPlan(
   supabase: AnySupabaseClient,
-  plan: CreateDailyPlan
+  plan: CreateDailyPlan,
 ): Promise<DailyPlan> {
   const { data, error } = await supabase
-    .from('daily_plans')
+    .from("daily_plans")
     .insert(plan as any)
     .select()
     .single();
@@ -97,16 +100,16 @@ export async function createDailyPlan(
 
 export async function getDailyPlan(
   supabase: AnySupabaseClient,
-  planId: string
+  planId: string,
 ): Promise<DailyPlan | null> {
   const { data, error } = await supabase
-    .from('daily_plans')
+    .from("daily_plans")
     .select()
-    .eq('id', planId)
+    .eq("id", planId)
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') return null; // Not found
+    if (error.code === "PGRST116") return null; // Not found
     throw error;
   }
 
@@ -116,19 +119,19 @@ export async function getDailyPlan(
 export async function getDailyPlanByDate(
   supabase: AnySupabaseClient,
   userId: string,
-  date: Date
+  date: Date,
 ): Promise<DailyPlan | null> {
-  const dateStr = date.toISOString().split('T')[0];
-  
+  const dateStr = date.toISOString().split("T")[0];
+
   const { data, error } = await supabase
-    .from('daily_plans')
+    .from("daily_plans")
     .select()
-    .eq('user_id', userId)
-    .eq('plan_date', dateStr)
+    .eq("user_id", userId)
+    .eq("plan_date", dateStr)
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') return null; // Not found
+    if (error.code === "PGRST116") return null; // Not found
     throw error;
   }
 
@@ -138,12 +141,12 @@ export async function getDailyPlanByDate(
 export async function updateDailyPlan(
   supabase: AnySupabaseClient,
   planId: string,
-  updates: UpdateDailyPlan
+  updates: UpdateDailyPlan,
 ): Promise<DailyPlan> {
   const { data, error } = await supabase
-    .from('daily_plans')
+    .from("daily_plans")
     .update(updates as any)
-    .eq('id', planId)
+    .eq("id", planId)
     .select()
     .single();
 
@@ -153,12 +156,12 @@ export async function updateDailyPlan(
 
 export async function deleteDailyPlan(
   supabase: AnySupabaseClient,
-  planId: string
+  planId: string,
 ): Promise<void> {
   const { error } = await supabase
-    .from('daily_plans')
+    .from("daily_plans")
     .delete()
-    .eq('id', planId);
+    .eq("id", planId);
 
   if (error) throw error;
 }
@@ -166,10 +169,10 @@ export async function deleteDailyPlan(
 // Time Block CRUD operations
 export async function createTimeBlock(
   supabase: AnySupabaseClient,
-  block: CreateTimeBlock
+  block: CreateTimeBlock,
 ): Promise<TimeBlock> {
   const { data, error } = await supabase
-    .from('time_blocks')
+    .from("time_blocks")
     .insert(block as any)
     .select()
     .single();
@@ -180,10 +183,10 @@ export async function createTimeBlock(
 
 export async function createTimeBlocks(
   supabase: AnySupabaseClient,
-  blocks: CreateTimeBlock[]
+  blocks: CreateTimeBlock[],
 ): Promise<TimeBlock[]> {
   const { data, error } = await supabase
-    .from('time_blocks')
+    .from("time_blocks")
     .insert(blocks as any)
     .select();
 
@@ -193,16 +196,16 @@ export async function createTimeBlocks(
 
 export async function getTimeBlock(
   supabase: AnySupabaseClient,
-  blockId: string
+  blockId: string,
 ): Promise<TimeBlock | null> {
   const { data, error } = await supabase
-    .from('time_blocks')
+    .from("time_blocks")
     .select()
-    .eq('id', blockId)
+    .eq("id", blockId)
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') return null; // Not found
+    if (error.code === "PGRST116") return null; // Not found
     throw error;
   }
 
@@ -211,13 +214,13 @@ export async function getTimeBlock(
 
 export async function getTimeBlocksByPlan(
   supabase: AnySupabaseClient,
-  planId: string
+  planId: string,
 ): Promise<TimeBlock[]> {
   const { data, error } = await supabase
-    .from('time_blocks')
+    .from("time_blocks")
     .select()
-    .eq('plan_id', planId)
-    .order('sequence_order', { ascending: true });
+    .eq("plan_id", planId)
+    .order("sequence_order", { ascending: true });
 
   if (error) throw error;
   return data.map(rowToTimeBlock);
@@ -226,12 +229,12 @@ export async function getTimeBlocksByPlan(
 export async function updateTimeBlock(
   supabase: AnySupabaseClient,
   blockId: string,
-  updates: UpdateTimeBlock
+  updates: UpdateTimeBlock,
 ): Promise<TimeBlock> {
   const { data, error } = await supabase
-    .from('time_blocks')
+    .from("time_blocks")
     .update(updates as any)
-    .eq('id', blockId)
+    .eq("id", blockId)
     .select()
     .single();
 
@@ -241,24 +244,24 @@ export async function updateTimeBlock(
 
 export async function deleteTimeBlock(
   supabase: AnySupabaseClient,
-  blockId: string
+  blockId: string,
 ): Promise<void> {
   const { error } = await supabase
-    .from('time_blocks')
+    .from("time_blocks")
     .delete()
-    .eq('id', blockId);
+    .eq("id", blockId);
 
   if (error) throw error;
 }
 
 export async function deleteTimeBlocksByPlan(
   supabase: AnySupabaseClient,
-  planId: string
+  planId: string,
 ): Promise<void> {
   const { error } = await supabase
-    .from('time_blocks')
+    .from("time_blocks")
     .delete()
-    .eq('plan_id', planId);
+    .eq("plan_id", planId);
 
   if (error) throw error;
 }
@@ -266,10 +269,10 @@ export async function deleteTimeBlocksByPlan(
 // Exit Time CRUD operations
 export async function createExitTime(
   supabase: AnySupabaseClient,
-  exitTime: CreateExitTime
+  exitTime: CreateExitTime,
 ): Promise<ExitTime> {
   const { data, error } = await supabase
-    .from('exit_times')
+    .from("exit_times")
     .insert(exitTime as any)
     .select()
     .single();
@@ -280,10 +283,10 @@ export async function createExitTime(
 
 export async function createExitTimes(
   supabase: AnySupabaseClient,
-  exitTimes: CreateExitTime[]
+  exitTimes: CreateExitTime[],
 ): Promise<ExitTime[]> {
   const { data, error } = await supabase
-    .from('exit_times')
+    .from("exit_times")
     .insert(exitTimes as any)
     .select();
 
@@ -293,16 +296,16 @@ export async function createExitTimes(
 
 export async function getExitTime(
   supabase: AnySupabaseClient,
-  exitTimeId: string
+  exitTimeId: string,
 ): Promise<ExitTime | null> {
   const { data, error } = await supabase
-    .from('exit_times')
+    .from("exit_times")
     .select()
-    .eq('id', exitTimeId)
+    .eq("id", exitTimeId)
     .single();
 
   if (error) {
-    if (error.code === 'PGRST116') return null; // Not found
+    if (error.code === "PGRST116") return null; // Not found
     throw error;
   }
 
@@ -311,12 +314,12 @@ export async function getExitTime(
 
 export async function getExitTimesByPlan(
   supabase: AnySupabaseClient,
-  planId: string
+  planId: string,
 ): Promise<ExitTime[]> {
   const { data, error } = await supabase
-    .from('exit_times')
+    .from("exit_times")
     .select()
-    .eq('plan_id', planId);
+    .eq("plan_id", planId);
 
   if (error) throw error;
   return data.map(rowToExitTime);
@@ -324,24 +327,24 @@ export async function getExitTimesByPlan(
 
 export async function deleteExitTime(
   supabase: AnySupabaseClient,
-  exitTimeId: string
+  exitTimeId: string,
 ): Promise<void> {
   const { error } = await supabase
-    .from('exit_times')
+    .from("exit_times")
     .delete()
-    .eq('id', exitTimeId);
+    .eq("id", exitTimeId);
 
   if (error) throw error;
 }
 
 export async function deleteExitTimesByPlan(
   supabase: AnySupabaseClient,
-  planId: string
+  planId: string,
 ): Promise<void> {
   const { error } = await supabase
-    .from('exit_times')
+    .from("exit_times")
     .delete()
-    .eq('plan_id', planId);
+    .eq("plan_id", planId);
 
   if (error) throw error;
 }
@@ -352,7 +355,7 @@ export async function deleteExitTimesByPlan(
 // Composite operations for fetching complete plans
 export async function getDailyPlanWithBlocks(
   supabase: AnySupabaseClient,
-  planId: string
+  planId: string,
 ): Promise<DailyPlan | null> {
   const plan = await getDailyPlan(supabase, planId);
   if (!plan) return null;
@@ -372,7 +375,7 @@ export async function getDailyPlanWithBlocks(
 export async function getDailyPlanByDateWithBlocks(
   supabase: AnySupabaseClient,
   userId: string,
-  date: Date
+  date: Date,
 ): Promise<DailyPlan | null> {
   const plan = await getDailyPlanByDate(supabase, userId, date);
   if (!plan) return null;

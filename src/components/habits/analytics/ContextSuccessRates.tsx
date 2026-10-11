@@ -1,5 +1,5 @@
 // src/components/habits/analytics/ContextSuccessRates.tsx - Context correlation analysis
-import React, { useMemo } from 'react';
+import React, { useMemo } from "react";
 
 interface HabitEntry {
   id: string;
@@ -25,8 +25,14 @@ interface ContextSuccessRatesProps {
 
 export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
   const contextAnalysis = useMemo(() => {
-    const entriesWithContext = data.entries.filter(e => 
-      e.effort || e.mood || e.energy_level || e.location || e.weather || e.context_tags?.length
+    const entriesWithContext = data.entries.filter(
+      (e) =>
+        e.effort ||
+        e.mood ||
+        e.energy_level ||
+        e.location ||
+        e.weather ||
+        e.context_tags?.length,
     );
 
     if (entriesWithContext.length === 0) {
@@ -34,32 +40,52 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
     }
 
     // Analyze mood correlation
-    const moodAnalysis = [1, 2, 3, 4, 5].map(mood => {
-      const moodEntries = entriesWithContext.filter(e => e.mood === mood);
-      const successRate = moodEntries.length > 0 ? 
-        moodEntries.filter(e => e.value === 1).length / moodEntries.length : 0;
-      return { mood, count: moodEntries.length, successRate };
-    }).filter(m => m.count > 0);
+    const moodAnalysis = [1, 2, 3, 4, 5]
+      .map((mood) => {
+        const moodEntries = entriesWithContext.filter((e) => e.mood === mood);
+        const successRate =
+          moodEntries.length > 0
+            ? moodEntries.filter((e) => e.value === 1).length /
+              moodEntries.length
+            : 0;
+        return { mood, count: moodEntries.length, successRate };
+      })
+      .filter((m) => m.count > 0);
 
     // Analyze energy correlation
-    const energyAnalysis = [1, 2, 3, 4, 5].map(energy => {
-      const energyEntries = entriesWithContext.filter(e => e.energy_level === energy);
-      const successRate = energyEntries.length > 0 ? 
-        energyEntries.filter(e => e.value === 1).length / energyEntries.length : 0;
-      return { energy, count: energyEntries.length, successRate };
-    }).filter(e => e.count > 0);
+    const energyAnalysis = [1, 2, 3, 4, 5]
+      .map((energy) => {
+        const energyEntries = entriesWithContext.filter(
+          (e) => e.energy_level === energy,
+        );
+        const successRate =
+          energyEntries.length > 0
+            ? energyEntries.filter((e) => e.value === 1).length /
+              energyEntries.length
+            : 0;
+        return { energy, count: energyEntries.length, successRate };
+      })
+      .filter((e) => e.count > 0);
 
     // Analyze effort correlation
-    const effortAnalysis = [1, 2, 3, 4, 5].map(effort => {
-      const effortEntries = entriesWithContext.filter(e => e.effort === effort);
-      const successRate = effortEntries.length > 0 ? 
-        effortEntries.filter(e => e.value === 1).length / effortEntries.length : 0;
-      return { effort, count: effortEntries.length, successRate };
-    }).filter(e => e.count > 0);
+    const effortAnalysis = [1, 2, 3, 4, 5]
+      .map((effort) => {
+        const effortEntries = entriesWithContext.filter(
+          (e) => e.effort === effort,
+        );
+        const successRate =
+          effortEntries.length > 0
+            ? effortEntries.filter((e) => e.value === 1).length /
+              effortEntries.length
+            : 0;
+        return { effort, count: effortEntries.length, successRate };
+      })
+      .filter((e) => e.count > 0);
 
     // Analyze location correlation
-    const locationCounts: Record<string, { count: number; success: number }> = {};
-    entriesWithContext.forEach(entry => {
+    const locationCounts: Record<string, { count: number; success: number }> =
+      {};
+    entriesWithContext.forEach((entry) => {
       if (entry.location) {
         if (!locationCounts[entry.location]) {
           locationCounts[entry.location] = { count: 0, success: 0 };
@@ -75,14 +101,15 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
       .map(([location, data]) => ({
         location,
         count: data.count,
-        successRate: data.success / data.count
+        successRate: data.success / data.count,
       }))
-      .filter(l => l.count >= 3) // Only show locations with at least 3 entries
+      .filter((l) => l.count >= 3) // Only show locations with at least 3 entries
       .sort((a, b) => b.successRate - a.successRate);
 
     // Analyze weather correlation
-    const weatherCounts: Record<string, { count: number; success: number }> = {};
-    entriesWithContext.forEach(entry => {
+    const weatherCounts: Record<string, { count: number; success: number }> =
+      {};
+    entriesWithContext.forEach((entry) => {
       if (entry.weather) {
         if (!weatherCounts[entry.weather]) {
           weatherCounts[entry.weather] = { count: 0, success: 0 };
@@ -98,16 +125,16 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
       .map(([weather, data]) => ({
         weather,
         count: data.count,
-        successRate: data.success / data.count
+        successRate: data.success / data.count,
       }))
-      .filter(w => w.count >= 3)
+      .filter((w) => w.count >= 3)
       .sort((a, b) => b.successRate - a.successRate);
 
     // Analyze context tags
     const tagCounts: Record<string, { count: number; success: number }> = {};
-    entriesWithContext.forEach(entry => {
+    entriesWithContext.forEach((entry) => {
       if (entry.context_tags) {
-        entry.context_tags.forEach(tag => {
+        entry.context_tags.forEach((tag) => {
           if (!tagCounts[tag]) {
             tagCounts[tag] = { count: 0, success: 0 };
           }
@@ -123,9 +150,9 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
       .map(([tag, data]) => ({
         tag,
         count: data.count,
-        successRate: data.success / data.count
+        successRate: data.success / data.count,
       }))
-      .filter(t => t.count >= 3)
+      .filter((t) => t.count >= 3)
       .sort((a, b) => b.successRate - a.successRate);
 
     return {
@@ -135,7 +162,7 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
       location: locationAnalysis,
       weather: weatherAnalysis,
       tags: tagAnalysis,
-      totalEntries: entriesWithContext.length
+      totalEntries: entriesWithContext.length,
     };
   }, [data]);
 
@@ -144,13 +171,26 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
       <div className="card">
         <div className="text-center py-8">
           <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <svg
+              className="w-8 h-8 text-text-muted"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+              />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-text-primary mb-2">No Context Data</h3>
+          <h3 className="text-lg font-medium text-text-primary mb-2">
+            No Context Data
+          </h3>
           <p className="text-text-secondary">
-            Use enhanced logging to track context data and see success correlations.
+            Use enhanced logging to track context data and see success
+            correlations.
           </p>
         </div>
       </div>
@@ -158,19 +198,19 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
   }
 
   const getMoodEmoji = (mood: number) => {
-    const emojis = ['😔', '😕', '😐', '😊', '😄'];
-    return emojis[mood - 1] || '😐';
+    const emojis = ["😔", "😕", "😐", "😊", "😄"];
+    return emojis[mood - 1] || "😐";
   };
 
   const getEnergyEmoji = (energy: number) => {
-    const emojis = ['🔋', '🔋', '🔋', '🔋', '⚡'];
-    return emojis[energy - 1] || '🔋';
+    const emojis = ["🔋", "🔋", "🔋", "🔋", "⚡"];
+    return emojis[energy - 1] || "🔋";
   };
 
   const getSuccessColor = (rate: number) => {
-    if (rate >= 0.8) return 'text-accent-success';
-    if (rate >= 0.6) return 'text-accent-warning';
-    return 'text-accent-error';
+    if (rate >= 0.8) return "text-accent-success";
+    if (rate >= 0.6) return "text-accent-warning";
+    return "text-accent-error";
   };
 
   const getBarWidth = (rate: number) => `${rate * 100}%`;
@@ -180,7 +220,9 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-text-primary">Context Success Rates</h3>
+            <h3 className="text-lg font-semibold text-text-primary">
+              Context Success Rates
+            </h3>
             <p className="text-sm text-text-secondary">
               How different contexts affect your habit success
             </p>
@@ -199,11 +241,13 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
                 Mood Impact
               </h4>
               <div className="space-y-3">
-                {contextAnalysis.mood.map(item => (
+                {contextAnalysis.mood.map((item) => (
                   <div key={item.mood} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <span className="text-lg">{getMoodEmoji(item.mood)}</span>
+                        <span className="text-lg">
+                          {getMoodEmoji(item.mood)}
+                        </span>
                         <span className="text-sm text-text-primary">
                           Mood {item.mood}
                         </span>
@@ -211,12 +255,14 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
                           ({item.count} entries)
                         </span>
                       </div>
-                      <span className={`font-semibold ${getSuccessColor(item.successRate)}`}>
+                      <span
+                        className={`font-semibold ${getSuccessColor(item.successRate)}`}
+                      >
                         {Math.round(item.successRate * 100)}%
                       </span>
                     </div>
                     <div className="w-full bg-surface-hover rounded-full h-2">
-                      <div 
+                      <div
                         className="h-2 rounded-full bg-accent-primary transition-all duration-500"
                         style={{ width: getBarWidth(item.successRate) }}
                       />
@@ -235,11 +281,13 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
                 Energy Impact
               </h4>
               <div className="space-y-3">
-                {contextAnalysis.energy.map(item => (
+                {contextAnalysis.energy.map((item) => (
                   <div key={item.energy} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <span className="text-lg">{getEnergyEmoji(item.energy)}</span>
+                        <span className="text-lg">
+                          {getEnergyEmoji(item.energy)}
+                        </span>
                         <span className="text-sm text-text-primary">
                           Energy {item.energy}
                         </span>
@@ -247,12 +295,14 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
                           ({item.count} entries)
                         </span>
                       </div>
-                      <span className={`font-semibold ${getSuccessColor(item.successRate)}`}>
+                      <span
+                        className={`font-semibold ${getSuccessColor(item.successRate)}`}
+                      >
                         {Math.round(item.successRate * 100)}%
                       </span>
                     </div>
                     <div className="w-full bg-surface-hover rounded-full h-2">
-                      <div 
+                      <div
                         className="h-2 rounded-full bg-accent-success transition-all duration-500"
                         style={{ width: getBarWidth(item.successRate) }}
                       />
@@ -271,7 +321,7 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
                 Location Impact
               </h4>
               <div className="space-y-3">
-                {contextAnalysis.location.slice(0, 5).map(item => (
+                {contextAnalysis.location.slice(0, 5).map((item) => (
                   <div key={item.location} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -282,12 +332,14 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
                           ({item.count} entries)
                         </span>
                       </div>
-                      <span className={`font-semibold ${getSuccessColor(item.successRate)}`}>
+                      <span
+                        className={`font-semibold ${getSuccessColor(item.successRate)}`}
+                      >
                         {Math.round(item.successRate * 100)}%
                       </span>
                     </div>
                     <div className="w-full bg-surface-hover rounded-full h-2">
-                      <div 
+                      <div
                         className="h-2 rounded-full bg-accent-warning transition-all duration-500"
                         style={{ width: getBarWidth(item.successRate) }}
                       />
@@ -306,7 +358,7 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
                 Context Tags
               </h4>
               <div className="space-y-3">
-                {contextAnalysis.tags.slice(0, 5).map(item => (
+                {contextAnalysis.tags.slice(0, 5).map((item) => (
                   <div key={item.tag} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
@@ -317,12 +369,14 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
                           ({item.count} entries)
                         </span>
                       </div>
-                      <span className={`font-semibold ${getSuccessColor(item.successRate)}`}>
+                      <span
+                        className={`font-semibold ${getSuccessColor(item.successRate)}`}
+                      >
                         {Math.round(item.successRate * 100)}%
                       </span>
                     </div>
                     <div className="w-full bg-surface-hover rounded-full h-2">
-                      <div 
+                      <div
                         className="h-2 rounded-full bg-accent-purple transition-all duration-500"
                         style={{ width: getBarWidth(item.successRate) }}
                       />
@@ -342,8 +396,11 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
               <div className="flex items-center space-x-2">
                 <span className="text-accent-success">✓</span>
                 <span className="text-text-secondary">
-                  Best mood for success: {getMoodEmoji(contextAnalysis.mood[0].mood)} Mood {contextAnalysis.mood[0].mood} 
-                  ({Math.round(contextAnalysis.mood[0].successRate * 100)}% success rate)
+                  Best mood for success:{" "}
+                  {getMoodEmoji(contextAnalysis.mood[0].mood)} Mood{" "}
+                  {contextAnalysis.mood[0].mood}(
+                  {Math.round(contextAnalysis.mood[0].successRate * 100)}%
+                  success rate)
                 </span>
               </div>
             )}
@@ -351,8 +408,11 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
               <div className="flex items-center space-x-2">
                 <span className="text-accent-success">✓</span>
                 <span className="text-text-secondary">
-                  Optimal energy level: {getEnergyEmoji(contextAnalysis.energy[0].energy)} Energy {contextAnalysis.energy[0].energy}
-                  ({Math.round(contextAnalysis.energy[0].successRate * 100)}% success rate)
+                  Optimal energy level:{" "}
+                  {getEnergyEmoji(contextAnalysis.energy[0].energy)} Energy{" "}
+                  {contextAnalysis.energy[0].energy}(
+                  {Math.round(contextAnalysis.energy[0].successRate * 100)}%
+                  success rate)
                 </span>
               </div>
             )}
@@ -360,8 +420,10 @@ export function ContextSuccessRates({ data }: ContextSuccessRatesProps) {
               <div className="flex items-center space-x-2">
                 <span className="text-accent-success">✓</span>
                 <span className="text-text-secondary">
-                  Most successful location: {contextAnalysis.location[0].location}
-                  ({Math.round(contextAnalysis.location[0].successRate * 100)}% success rate)
+                  Most successful location:{" "}
+                  {contextAnalysis.location[0].location}(
+                  {Math.round(contextAnalysis.location[0].successRate * 100)}%
+                  success rate)
                 </span>
               </div>
             )}

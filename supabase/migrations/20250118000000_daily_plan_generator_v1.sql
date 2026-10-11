@@ -52,13 +52,13 @@ CREATE TABLE exit_times (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_daily_plans_user_date ON daily_plans(user_id, plan_date);
-CREATE INDEX idx_daily_plans_status ON daily_plans(status);
-CREATE INDEX idx_time_blocks_plan ON time_blocks(plan_id);
-CREATE INDEX idx_time_blocks_sequence ON time_blocks(plan_id, sequence_order);
-CREATE INDEX idx_time_blocks_status ON time_blocks(status);
-CREATE INDEX idx_exit_times_plan ON exit_times(plan_id);
-CREATE INDEX idx_exit_times_time_block ON exit_times(time_block_id);
+CREATE INDEX IF NOT EXISTS idx_daily_plans_user_date ON daily_plans(user_id, plan_date);
+CREATE INDEX IF NOT EXISTS idx_daily_plans_status ON daily_plans(status);
+CREATE INDEX IF NOT EXISTS idx_time_blocks_plan ON time_blocks(plan_id);
+CREATE INDEX IF NOT EXISTS idx_time_blocks_sequence ON time_blocks(plan_id, sequence_order);
+CREATE INDEX IF NOT EXISTS idx_time_blocks_status ON time_blocks(status);
+CREATE INDEX IF NOT EXISTS idx_exit_times_plan ON exit_times(plan_id);
+CREATE INDEX IF NOT EXISTS idx_exit_times_time_block ON exit_times(time_block_id);
 
 -- Enable Row Level Security
 ALTER TABLE daily_plans ENABLE ROW LEVEL SECURITY;
@@ -66,18 +66,21 @@ ALTER TABLE time_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exit_times ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for daily_plans
+DROP POLICY IF EXISTS "Users can insert their own daily plans" ON daily_plans;
 CREATE POLICY "Users can insert their own daily plans"
 ON daily_plans
 FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can select their own daily plans" ON daily_plans;
 CREATE POLICY "Users can select their own daily plans"
 ON daily_plans
 FOR SELECT
 TO authenticated
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own daily plans" ON daily_plans;
 CREATE POLICY "Users can update their own daily plans"
 ON daily_plans
 FOR UPDATE
@@ -85,6 +88,7 @@ TO authenticated
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own daily plans" ON daily_plans;
 CREATE POLICY "Users can delete their own daily plans"
 ON daily_plans
 FOR DELETE
@@ -92,6 +96,7 @@ TO authenticated
 USING (auth.uid() = user_id);
 
 -- RLS Policies for time_blocks
+DROP POLICY IF EXISTS "Users can insert time blocks for their plans" ON time_blocks;
 CREATE POLICY "Users can insert time blocks for their plans"
 ON time_blocks
 FOR INSERT
@@ -104,6 +109,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Users can select time blocks for their plans" ON time_blocks;
 CREATE POLICY "Users can select time blocks for their plans"
 ON time_blocks
 FOR SELECT
@@ -116,6 +122,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can update time blocks for their plans" ON time_blocks;
 CREATE POLICY "Users can update time blocks for their plans"
 ON time_blocks
 FOR UPDATE
@@ -135,6 +142,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Users can delete time blocks for their plans" ON time_blocks;
 CREATE POLICY "Users can delete time blocks for their plans"
 ON time_blocks
 FOR DELETE
@@ -148,6 +156,7 @@ USING (
 );
 
 -- RLS Policies for exit_times (immutable - no UPDATE policy)
+DROP POLICY IF EXISTS "Users can insert exit times for their plans" ON exit_times;
 CREATE POLICY "Users can insert exit times for their plans"
 ON exit_times
 FOR INSERT
@@ -160,6 +169,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Users can select exit times for their plans" ON exit_times;
 CREATE POLICY "Users can select exit times for their plans"
 ON exit_times
 FOR SELECT
@@ -172,6 +182,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Users can delete exit times for their plans" ON exit_times;
 CREATE POLICY "Users can delete exit times for their plans"
 ON exit_times
 FOR DELETE
@@ -193,11 +204,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_daily_plans_updated_at ON daily_plans;
 CREATE TRIGGER update_daily_plans_updated_at
 BEFORE UPDATE ON daily_plans
 FOR EACH ROW
 EXECUTE FUNCTION daily_plan_update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_time_blocks_updated_at ON time_blocks;
 CREATE TRIGGER update_time_blocks_updated_at
 BEFORE UPDATE ON time_blocks
 FOR EACH ROW

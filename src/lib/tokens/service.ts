@@ -1,13 +1,13 @@
 // src/lib/tokens/service.ts - Token Management Service
-import { authClient } from '../auth/config';
-import type { 
-  TokenBalance, 
-  TokenTransaction, 
-  TrialStatus, 
+import { authClient } from "../auth/config";
+import type {
+  TokenBalance,
+  TokenTransaction,
+  TrialStatus,
   TokenDeductionResult,
   TokenEarningOpportunity,
-  UserTokenEarning
-} from './types';
+  UserTokenEarning,
+} from "./types";
 
 class TokenService {
   private client = authClient;
@@ -18,13 +18,13 @@ class TokenService {
   async getTokenBalance(userId: string): Promise<TokenBalance | null> {
     try {
       const { data, error } = await this.client
-        .from('user_tokens')
-        .select('*')
-        .eq('user_id', userId)
+        .from("user_tokens")
+        .select("*")
+        .eq("user_id", userId)
         .single();
 
       if (error) {
-        console.error('Error fetching token balance:', error);
+        console.error("Error fetching token balance:", error);
         return null;
       }
 
@@ -36,10 +36,10 @@ class TokenService {
         trial_end_date: data.trial_end_date,
         last_transaction_at: data.last_transaction_at,
         created_at: data.created_at,
-        updated_at: data.updated_at
+        updated_at: data.updated_at,
       };
     } catch (error) {
-      console.error('Error getting token balance:', error);
+      console.error("Error getting token balance:", error);
       return null;
     }
   }
@@ -47,21 +47,24 @@ class TokenService {
   /**
    * Get user's transaction history
    */
-  async getTransactionHistory(userId: string, limit: number = 50): Promise<TokenTransaction[]> {
+  async getTransactionHistory(
+    userId: string,
+    limit: number = 50,
+  ): Promise<TokenTransaction[]> {
     try {
       const { data, error } = await this.client
-        .from('token_transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .from("token_transactions")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
         .limit(limit);
 
       if (error) {
-        console.error('Error fetching transaction history:', error);
+        console.error("Error fetching transaction history:", error);
         return [];
       }
 
-      return data.map(transaction => ({
+      return data.map((transaction) => ({
         id: transaction.id,
         user_id: transaction.user_id,
         transaction_type: transaction.transaction_type,
@@ -73,10 +76,10 @@ class TokenService {
         related_entity_id: transaction.related_entity_id,
         metadata: transaction.metadata,
         created_at: transaction.created_at,
-        processed_at: transaction.processed_at
+        processed_at: transaction.processed_at,
       }));
     } catch (error) {
-      console.error('Error getting transaction history:', error);
+      console.error("Error getting transaction history:", error);
       return [];
     }
   }
@@ -93,16 +96,21 @@ class TokenService {
 
       const expiresAt = new Date(balance.trial_end_date);
       const now = new Date();
-      const daysRemaining = Math.max(0, Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-      
+      const daysRemaining = Math.max(
+        0,
+        Math.ceil(
+          (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+        ),
+      );
+
       return {
         isActive: daysRemaining > 0 && balance.balance > 0,
         daysRemaining,
         tokensRemaining: balance.balance,
-        expiresAt
+        expiresAt,
       };
     } catch (error) {
-      console.error('Error getting trial status:', error);
+      console.error("Error getting trial status:", error);
       return null;
     }
   }
@@ -111,12 +119,12 @@ class TokenService {
    * Deduct tokens from user balance
    */
   async deductTokens(
-    userId: string, 
-    amount: number, 
+    userId: string,
+    amount: number,
     description: string,
     entityType?: string,
     entityId?: string,
-    metadata?: any
+    metadata?: any,
   ): Promise<TokenDeductionResult> {
     try {
       // Get current balance
@@ -124,18 +132,18 @@ class TokenService {
       if (!balance) {
         return {
           success: false,
-          error: 'User token account not found',
-          current_balance: 0
+          error: "User token account not found",
+          current_balance: 0,
         };
       }
 
       if (balance.balance < amount) {
         return {
           success: false,
-          error: 'Insufficient token balance',
+          error: "Insufficient token balance",
           current_balance: balance.balance,
           required: amount,
-          shortfall: amount - balance.balance
+          shortfall: amount - balance.balance,
         };
       }
 
@@ -144,30 +152,30 @@ class TokenService {
 
       // Update balance
       const { error: updateError } = await this.client
-        .from('user_tokens')
+        .from("user_tokens")
         .update({
           balance: newBalance,
           total_spent: newTotalSpent,
           last_transaction_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('user_id', userId);
+        .eq("user_id", userId);
 
       if (updateError) {
-        console.error('Error updating token balance:', updateError);
+        console.error("Error updating token balance:", updateError);
         return {
           success: false,
-          error: 'Failed to deduct tokens',
-          current_balance: balance.balance
+          error: "Failed to deduct tokens",
+          current_balance: balance.balance,
         };
       }
 
       // Log transaction
       const { error: transactionError } = await this.client
-        .from('token_transactions')
+        .from("token_transactions")
         .insert({
           user_id: userId,
-          transaction_type: 'spend',
+          transaction_type: "spend",
           amount: -amount,
           description,
           balance_before: balance.balance,
@@ -176,26 +184,26 @@ class TokenService {
           related_entity_id: entityId,
           metadata: {
             ...metadata,
-            deduction_reason: description
-          }
+            deduction_reason: description,
+          },
         });
 
       if (transactionError) {
-        console.error('Error logging transaction:', transactionError);
+        console.error("Error logging transaction:", transactionError);
       }
 
       return {
         success: true,
         tokens_deducted: amount,
         new_balance: newBalance,
-        transaction_logged: !transactionError
+        transaction_logged: !transactionError,
       };
     } catch (error) {
-      console.error('Error deducting tokens:', error);
+      console.error("Error deducting tokens:", error);
       return {
         success: false,
-        error: 'Internal error during token deduction',
-        current_balance: 0
+        error: "Internal error during token deduction",
+        current_balance: 0,
       };
     }
   }
@@ -207,18 +215,18 @@ class TokenService {
     userId: string,
     amount: number,
     description: string,
-    transactionType: 'earn' | 'bonus' | 'purchase' | 'refund' = 'earn',
+    transactionType: "earn" | "bonus" | "purchase" | "refund" = "earn",
     entityType?: string,
     entityId?: string,
-    metadata?: any
+    metadata?: any,
   ): Promise<TokenDeductionResult> {
     try {
       const balance = await this.getTokenBalance(userId);
       if (!balance) {
         return {
           success: false,
-          error: 'User token account not found',
-          current_balance: 0
+          error: "User token account not found",
+          current_balance: 0,
         };
       }
 
@@ -227,27 +235,27 @@ class TokenService {
 
       // Update balance
       const { error: updateError } = await this.client
-        .from('user_tokens')
+        .from("user_tokens")
         .update({
           balance: newBalance,
           total_earned: newTotalEarned,
           last_transaction_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('user_id', userId);
+        .eq("user_id", userId);
 
       if (updateError) {
-        console.error('Error updating token balance:', updateError);
+        console.error("Error updating token balance:", updateError);
         return {
           success: false,
-          error: 'Failed to add tokens',
-          current_balance: balance.balance
+          error: "Failed to add tokens",
+          current_balance: balance.balance,
         };
       }
 
       // Log transaction
       const { error: transactionError } = await this.client
-        .from('token_transactions')
+        .from("token_transactions")
         .insert({
           user_id: userId,
           transaction_type: transactionType,
@@ -259,26 +267,26 @@ class TokenService {
           related_entity_id: entityId,
           metadata: {
             ...metadata,
-            earning_reason: description
-          }
+            earning_reason: description,
+          },
         });
 
       if (transactionError) {
-        console.error('Error logging transaction:', transactionError);
+        console.error("Error logging transaction:", transactionError);
       }
 
       return {
         success: true,
         tokens_added: amount,
         new_balance: newBalance,
-        transaction_logged: !transactionError
+        transaction_logged: !transactionError,
       };
     } catch (error) {
-      console.error('Error adding tokens:', error);
+      console.error("Error adding tokens:", error);
       return {
         success: false,
-        error: 'Internal error during token addition',
-        current_balance: 0
+        error: "Internal error during token addition",
+        current_balance: 0,
       };
     }
   }
@@ -291,43 +299,40 @@ class TokenService {
       const trialStartDate = new Date();
       const trialEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
-      const { error } = await this.client
-        .from('user_tokens')
-        .insert({
-          user_id: userId,
-          balance: 4800,
-          total_earned: 4800,
-          total_spent: 0,
-          trial_start_date: trialStartDate.toISOString(),
-          trial_end_date: trialEndDate.toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+      const { error } = await this.client.from("user_tokens").insert({
+        user_id: userId,
+        balance: 4800,
+        total_earned: 4800,
+        total_spent: 0,
+        trial_start_date: trialStartDate.toISOString(),
+        trial_end_date: trialEndDate.toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
-      if (error && error.code !== '23505') { // Ignore duplicate key error
-        console.error('Error initializing user tokens:', error);
+      if (error && error.code !== "23505") {
+        // Ignore duplicate key error
+        console.error("Error initializing user tokens:", error);
         return false;
       }
 
       // Log welcome bonus transaction
-      await this.client
-        .from('token_transactions')
-        .insert({
-          user_id: userId,
-          transaction_type: 'bonus',
-          amount: 4800,
-          description: 'Welcome to MessyOS! 30-day free trial with 4800 tokens',
-          balance_before: 0,
-          balance_after: 4800,
-          metadata: {
-            bonus_type: 'welcome_trial',
-            trial_duration_days: 30
-          }
-        });
+      await this.client.from("token_transactions").insert({
+        user_id: userId,
+        transaction_type: "bonus",
+        amount: 4800,
+        description: "Welcome to MessyOS! 30-day free trial with 4800 tokens",
+        balance_before: 0,
+        balance_after: 4800,
+        metadata: {
+          bonus_type: "welcome_trial",
+          trial_duration_days: 30,
+        },
+      });
 
       return true;
     } catch (error) {
-      console.error('Error initializing user tokens:', error);
+      console.error("Error initializing user tokens:", error);
       return false;
     }
   }
@@ -338,17 +343,17 @@ class TokenService {
   async getEarningOpportunities(): Promise<TokenEarningOpportunity[]> {
     try {
       const { data, error } = await this.client
-        .from('token_earning_opportunities')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
+        .from("token_earning_opportunities")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
 
       if (error) {
-        console.error('Error fetching earning opportunities:', error);
+        console.error("Error fetching earning opportunities:", error);
         return [];
       }
 
-      return data.map(opportunity => ({
+      return data.map((opportunity) => ({
         id: opportunity.id,
         opportunity_type: opportunity.opportunity_type,
         name: opportunity.name,
@@ -358,10 +363,10 @@ class TokenService {
         conditions: opportunity.conditions,
         is_active: opportunity.is_active,
         start_date: opportunity.start_date,
-        end_date: opportunity.end_date
+        end_date: opportunity.end_date,
       }));
     } catch (error) {
-      console.error('Error getting earning opportunities:', error);
+      console.error("Error getting earning opportunities:", error);
       return [];
     }
   }
@@ -372,34 +377,36 @@ class TokenService {
   async getUserEarnings(userId: string): Promise<UserTokenEarning[]> {
     try {
       const { data, error } = await this.client
-        .from('user_token_earnings')
-        .select(`
+        .from("user_token_earnings")
+        .select(
+          `
           *,
           token_earning_opportunities (
             name,
             description,
             opportunity_type
           )
-        `)
-        .eq('user_id', userId)
-        .order('claimed_at', { ascending: false });
+        `,
+        )
+        .eq("user_id", userId)
+        .order("claimed_at", { ascending: false });
 
       if (error) {
-        console.error('Error fetching user earnings:', error);
+        console.error("Error fetching user earnings:", error);
         return [];
       }
 
-      return data.map(earning => ({
+      return data.map((earning) => ({
         id: earning.id,
         user_id: earning.user_id,
         opportunity_id: earning.opportunity_id,
         tokens_earned: earning.tokens_earned,
         claimed_at: earning.claimed_at,
         progress_data: earning.progress_data,
-        opportunity: earning.token_earning_opportunities
+        opportunity: earning.token_earning_opportunities,
       }));
     } catch (error) {
-      console.error('Error getting user earnings:', error);
+      console.error("Error getting user earnings:", error);
       return [];
     }
   }
@@ -408,7 +415,7 @@ class TokenService {
    * Format token amount for display
    */
   formatTokenAmount(amount: number): string {
-    return new Intl.NumberFormat('en-US').format(amount);
+    return new Intl.NumberFormat("en-US").format(amount);
   }
 
   /**
@@ -424,12 +431,12 @@ class TokenService {
    */
   getTokenCosts() {
     return {
-      'ai_chat': 10,
-      'ai_insight': 25,
-      'ai_analysis': 50,
-      'ai_recommendation': 15,
-      'ai_summary': 20,
-      'ai_action': 30
+      ai_chat: 10,
+      ai_insight: 25,
+      ai_analysis: 50,
+      ai_recommendation: 15,
+      ai_summary: 20,
+      ai_action: 30,
     };
   }
 }

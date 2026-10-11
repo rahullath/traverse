@@ -1,8 +1,12 @@
 // Daily Plan Generator V1 - Exit Time Calculator
 
-import { TravelService } from '../uk-student/travel-service';
-import type { Location, TravelConditions, TravelPreferences } from '../../types/uk-student-travel';
-import type { TravelMethod } from '../../types/daily-plan';
+import { TravelService } from "../uk-student/travel-service";
+import type {
+  Location,
+  TravelConditions,
+  TravelPreferences,
+} from "../../types/uk-student-travel";
+import type { TravelMethod } from "../../types/daily-plan";
 
 export interface Commitment {
   id: string;
@@ -26,7 +30,7 @@ export interface ExitTimeCalculatorOptions {
   userEnergy?: number; // 1-5 scale, defaults to 3
   weather?: {
     temperature: number;
-    condition: 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy';
+    condition: "sunny" | "cloudy" | "rainy" | "stormy" | "snowy";
     windSpeed: number;
     humidity: number;
     precipitation: number;
@@ -47,22 +51,22 @@ export class ExitTimeCalculator {
 
   /**
    * Calculate exit time for a commitment
-   * 
+   *
    * Formula: exitTime = commitmentStart - travelDuration - preparationBuffer
-   * 
+   *
    * @param commitment - The commitment to calculate exit time for
    * @param options - Current location and optional conditions
    * @returns Exit time result with travel details
    */
   async calculateExitTime(
     commitment: Commitment,
-    options: ExitTimeCalculatorOptions
+    options: ExitTimeCalculatorOptions,
   ): Promise<ExitTimeResult> {
     const { currentLocation, userEnergy = 3, weather } = options;
 
     // If commitment has no location, we can't calculate travel time
     if (!commitment.location) {
-      return this.createFallbackResult(commitment, 'No location specified');
+      return this.createFallbackResult(commitment, "No location specified");
     }
 
     try {
@@ -79,14 +83,14 @@ export class ExitTimeCalculator {
 
       // Build travel preferences (use defaults)
       const preferences: TravelPreferences = {
-        preferredMethod: 'mixed',
+        preferredMethod: "mixed",
         maxWalkingDistance: 1500, // 1.5km
         weatherThreshold: {
           minTemperature: 0,
           maxWindSpeed: 30,
           maxPrecipitation: 10,
         },
-        fitnessLevel: 'medium',
+        fitnessLevel: "medium",
         budgetConstraints: {
           dailyLimit: 500, // £5
           weeklyLimit: 2000, // £20
@@ -102,14 +106,14 @@ export class ExitTimeCalculator {
         currentLocation,
         commitment.location,
         conditions,
-        preferences
+        preferences,
       );
 
       // Calculate exit time
       const travelDuration = route.duration;
       const totalMinutes = travelDuration + PREPARATION_BUFFER_MINUTES;
       const exitTime = new Date(
-        commitment.startTime.getTime() - totalMinutes * 60 * 1000
+        commitment.startTime.getTime() - totalMinutes * 60 * 1000,
       );
 
       return {
@@ -122,21 +126,21 @@ export class ExitTimeCalculator {
       };
     } catch (error) {
       // If travel service fails, use fallback
-      console.error('Travel service failed, using fallback:', error);
-      return this.createFallbackResult(commitment, 'Travel service error');
+      console.error("Travel service failed, using fallback:", error);
+      return this.createFallbackResult(commitment, "Travel service error");
     }
   }
 
   /**
    * Calculate exit times for multiple commitments
-   * 
+   *
    * @param commitments - Array of commitments
    * @param options - Current location and optional conditions
    * @returns Array of exit time results
    */
   async calculateExitTimes(
     commitments: Commitment[],
-    options: ExitTimeCalculatorOptions
+    options: ExitTimeCalculatorOptions,
   ): Promise<ExitTimeResult[]> {
     const results: ExitTimeResult[] = [];
 
@@ -154,13 +158,16 @@ export class ExitTimeCalculator {
    */
   private createFallbackResult(
     commitment: Commitment,
-    reason: string
+    reason: string,
   ): ExitTimeResult {
-    console.warn(`Using fallback exit time for commitment ${commitment.id}: ${reason}`);
+    console.warn(
+      `Using fallback exit time for commitment ${commitment.id}: ${reason}`,
+    );
 
-    const totalMinutes = DEFAULT_TRAVEL_DURATION_MINUTES + PREPARATION_BUFFER_MINUTES;
+    const totalMinutes =
+      DEFAULT_TRAVEL_DURATION_MINUTES + PREPARATION_BUFFER_MINUTES;
     const exitTime = new Date(
-      commitment.startTime.getTime() - totalMinutes * 60 * 1000
+      commitment.startTime.getTime() - totalMinutes * 60 * 1000,
     );
 
     return {
@@ -168,7 +175,7 @@ export class ExitTimeCalculator {
       exitTime,
       travelDuration: DEFAULT_TRAVEL_DURATION_MINUTES,
       preparationTime: PREPARATION_BUFFER_MINUTES,
-      travelMethod: 'walk', // Default to walking
+      travelMethod: "walk", // Default to walking
       travelBlockDuration: totalMinutes,
     };
   }
@@ -179,7 +186,7 @@ export class ExitTimeCalculator {
   private getDefaultWeather() {
     return {
       temperature: 15,
-      condition: 'cloudy' as const,
+      condition: "cloudy" as const,
       windSpeed: 10,
       humidity: 70,
       precipitation: 0,

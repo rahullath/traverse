@@ -29,43 +29,45 @@ export class HabitOfflineSync {
   }
 
   private setupEventListeners() {
-    window.addEventListener('online', () => {
+    window.addEventListener("online", () => {
       this.isOnline = true;
       this.syncQueue();
       this.registerBackgroundSync();
     });
 
-    window.addEventListener('offline', () => {
+    window.addEventListener("offline", () => {
       this.isOnline = false;
     });
 
     // Sync when page becomes visible
-    document.addEventListener('visibilitychange', () => {
+    document.addEventListener("visibilitychange", () => {
       if (!document.hidden && this.isOnline) {
         this.syncQueue();
       }
     });
 
     // Listen for service worker messages
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data.type === 'HABIT_SYNC_COMPLETE') {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("message", (event) => {
+        if (event.data.type === "HABIT_SYNC_COMPLETE") {
           // Remove synced entries from local queue
-          this.queue = this.queue.filter(entry => !entry.synced);
+          this.queue = this.queue.filter((entry) => !entry.synced);
           this.saveQueue();
-          
+
           // Dispatch event for UI updates
-          window.dispatchEvent(new CustomEvent('habitSyncComplete', {
-            detail: { 
-              success: event.data.syncedCount, 
-              failed: event.data.failedCount, 
-              remaining: this.queue.length 
-            }
-          }));
-        } else if (event.data.type === 'GET_OFFLINE_QUEUE') {
+          window.dispatchEvent(
+            new CustomEvent("habitSyncComplete", {
+              detail: {
+                success: event.data.syncedCount,
+                failed: event.data.failedCount,
+                remaining: this.queue.length,
+              },
+            }),
+          );
+        } else if (event.data.type === "GET_OFFLINE_QUEUE") {
           // Send queue to service worker
           event.ports[0].postMessage({ queue: this.queue });
-        } else if (event.data.type === 'UPDATE_OFFLINE_QUEUE') {
+        } else if (event.data.type === "UPDATE_OFFLINE_QUEUE") {
           // Update queue from service worker
           this.queue = event.data.queue;
           this.saveQueue();
@@ -76,21 +78,21 @@ export class HabitOfflineSync {
 
   private loadQueue() {
     try {
-      const saved = localStorage.getItem('habitOfflineQueue');
+      const saved = localStorage.getItem("habitOfflineQueue");
       if (saved) {
         this.queue = JSON.parse(saved);
       }
     } catch (error) {
-      console.error('Failed to load offline queue:', error);
+      console.error("Failed to load offline queue:", error);
       this.queue = [];
     }
   }
 
   private saveQueue() {
     try {
-      localStorage.setItem('habitOfflineQueue', JSON.stringify(this.queue));
+      localStorage.setItem("habitOfflineQueue", JSON.stringify(this.queue));
     } catch (error) {
-      console.error('Failed to save offline queue:', error);
+      console.error("Failed to save offline queue:", error);
     }
   }
 
@@ -99,10 +101,10 @@ export class HabitOfflineSync {
       id: `offline_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       habitId,
       value,
-      date: date || new Date().toISOString().split('T')[0],
+      date: date || new Date().toISOString().split("T")[0],
       timestamp: Date.now(),
       synced: false,
-      retryCount: 0
+      retryCount: 0,
     };
 
     this.queue.push(entry);
@@ -128,7 +130,9 @@ export class HabitOfflineSync {
     let successCount = 0;
     let failedCount = 0;
 
-    const unsyncedEntries = this.queue.filter(entry => !entry.synced && entry.retryCount < this.maxRetries);
+    const unsyncedEntries = this.queue.filter(
+      (entry) => !entry.synced && entry.retryCount < this.maxRetries,
+    );
 
     for (const entry of unsyncedEntries) {
       try {
@@ -136,37 +140,45 @@ export class HabitOfflineSync {
         entry.synced = true;
         successCount++;
       } catch (error) {
-        console.error('Failed to sync entry:', error);
+        console.error("Failed to sync entry:", error);
         entry.retryCount++;
         failedCount++;
       }
     }
 
     // Remove synced entries and entries that exceeded max retries
-    this.queue = this.queue.filter(entry => !entry.synced && entry.retryCount < this.maxRetries);
+    this.queue = this.queue.filter(
+      (entry) => !entry.synced && entry.retryCount < this.maxRetries,
+    );
     this.saveQueue();
 
     this.syncInProgress = false;
 
     // Dispatch custom event for UI updates
-    window.dispatchEvent(new CustomEvent('habitSyncComplete', {
-      detail: { success: successCount, failed: failedCount, remaining: this.queue.length }
-    }));
+    window.dispatchEvent(
+      new CustomEvent("habitSyncComplete", {
+        detail: {
+          success: successCount,
+          failed: failedCount,
+          remaining: this.queue.length,
+        },
+      }),
+    );
 
     return { success: successCount, failed: failedCount };
   }
 
   private async syncEntry(entry: OfflineHabitEntry): Promise<void> {
     const response = await fetch(`/api/habits/${entry.habitId}/log-enhanced`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         value: entry.value,
         date: entry.date,
-        notes: `Synced from offline (${new Date(entry.timestamp).toLocaleString()})`
-      })
+        notes: `Synced from offline (${new Date(entry.timestamp).toLocaleString()})`,
+      }),
     });
 
     if (!response.ok) {
@@ -178,10 +190,10 @@ export class HabitOfflineSync {
   getQueueStatus() {
     return {
       total: this.queue.length,
-      unsynced: this.queue.filter(e => !e.synced).length,
-      failed: this.queue.filter(e => e.retryCount >= this.maxRetries).length,
+      unsynced: this.queue.filter((e) => !e.synced).length,
+      failed: this.queue.filter((e) => e.retryCount >= this.maxRetries).length,
       isOnline: this.isOnline,
-      syncInProgress: this.syncInProgress
+      syncInProgress: this.syncInProgress,
     };
   }
 
@@ -192,7 +204,7 @@ export class HabitOfflineSync {
 
   // Force sync a specific entry
   async retrySyncEntry(entryId: string): Promise<boolean> {
-    const entry = this.queue.find(e => e.id === entryId);
+    const entry = this.queue.find((e) => e.id === entryId);
     if (!entry || entry.synced) return false;
 
     try {
@@ -208,12 +220,17 @@ export class HabitOfflineSync {
   }
 
   private registerBackgroundSync() {
-    if ('serviceWorker' in navigator && 'sync' in (window as any).ServiceWorkerRegistration.prototype) {
-      navigator.serviceWorker.ready.then(registration => {
-        return (registration as any).sync.register('habit-sync');
-      }).catch(error => {
-        console.error('Background sync registration failed:', error);
-      });
+    if (
+      "serviceWorker" in navigator &&
+      "sync" in (window as any).ServiceWorkerRegistration.prototype
+    ) {
+      navigator.serviceWorker.ready
+        .then((registration) => {
+          return (registration as any).sync.register("habit-sync");
+        })
+        .catch((error) => {
+          console.error("Background sync registration failed:", error);
+        });
     }
   }
 }
@@ -221,22 +238,28 @@ export class HabitOfflineSync {
 // Utility functions for React components
 export const useOfflineSync = () => {
   const sync = HabitOfflineSync.getInstance();
-  
+
   return {
-    addToQueue: (habitId: string, value: number, date?: string) => sync.addToQueue(habitId, value, date),
+    addToQueue: (habitId: string, value: number, date?: string) =>
+      sync.addToQueue(habitId, value, date),
     syncQueue: () => sync.syncQueue(),
     getStatus: () => sync.getQueueStatus(),
-    clearQueue: () => sync.clearQueue()
+    clearQueue: () => sync.clearQueue(),
   };
 };
 
 // Background sync registration for service worker
 export const registerBackgroundSync = () => {
-  if ('serviceWorker' in navigator && 'sync' in (window as any).ServiceWorkerRegistration.prototype) {
-    navigator.serviceWorker.ready.then(registration => {
-      return (registration as any).sync.register('habit-sync');
-    }).catch(error => {
-      console.error('Background sync registration failed:', error);
-    });
+  if (
+    "serviceWorker" in navigator &&
+    "sync" in (window as any).ServiceWorkerRegistration.prototype
+  ) {
+    navigator.serviceWorker.ready
+      .then((registration) => {
+        return (registration as any).sync.register("habit-sync");
+      })
+      .catch((error) => {
+        console.error("Background sync registration failed:", error);
+      });
   }
 };

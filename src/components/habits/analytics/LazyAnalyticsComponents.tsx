@@ -1,29 +1,37 @@
 // src/components/habits/analytics/LazyAnalyticsComponents.tsx - Lazy loading wrapper for analytics components
-import React, { Suspense, lazy, useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from "react";
 
 // Lazy load analytics components
-const CompletionRateChart = lazy(() => 
-  import('./CompletionRateChart').then(module => ({ default: module.CompletionRateChart }))
+const CompletionRateChart = lazy(() =>
+  import("./CompletionRateChart").then((module) => ({
+    default: module.CompletionRateChart,
+  })),
 );
 
-const HeatmapCalendar = lazy(() => 
-  import('./HeatmapCalendar').then(module => ({ default: module.HeatmapCalendar }))
+const HeatmapCalendar = lazy(() =>
+  import("./HeatmapCalendar").then((module) => ({
+    default: module.HeatmapCalendar,
+  })),
 );
 
-const ContextSuccessRates = lazy(() => 
-  import('./ContextSuccessRates').then(module => ({ default: module.ContextSuccessRates }))
+const ContextSuccessRates = lazy(() =>
+  import("./ContextSuccessRates").then((module) => ({
+    default: module.ContextSuccessRates,
+  })),
 );
 
-const StreakTimeline = lazy(() => 
-  import('./StreakTimeline').then(module => ({ default: module.StreakTimeline }))
+const StreakTimeline = lazy(() =>
+  import("./StreakTimeline").then((module) => ({
+    default: module.StreakTimeline,
+  })),
 );
 
-const CrossHabitCorrelations = lazy(() => 
-  import('./CrossHabitCorrelations')
-);
+const CrossHabitCorrelations = lazy(() => import("./CrossHabitCorrelations"));
 
-const PatternInsights = lazy(() => 
-  import('./PatternInsights').then(module => ({ default: module.PatternInsights }))
+const PatternInsights = lazy(() =>
+  import("./PatternInsights").then((module) => ({
+    default: module.PatternInsights,
+  })),
 );
 
 // Loading skeleton components
@@ -89,25 +97,38 @@ class AnalyticsErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Analytics component error:', error, errorInfo);
+    console.error("Analytics component error:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback || (
-        <div className="card border-accent-error/20 bg-accent-error/5">
-          <div className="flex items-center space-x-3 text-accent-error">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-            </svg>
-            <div>
-              <h3 className="font-medium">Analytics Error</h3>
-              <p className="text-sm text-text-secondary mt-1">
-                Failed to load this analytics component. Please try refreshing the page.
-              </p>
+      return (
+        this.props.fallback || (
+          <div className="card border-accent-error/20 bg-accent-error/5">
+            <div className="flex items-center space-x-3 text-accent-error">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                ></path>
+              </svg>
+              <div>
+                <h3 className="font-medium">Analytics Error</h3>
+                <p className="text-sm text-text-secondary mt-1">
+                  Failed to load this analytics component. Please try refreshing
+                  the page.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )
       );
     }
 
@@ -118,7 +139,7 @@ class AnalyticsErrorBoundary extends React.Component<
 // Intersection Observer hook for lazy loading
 const useIntersectionObserver = (
   ref: React.RefObject<Element>,
-  options: IntersectionObserverInit = {}
+  options: IntersectionObserverInit = {},
 ) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
 
@@ -132,9 +153,9 @@ const useIntersectionObserver = (
       },
       {
         threshold: 0.1,
-        rootMargin: '50px',
-        ...options
-      }
+        rootMargin: "50px",
+        ...options,
+      },
     );
 
     observer.observe(element);
@@ -154,10 +175,10 @@ interface LazyComponentProps {
   className?: string;
 }
 
-const LazyWrapper: React.FC<LazyComponentProps> = ({ 
-  children, 
-  fallback, 
-  className = '' 
+const LazyWrapper: React.FC<LazyComponentProps> = ({
+  children,
+  fallback,
+  className = "",
 }) => {
   const ref = React.useRef<HTMLDivElement>(null);
   const isVisible = useIntersectionObserver(ref);
@@ -166,9 +187,7 @@ const LazyWrapper: React.FC<LazyComponentProps> = ({
     <div ref={ref} className={className}>
       {isVisible ? (
         <AnalyticsErrorBoundary>
-          <Suspense fallback={fallback}>
-            {children}
-          </Suspense>
+          <Suspense fallback={fallback}>{children}</Suspense>
         </AnalyticsErrorBoundary>
       ) : (
         fallback
@@ -202,16 +221,18 @@ export const LazyStreakTimeline: React.FC<{ data: any }> = ({ data }) => (
   </LazyWrapper>
 );
 
-export const LazyCrossHabitCorrelations: React.FC<{ data: any }> = ({ data }) => (
+export const LazyCrossHabitCorrelations: React.FC<{ data: any }> = ({
+  data,
+}) => (
   <LazyWrapper fallback={<ChartSkeleton />}>
     <CrossHabitCorrelations data={data} />
   </LazyWrapper>
 );
 
-export const LazyPatternInsights: React.FC<{ data: any; showDetailed?: boolean }> = ({ 
-  data, 
-  showDetailed 
-}) => (
+export const LazyPatternInsights: React.FC<{
+  data: any;
+  showDetailed?: boolean;
+}> = ({ data, showDetailed }) => (
   <LazyWrapper fallback={<InsightsSkeleton />}>
     <PatternInsights data={data} showDetailed={showDetailed} />
   </LazyWrapper>
@@ -226,28 +247,29 @@ export const useAnalyticsPerformance = () => {
   }>({
     loadTime: 0,
     renderTime: 0,
-    componentCount: 0
+    componentCount: 0,
   });
 
   const startTiming = () => {
     return performance.now();
   };
 
-  const endTiming = (startTime: number, type: 'load' | 'render') => {
+  const endTiming = (startTime: number, type: "load" | "render") => {
     const endTime = performance.now();
     const duration = endTime - startTime;
-    
-    setMetrics(prev => ({
+
+    setMetrics((prev) => ({
       ...prev,
-      [type === 'load' ? 'loadTime' : 'renderTime']: duration,
-      componentCount: prev.componentCount + 1
+      [type === "load" ? "loadTime" : "renderTime"]: duration,
+      componentCount: prev.componentCount + 1,
     }));
 
     // Log performance metrics for monitoring
-    if (duration > 1000) { // Log slow components
+    if (duration > 1000) {
+      // Log slow components
       console.warn(`Slow analytics component ${type}:`, {
         duration: `${duration.toFixed(2)}ms`,
-        type
+        type,
       });
     }
   };
@@ -259,16 +281,16 @@ export const useAnalyticsPerformance = () => {
 export const preloadAnalyticsComponents = () => {
   // Preload components when user is likely to need them
   const preloadPromises = [
-    import('./CompletionRateChart'),
-    import('./HeatmapCalendar'),
-    import('./ContextSuccessRates'),
-    import('./StreakTimeline'),
-    import('./CrossHabitCorrelations'),
-    import('./PatternInsights')
+    import("./CompletionRateChart"),
+    import("./HeatmapCalendar"),
+    import("./ContextSuccessRates"),
+    import("./StreakTimeline"),
+    import("./CrossHabitCorrelations"),
+    import("./PatternInsights"),
   ];
 
-  return Promise.all(preloadPromises).catch(error => {
-    console.warn('Failed to preload analytics components:', error);
+  return Promise.all(preloadPromises).catch((error) => {
+    console.warn("Failed to preload analytics components:", error);
   });
 };
 
@@ -278,20 +300,20 @@ export const useAnalyticsDataPrefetch = (userId: string) => {
 
   const prefetchData = async () => {
     if (isPrefetching) return;
-    
+
     setIsPrefetching(true);
-    
+
     try {
       // Prefetch common analytics data
       const prefetchPromises = [
         fetch(`/api/habits/analytics/export?format=json&dateRange=30`),
         fetch(`/api/habits?user_id=${userId}`),
-        fetch(`/api/cross-module/correlations?user_id=${userId}`)
+        fetch(`/api/cross-module/correlations?user_id=${userId}`),
       ];
 
       await Promise.all(prefetchPromises);
     } catch (error) {
-      console.warn('Failed to prefetch analytics data:', error);
+      console.warn("Failed to prefetch analytics data:", error);
     } finally {
       setIsPrefetching(false);
     }
@@ -309,5 +331,5 @@ export default {
   LazyPatternInsights,
   preloadAnalyticsComponents,
   useAnalyticsPerformance,
-  useAnalyticsDataPrefetch
+  useAnalyticsDataPrefetch,
 };

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>traverse — a convivial tool for the day</title>
+
+  <template id="__bundler_thumbnail" data-bg-color="#efece6">
+    <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1200" height="800" fill="#efece6"/>
+      <g stroke="#7a7368" stroke-width="2" fill="none">
+        <line x1="200" y1="260" x2="1000" y2="260"/>
+        <line x1="200" y1="380" x2="1000" y2="380"/>
+        <line x1="200" y1="500" x2="1000" y2="500"/>
+        <line x1="200" y1="620" x2="1000" y2="620"/>
+      </g>
+      <g fill="#3e5b7e" font-family="Georgia, serif">
+        <circle cx="170" cy="440" r="6"/>
+        <rect x="160" y="395" width="880" height="90" fill="#dde6f0" opacity="0.55" stroke="#3e5b7e" stroke-width="1.5"/>
+      </g>
+      <text x="600" y="160" text-anchor="middle" font-family="Georgia, serif" font-size="72" fill="#1c1a16" font-style="italic">traverse</text>
+      <text x="600" y="200" text-anchor="middle" font-family="monospace" font-size="18" fill="#7a7368" letter-spacing="4">A QUIET RUNTIME FOR THE DAY</text>
+      <g font-family="monospace" font-size="20" fill="#7a7368">
+        <text x="240" y="270">08:00</text>
+        <text x="240" y="390">09:15</text>
+        <text x="240" y="510">11:00</text>
+        <text x="240" y="630">13:00</text>
+      </g>
+      <g font-family="Georgia, serif" font-size="22" fill="#2a2620">
+        <text x="380" y="270">Shower</text>
+        <text x="380" y="390">Dress · pack bag · keys, phone</text>
+        <text x="380" y="510" font-style="italic">Linguistics lecture · King's 2.04</text>
+        <text x="380" y="630">Lie down · do nothing</text>
+      </g>
+    </svg>
+  </template>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* host page: a quiet stage for the phone frame */
+    html, body { margin: 0; padding: 0; min-height: 100%; background: #efece6; }
+    body {
+      font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+      color: #2a2620;
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 28px 16px 96px;
+      box-sizing: border-box;
+      min-height: 100vh;
+    }
+    .stage-cap {
+      max-width: 760px;
+      text-align: center;
+      margin: 0 0 18px;
+    }
+    .stage-cap h1 {
+      font-family: 'Newsreader', Georgia, serif;
+      font-weight: 400;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      margin: 0 0 6px;
+      color: #1c1a16;
+    }
+    .stage-cap p {
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 14px;
+      color: #6a655c;
+      margin: 0;
+      max-width: 60ch;
+      margin-left: auto; margin-right: auto;
+    }
+    .stage-cap small {
+      display: block;
+      margin-top: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      color: #8c867c;
+      text-transform: uppercase;
+    }
+    .phone-shell {
+      filter: drop-shadow(0 30px 50px rgba(40, 30, 15, 0.13));
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-cap">
+    <h1>traverse</h1>
+    <p>A convivial, stateless tool for neurodivergent executive dysfunction. Paper-and-ink runtime. No streaks, no analytics, no retention loops.</p>
+    <small>mirror v2 · prototype · open Tweaks for variations</small>
+  </div>
+
+  <div class="phone-shell">
+    <div id="root"></div>
+  </div>
+
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- iOS frame + tweaks panel -->
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+  <!-- Screens -->
+  <script type="text/babel" src="screens/today.jsx"></script>
+  <script type="text/babel" src="screens/plan.jsx"></script>
+  <script type="text/babel" src="screens/empty.jsx"></script>
+  <script type="text/babel" src="screens/onboarding.jsx"></script>
+  <script type="text/babel" src="screens/clinical.jsx"></script>
+  <script type="text/babel" src="screens/settings.jsx"></script>
+
+  <!-- Mount: a single React tree wraps the app in an iOS device frame. -->
+  <script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

@@ -4,16 +4,27 @@ type EmailPayload = {
   html: string;
 };
 
-const RESEND_API_URL = 'https://api.resend.com/emails';
+const RESEND_API_URL = "https://api.resend.com/emails";
 
-function getEnvValue(primary: string | undefined, fallback: string | undefined): string | undefined {
+function getEnvValue(
+  primary: string | undefined,
+  fallback: string | undefined,
+): string | undefined {
   const value = primary || fallback;
-  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
-export async function sendTransactionalEmail(payload: EmailPayload): Promise<boolean> {
-  const apiKey = getEnvValue(import.meta.env.RESEND_API_KEY, process.env.RESEND_API_KEY);
-  const from = getEnvValue(import.meta.env.RESEND_FROM_EMAIL, process.env.RESEND_FROM_EMAIL);
+export async function sendTransactionalEmail(
+  payload: EmailPayload,
+): Promise<boolean> {
+  const apiKey = getEnvValue(
+    import.meta.env.RESEND_API_KEY,
+    process.env.RESEND_API_KEY,
+  );
+  const from = getEnvValue(
+    import.meta.env.RESEND_FROM_EMAIL,
+    process.env.RESEND_FROM_EMAIL,
+  );
 
   if (!apiKey || !from) {
     // Email delivery is optional in local/staging environments.
@@ -22,10 +33,10 @@ export async function sendTransactionalEmail(payload: EmailPayload): Promise<boo
 
   try {
     const response = await fetch(RESEND_API_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         from,
@@ -41,10 +52,12 @@ export async function sendTransactionalEmail(payload: EmailPayload): Promise<boo
   }
 }
 
-export async function sendWaitlistConfirmationEmail(email: string): Promise<boolean> {
+export async function sendWaitlistConfirmationEmail(
+  email: string,
+): Promise<boolean> {
   return sendTransactionalEmail({
     to: email,
-    subject: 'You are on the MeshOS waitlist',
+    subject: "You are on the MeshOS waitlist",
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.5">
         <h2>You're on the waitlist</h2>
@@ -58,7 +71,7 @@ export async function sendWaitlistConfirmationEmail(email: string): Promise<bool
 export async function sendWelcomeEmail(email: string): Promise<boolean> {
   return sendTransactionalEmail({
     to: email,
-    subject: 'Welcome to MeshOS',
+    subject: "Welcome to MeshOS",
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.5">
         <h2>Welcome to MeshOS</h2>

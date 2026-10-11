@@ -10,15 +10,22 @@ export interface Anchor {
   end: Date;
   title: string;
   location?: string;
+  location_label?: string;
   type: AnchorType;
   must_attend: boolean;
   calendar_event_id: string;
+  max_late_minutes?: number;
 }
 
 /**
  * Anchor Type - Classification of calendar events
  */
-export type AnchorType = 'class' | 'seminar' | 'workshop' | 'appointment' | 'other';
+export type AnchorType =
+  | "class"
+  | "seminar"
+  | "workshop"
+  | "appointment"
+  | "other";
 
 /**
  * Calendar Event - Raw event from calendar service
@@ -60,7 +67,7 @@ export interface AnchorServiceConfig {
   seminarKeywords: string[];
   workshopKeywords: string[];
   appointmentKeywords: string[];
-  
+
   // Default must_attend behavior
   defaultMustAttend: boolean;
   requireLocationForMustAttend: boolean;
@@ -70,10 +77,10 @@ export interface AnchorServiceConfig {
  * Default configuration for anchor classification
  */
 export const DEFAULT_ANCHOR_CONFIG: AnchorServiceConfig = {
-  classKeywords: ['lecture', 'class', 'tutorial', 'lab', 'practical'],
-  seminarKeywords: ['seminar', 'session'],
-  workshopKeywords: ['workshop', 'training', 'bootcamp'],
-  appointmentKeywords: ['appointment', 'meeting', 'consultation', 'interview'],
+  classKeywords: ["lecture", "class", "tutorial", "lab", "practical"],
+  seminarKeywords: ["seminar", "session"],
+  workshopKeywords: ["workshop", "training", "bootcamp"],
+  appointmentKeywords: ["appointment", "meeting", "consultation", "interview"],
   defaultMustAttend: false,
   requireLocationForMustAttend: true,
 };
