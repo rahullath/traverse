@@ -55,11 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Get token balance and trial status
-      const [tokenBalance, trialStatus] = await Promise.all([
-        authService.getTokenBalance(user.id),
-        authService.getTrialStatus(user.id),
-      ]);
+      // traverse is donation-funded: no token balance or trial to load.
+      const tokenBalance = null;
+      const trialStatus = null;
 
       setAuthState((prev) => ({
         ...prev,
@@ -87,10 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!authState.user) return;
 
     try {
-      const [tokenBalance, trialStatus] = await Promise.all([
-        authService.getTokenBalance(authState.user.id),
-        authService.getTrialStatus(authState.user.id),
-      ]);
+      const tokenBalance = null;
+      const trialStatus = null;
 
       setAuthState((prev) => ({
         ...prev,

@@ -102,8 +102,6 @@ export default function SettingsPageContent({ email, theme: initTheme, motion: i
         <Setting name="Travel profiles" hint="Reusable location-to-location travel times and lateness overrides."
           control={<Button variant="quiet" className="tv-inline-btn" onClick={() => { window.location.href = '/settings/travel'; }}>Open</Button>} />
 
-        <Setting name="Habit log" hint="Kept around for users mid-migration. Feeds chain padding, never streaks. Will be removed when the new system stabilises."
-          control={<span className="tv-ui-s" style={{ fontStyle: 'italic' }}>legacy</span>} />
       </section>
 
       <section>

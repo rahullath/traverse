@@ -53,4 +53,33 @@ describe("PlanPage", () => {
     expect(generateBodies[1].manualAnchor.anchor_type).toBe("appointment");
   });
 
+
+  it("anchor-less: a suggestion pre-fills a real anchor for the chain builder", async () => {
+    render(<PlanPage voice="plain" anchorless="choice" />);
+    fireEvent.click(screen.getByText("I don't have one today"));
+    fireEvent.click(screen.getByText("Find an anchor"));
+    fireEvent.click(screen.getByText("The next time you eat."));
+    expect((screen.getByPlaceholderText(/What, and when/i) as HTMLInputElement).value).toBe("Eat something");
+  });
+
+  it("anchor-less: gentle start generates a plan with no anchor and clears manual anchors", async () => {
+    render(<PlanPage voice="plain" anchorless="refuse" />);
+    fireEvent.click(screen.getByText("I don't have one today"));
+    fireEvent.click(screen.getByText("A gentle start, no anchor"));
+    await waitFor(() => expect(generateBodies).toHaveLength(1));
+    expect(generateBodies[0].manualAnchor).toBeUndefined();
+    expect(generateBodies[0].replaceManualAnchors).toBe(true);
+  });
+
+  it("rejects an anchor time that has already passed", () => {
+    render(<PlanPage voice="plain" anchorless="choice" />);
+    fireEvent.change(screen.getByPlaceholderText(/What, and when/i), { target: { value: "Too late" } });
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(new Date().setHours(15, 0, 0, 0)));
+    fireEvent.change(document.querySelector('input[type="time"]')!, { target: { value: "09:00" } });
+    fireEvent.click(screen.getByText("Use this anchor"));
+    expect(screen.getByRole("alert").textContent).toMatch(/already passed/);
+    expect(generateBodies).toHaveLength(0);
+    vi.useRealTimers();
+  });
 });

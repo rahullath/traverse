@@ -952,8 +952,8 @@ export class ChainGenerator {
       }
     }
 
-    const dateKey = options.date.toISOString().split("T")[0];
-    const anchorId = `fallback-home-${dateKey}`;
+    // Must be a real UUID: it is persisted to time_blocks.activity_id (uuid).
+    const anchorId = crypto.randomUUID();
 
     return {
       id: anchorId,

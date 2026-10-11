@@ -215,6 +215,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       await deleteDailyPlan(supabase, existingPlan.id);
     }
 
+    // The chain builder defines the day's single manual anchor: rebuilding
+    // replaces earlier ones instead of stacking a chain per attempt. With no
+    // anchor (gentle start) it clears them. Calendar anchors are untouched.
+    if (body.replaceManualAnchors === true) {
+      const { error: clearError } = await supabase
+        .from("manual_anchors")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("anchor_date", date.toISOString().split("T")[0]);
+      if (clearError && clearError.code !== "42P01") throw clearError;
+    }
+
     // Optional manual anchor insertion (for no-calendar users and custom anchors).
     if (parsedManualAnchor) {
       const anchorDate = date.toISOString().split("T")[0];
@@ -357,7 +369,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     console.error("Error generating daily plan:", error);
 
     const errorCode = (error as any)?.code;
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    // Supabase errors are plain objects, not Error instances.
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : typeof (error as any)?.message === "string"
+          ? (error as any).message
+          : String(error);
 
     // Duplicate insert race protection: return existing winner plan instead of failing.
     if (
