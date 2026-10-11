@@ -50,6 +50,13 @@ import type {
 } from "../chains/step-customization";
 import { fetchActiveTravelProfiles } from "../travel/location-travel-profiles";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** time_blocks.activity_id is a uuid column; synthetic ids must not reach it. */
+function asUuid(id: string | null | undefined): string | undefined {
+  return id && UUID_RE.test(id) ? id : undefined;
+}
+
 // Internal types for plan building
 interface Activity {
   type: ActivityType;
@@ -1723,7 +1730,7 @@ export class PlanBuilderService {
           end_time: normalized.endIso,
           activity_type: block.activityType,
           activity_name: block.activityName,
-          activity_id: block.activityId,
+          activity_id: asUuid(block.activityId),
           is_fixed: block.isFixed,
           sequence_order: chainSequenceOrder,
           status: block.status,
@@ -1759,7 +1766,7 @@ export class PlanBuilderService {
         end_time: normalized.endIso,
         activity_type: block.activityType,
         activity_name: block.activityName,
-        activity_id: block.activityId,
+        activity_id: asUuid(block.activityId),
         is_fixed: block.isFixed,
         sequence_order: block.sequenceOrder + chainSequenceOffset,
         status: block.status,

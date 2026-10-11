@@ -22,6 +22,11 @@ import type {
 } from "types/calendar";
 import type { TablesInsert, TablesUpdate } from "types/supabase";
 
+// Providers hand back event times as Date (Google/Outlook) or ISO strings
+// (iCal); the database returns strings in its own format. Normalise both.
+const toMs = (v: string | Date) => new Date(v).getTime();
+const toIso = (v: string | Date) => new Date(v).toISOString();
+
 export class CalendarService {
   // Server code must pass a user-scoped client (serverAuth.supabase): the
   // default browser client has no session server-side, so RLS hides
@@ -225,8 +230,11 @@ export class CalendarService {
         .select("*")
         .eq("source_id", source.id);
 
-      const existingEventMap = new Map(
-        (existingEvents || []).map((event) => [event.external_id || "", event]),
+      const existingEventMap = new Map<string, CalendarEvent>(
+        ((existingEvents || []) as CalendarEvent[]).map((event) => [
+          event.external_id || "",
+          event,
+        ]),
       );
 
       // Process new events
@@ -239,8 +247,8 @@ export class CalendarService {
             const updatePayload: TablesUpdate<"calendar_events"> = {
               title: newEvent.title,
               description: newEvent.description,
-              start_time: newEvent.start_time.toISOString(),
-              end_time: newEvent.end_time.toISOString(),
+              start_time: toIso(newEvent.start_time),
+              end_time: toIso(newEvent.end_time),
               location: newEvent.location,
               event_type: newEvent.event_type,
               flexibility: newEvent.flexibility,
@@ -263,8 +271,8 @@ export class CalendarService {
             source_id: newEvent.source_id,
             title: newEvent.title,
             description: newEvent.description,
-            start_time: newEvent.start_time.toISOString(),
-            end_time: newEvent.end_time.toISOString(),
+            start_time: toIso(newEvent.start_time),
+            end_time: toIso(newEvent.end_time),
             location: newEvent.location,
             event_type: newEvent.event_type,
             flexibility: newEvent.flexibility,
@@ -657,16 +665,17 @@ export class CalendarService {
     existing: CalendarEvent,
     updated: Omit<CalendarEvent, "id" | "created_at" | "updated_at">,
   ): boolean {
-    // Compare existing string dates with updated Date objects converted to ISO strings
+    // The database returns null where providers return undefined.
+    const same = (a: unknown, b: unknown) => (a ?? null) === (b ?? null);
     return (
-      existing.title !== updated.title ||
-      existing.description !== updated.description ||
-      existing.start_time !== updated.start_time.toISOString() ||
-      existing.end_time !== updated.end_time.toISOString() ||
-      existing.location !== updated.location ||
-      existing.event_type !== updated.event_type ||
-      existing.flexibility !== updated.flexibility ||
-      existing.importance !== updated.importance
+      !same(existing.title, updated.title) ||
+      !same(existing.description, updated.description) ||
+      toMs(existing.start_time) !== toMs(updated.start_time) ||
+      toMs(existing.end_time) !== toMs(updated.end_time) ||
+      !same(existing.location, updated.location) ||
+      !same(existing.event_type, updated.event_type) ||
+      !same(existing.flexibility, updated.flexibility) ||
+      !same(existing.importance, updated.importance)
     );
   }
 

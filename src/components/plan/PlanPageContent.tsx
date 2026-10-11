@@ -112,7 +112,8 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
   const [profiles, setProfiles] = useState<TravelProfile[]>([]);
 
   const [customTitle, setCustomTitle] = useState('');
-  const [customTime, setCustomTime] = useState('11:00');
+  const [customTime, setCustomTime] = useState(() => minutesFromNow(120));
+  const [anchorError, setAnchorError] = useState<string | null>(null);
   const [customDuration, setCustomDuration] = useState(60);
 
   const [wake, setWake] = useState(() => calculateDefaultWakeTime(wakeDefault));
@@ -188,8 +189,9 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
         title: anchor.title,
         start_time: anchor.startISO,
         end_time: anchor.endISO,
-        location: travel?.label ?? null,
-        location_label: travel?.label ?? null,
+        // "Same location" means no travel: don't save it as a travel profile.
+        location: travel?.sameLocation ? null : travel?.label ?? null,
+        location_label: travel?.sameLocation ? null : travel?.label ?? null,
         max_late_minutes: travel?.maxLateMinutes ?? 0,
         location_travel_minutes: travel?.sameLocation ? 0 : (travel?.totalMinutes ?? 0),
         departure_slots: travel?.departureSlots ?? [],
@@ -206,6 +208,7 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
           sleepTime: sleepTime.toISOString(),
           energyState,
           manualAnchor,
+          replaceManualAnchors: true,
         }),
       });
 
@@ -236,7 +239,25 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
           <div className="tv-head__date">no fixed anchor</div>
           <div className="tv-head__clock">{formatTime(new Date(), timeFormat)}</div>
         </header>
-        <EmptyContent variant={anchorless} onBuildAnchor={() => { setMode('wizard'); setStep(0); }} />
+        <EmptyContent
+          variant={anchorless}
+          onPickAnchor={(a) => {
+            if (a) { setCustomTitle(a.title); setCustomTime(a.time); }
+            setAnchorError(null);
+            setMode('wizard');
+            setStep(0);
+          }}
+          onGentleStart={() => {
+            // No anchor: the server builds a gentle home "free activation" chain.
+            setAnchor(null);
+            setEnergy(e => e ?? 'low');
+            setTravel(null);
+            setPlan(null);
+            setGenError(null);
+            setMode('wizard');
+            setStep(4);
+          }}
+        />
       </Page>
     );
   }
@@ -291,9 +312,15 @@ function PlanPageContent({ voice, theme, density, motion = true, timeFormat = 'c
               </select>
             </div>
             <div className="tv-actions">
+              {anchorError && <p className="tv-prose" role="alert" style={{ margin: '8px 0 0', fontSize: 15 }}>{anchorError}</p>}
               <Button variant="primary" hint="→" onClick={() => {
-                if (!customTitle.trim()) return;
+                if (!customTitle.trim()) { setAnchorError('Give it a name first — anything works.'); return; }
                 const start = todayAt(customTime);
+                if (start.getTime() <= Date.now()) {
+                  setAnchorError("That time has already passed today — pick a time that's still ahead.");
+                  return;
+                }
+                setAnchorError(null);
                 const end = new Date(start.getTime() + customDuration * 60000);
                 setAnchor({ title: customTitle.trim(), startISO: start.toISOString(), endISO: end.toISOString(), type: suggestAnchorType(customTitle) });
                 next();
@@ -558,21 +585,48 @@ function PlanResult({ anchor, wake, sleep, onWake, onSleep, onAnchorType, plan, 
   );
 }
 
-export function EmptyContent({ variant, onBuildAnchor }: { variant: Anchorless; onBuildAnchor: () => void }) {
-  if (variant === 'refuse') return <EmptyRefuse onBuildAnchor={onBuildAnchor} />;
-  if (variant === 'choice') return <EmptyChoice onBuildAnchor={onBuildAnchor} />;
-  return <EmptySuggest onBuildAnchor={onBuildAnchor} />;
+export interface SoftAnchor {
+  title: string;
+  /** HH:MM, today */
+  time: string;
 }
 
-function EmptySuggest({ onBuildAnchor }: { onBuildAnchor: () => void }) {
-  const zeitgebers = [
-    { label: 'Sunlight on your face.', meta: 'environmental · ~5 min' },
-    { label: 'The next time you eat.', meta: 'bodily · whenever' },
-    { label: 'The first message you reply to.', meta: 'social · cue' },
-    { label: 'A flatmate makes tea.', meta: 'social · ambient' },
-    { label: 'Feeding a pet, if you have one.', meta: 'bodily · routine' },
-    { label: 'Sunset.', meta: 'environmental · soft close' },
-  ];
+/** Next HH:MM at least `minAhead` minutes from now, rounded up to 15 min. */
+function minutesFromNow(minAhead: number): string {
+  const d = new Date(Date.now() + minAhead * 60000);
+  const m = Math.ceil(d.getMinutes() / 15) * 15;
+  d.setMinutes(m, 0, 0);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/** First of the given HH:MM slots still ≥ minAhead minutes away, else now + fallback. */
+function nextSlot(slots: string[], minAhead: number, fallbackAhead: number): string {
+  const limit = Date.now() + minAhead * 60000;
+  const hit = slots.find(t => todayAt(t).getTime() >= limit);
+  return hit ?? minutesFromNow(fallbackAhead);
+}
+
+const ZEITGEBERS: { label: string; meta: string; anchor: () => SoftAnchor }[] = [
+  { label: 'Sunlight on your face.', meta: 'environmental · ~5 min', anchor: () => ({ title: 'Step outside into daylight', time: minutesFromNow(30) }) },
+  { label: 'The next time you eat.', meta: 'bodily · next meal', anchor: () => ({ title: 'Eat something', time: nextSlot(['08:30', '13:00', '19:00'], 45, 60) }) },
+  { label: 'The first message you reply to.', meta: 'social · cue', anchor: () => ({ title: 'Reply to one message', time: minutesFromNow(30) }) },
+  { label: 'Someone else is around.', meta: 'social · ambient', anchor: () => ({ title: 'Be in the same room as someone', time: minutesFromNow(60) }) },
+  { label: 'Feeding a pet, if you have one.', meta: 'bodily · routine', anchor: () => ({ title: 'Feed the pet', time: nextSlot(['08:00', '18:00'], 30, 60) }) },
+  { label: 'Sunset.', meta: 'environmental · soft close', anchor: () => ({ title: 'Watch the light go', time: nextSlot(['18:30'], 30, 90) }) },
+];
+
+export function EmptyContent({ variant, onPickAnchor, onGentleStart }: {
+  variant: Anchorless;
+  onPickAnchor: (a: SoftAnchor | null) => void;
+  onGentleStart: () => void;
+}) {
+  const [view, setView] = useState<Anchorless>(variant);
+  if (view === 'refuse') return <EmptyRefuse onSuggest={() => setView('suggest')} onGentleStart={onGentleStart} />;
+  if (view === 'choice') return <EmptyChoice onSuggest={() => setView('suggest')} onRest={() => setView('refuse')} />;
+  return <EmptySuggest onPickAnchor={onPickAnchor} onGentleStart={onGentleStart} />;
+}
+
+function EmptySuggest({ onPickAnchor, onGentleStart }: { onPickAnchor: (a: SoftAnchor | null) => void; onGentleStart: () => void }) {
   return (
     <>
       <div className="tv-label">social zeitgebers · pick one to build from</div>
@@ -580,21 +634,29 @@ function EmptySuggest({ onBuildAnchor }: { onBuildAnchor: () => void }) {
         Nothing is fixed today. <em>What's the next thing that happens whether you act or not?</em>
       </h1>
       <p className="tv-prose">
-        Time-blind brains are weaker at clock-time and stronger at events. Pick any one of these — a chain can be hung off it.
+        Time-blind brains are weaker at clock-time and stronger at events. Pick one — you can adjust the time on the next screen, and the chain is built backward from it.
       </p>
       <div className="tv-actions">
-        {zeitgebers.map(o => (
-          <button key={o.label} className="tv-btn" onClick={onBuildAnchor}>
-            <span style={{ fontFamily: 'var(--serif)', fontSize: 16 }}>{o.label}</span>
-            <span className="tv-btn__hint">{o.meta}</span>
+        {ZEITGEBERS.map(z => (
+          <button key={z.label} className="tv-btn" onClick={() => onPickAnchor(z.anchor())}>
+            <span style={{ fontFamily: 'var(--serif)', fontSize: 16 }}>{z.label}</span>
+            <span className="tv-btn__hint">{z.meta}</span>
           </button>
         ))}
+        <button className="tv-btn tv-btn--quiet" onClick={() => onPickAnchor(null)}>
+          <span>Something else — I'll type it</span>
+          <span className="tv-btn__hint">custom</span>
+        </button>
+        <button className="tv-btn tv-btn--quiet" onClick={onGentleStart}>
+          <span>No anchor at all — just a gentle start</span>
+          <span className="tv-btn__hint">home chain</span>
+        </button>
       </div>
     </>
   );
 }
 
-function EmptyRefuse({ onBuildAnchor }: { onBuildAnchor: () => void }) {
+function EmptyRefuse({ onSuggest, onGentleStart }: { onSuggest: () => void; onGentleStart: () => void }) {
   return (
     <>
       <div className="tv-label">no plan</div>
@@ -611,14 +673,15 @@ function EmptyRefuse({ onBuildAnchor }: { onBuildAnchor: () => void }) {
       </Card>
       <div className="tv-actions">
         <Button variant="primary" hint="enough" onClick={() => { window.location.href = '/today'; }}>Close the app</Button>
-        <Button variant="quiet" hint="switch" onClick={onBuildAnchor}>Show me a zeitgeber instead</Button>
+        <Button hint="home chain" onClick={onGentleStart}>A gentle start, no anchor</Button>
+        <Button variant="quiet" hint="switch" onClick={onSuggest}>Show me a zeitgeber instead</Button>
       </div>
       <p className="tv-foot-note">The app stores nothing about this. There is no streak to break.</p>
     </>
   );
 }
 
-function EmptyChoice({ onBuildAnchor }: { onBuildAnchor: () => void }) {
+function EmptyChoice({ onSuggest, onRest }: { onSuggest: () => void; onRest: () => void }) {
   return (
     <>
       <div className="tv-label">no fixed anchor</div>
@@ -629,14 +692,14 @@ function EmptyChoice({ onBuildAnchor }: { onBuildAnchor: () => void }) {
         <p className="tv-serif" style={{ fontSize: 20, margin: 0, lineHeight: 1.25 }}>
           Find a soft anchor — a meal, the sunset, a friend — and build a small chain backward from it.
         </p>
-        <Button variant="primary" onClick={onBuildAnchor}>Find an anchor</Button>
+        <Button variant="primary" onClick={onSuggest}>Find an anchor</Button>
       </Card>
       <Card style={{ marginTop: 4 }}>
         <div className="tv-label">option · two</div>
         <p className="tv-serif" style={{ fontSize: 20, margin: 0, lineHeight: 1.25 }}>
           Today is a rest day on purpose. One small act, then close the app.
         </p>
-        <Button onClick={() => { window.location.href = '/today'; }}>Rest day</Button>
+        <Button onClick={onRest}>Rest day</Button>
       </Card>
       <p className="tv-foot-note">Either is a complete day. Neither is failure.</p>
     </>
